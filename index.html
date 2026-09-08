@@ -184,7 +184,13 @@
           <input type="checkbox" id="in-order" checked />
           <span class="switch" aria-hidden="true"></span>
         </label>
-        <p class="setup-note">Turn this ON for sequential tables. Leave OFF to shuffle. Mic listens automatically — say or type, then hit POW!</p>
+
+        <label class="toggle-row">
+          <span>Timed · 5 seconds per question</span>
+          <input type="checkbox" id="per-question-timer" />
+          <span class="switch" aria-hidden="true"></span>
+        </label>
+        <p class="setup-note">In order = sequential tables. Timed = 5 seconds each, then next question. Mic listens automatically.</p>
 
         <button type="submit" class="btn primary big">Start Mission</button>
       </form>
@@ -294,6 +300,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v28.js"></script>
+  <script src="app-v29.js"></script>
 </body>
 </html>
