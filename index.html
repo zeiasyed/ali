@@ -179,10 +179,12 @@
           <span class="switch" aria-hidden="true"></span>
         </label>
 
-        <label class="toggle-row">
-          <span>Shuffle questions</span>
-          <input type="checkbox" id="shuffle" checked />
-          <span class="switch" aria-hidden="true"></span>
+        <label>
+          Question order
+          <select id="question-order" name="questionOrder">
+            <option value="order">In order · 7×1, 7×2, 7×3…</option>
+            <option value="shuffle" selected>Shuffled</option>
+          </select>
         </label>
         <p class="setup-note">During play the mic listens automatically. Say or type the answer, then hit POW!</p>
 
@@ -294,6 +296,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app.js?v=25"></script>
+  <script src="app.js?v=26"></script>
 </body>
 </html>

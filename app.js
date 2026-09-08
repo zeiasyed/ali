@@ -628,7 +628,9 @@
     if ($("digit-level")) $("digit-level").value = state.settings.digitLevel || "single";
     if ($("mode")) $("mode").value = state.settings.mode;
     if ($("problem-type")) $("problem-type").value = state.settings.problemType || "product";
-    if ($("shuffle")) $("shuffle").checked = !!state.settings.shuffle;
+    if ($("question-order")) {
+      $("question-order").value = state.settings.shuffle ? "shuffle" : "order";
+    }
     if ($("voice-mode")) $("voice-mode").checked = !!state.settings.voiceMode;
     renderTableChips();
     syncOperationUI();
@@ -793,16 +795,28 @@
     return pool;
   }
 
+  function buildOrderedQueue(operation, max, tables, digitLevel) {
+    const pool = buildPool(operation, max, tables, digitLevel);
+    pool.sort((x, y) => {
+      if (x.a !== y.a) return x.a - y.a;
+      return x.b - y.b;
+    });
+    return pool.map((p) => ({ a: p.a, b: p.b, key: p.key }));
+  }
+
   function pickQuestion(operation, max, shuffle, tables, digitLevel) {
+    // In-order mode: walk the list (7×1, 7×2, 7×3…) with no random jumps
+    if (!shuffle && session?.queue?.length) {
+      if (session.queueIndex >= session.queue.length) {
+        session.queueIndex = 0;
+      }
+      const p = session.queue[session.queueIndex];
+      session.queueIndex += 1;
+      return { a: p.a, b: p.b, key: p.key };
+    }
+
     const pool = buildPool(operation, max, tables, digitLevel);
     if (!pool.length) return { a: 1, b: 1, key: factKey(1, 1, operation) };
-
-    if (!shuffle) {
-      pool.sort((x, y) => {
-        if (x.a !== y.a) return x.a - y.a;
-        return x.b - y.b;
-      });
-    }
 
     const filtered =
       session?.current && pool.length > 1
@@ -858,16 +872,22 @@
       .filter((n) => n >= 1 && n <= max);
     if (!tables.length) tables = rangeTables(max);
     const problemType = opts.problemType || "product";
+    const shuffle = !!opts.shuffle;
+    const queue = shuffle
+      ? null
+      : buildOrderedQueue(operation, max, tables, digitLevel);
 
     session = {
       operation,
       difficulty: opts.difficulty,
       digitLevel,
       mode: opts.mode,
-      shuffle: opts.shuffle,
+      shuffle,
       tables,
       problemType,
       max,
+      queue,
+      queueIndex: 0,
       asked: 0,
       target: opts.mode === "10" || opts.mode === "20" ? Number(opts.mode) : null,
       correct: 0,
@@ -1280,7 +1300,7 @@
       difficulty: $("difficulty")?.value || "medium",
       digitLevel: $("digit-level")?.value || "single",
       mode: $("mode")?.value || "endless",
-      shuffle: !!$("shuffle")?.checked,
+      shuffle: ($("question-order")?.value || "shuffle") === "shuffle",
       voiceMode: true,
       tables,
       problemType: $("problem-type")?.value || "product",
