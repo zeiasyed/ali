@@ -179,14 +179,12 @@
           <span class="switch" aria-hidden="true"></span>
         </label>
 
-        <label>
-          Question order
-          <select id="question-order" name="questionOrder">
-            <option value="order">In order · 7×1, 7×2, 7×3…</option>
-            <option value="shuffle" selected>Shuffled</option>
-          </select>
+        <label class="toggle-row">
+          <span>Go in order (7×1, 7×2, 7×3…)</span>
+          <input type="checkbox" id="in-order" checked />
+          <span class="switch" aria-hidden="true"></span>
         </label>
-        <p class="setup-note">During play the mic listens automatically. Say or type the answer, then hit POW!</p>
+        <p class="setup-note">Turn this ON for sequential tables. Leave OFF to shuffle. Mic listens automatically — say or type, then hit POW!</p>
 
         <button type="submit" class="btn primary big">Start Mission</button>
       </form>
@@ -296,6 +294,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app.js?v=26"></script>
+  <script src="app-v27.js"></script>
 </body>
 </html>
