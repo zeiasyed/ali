@@ -200,8 +200,9 @@
     const filter = ctx.createBiquadFilter();
     filter.type = filterType;
     filter.frequency.setValueAtTime(filterFreq, ctx.currentTime + start);
-    filter.frequency.exponentialRampToValueAtTime(
-      Math.max(80, filterFreq * 0.25),
+    filter.Q.setValueAtTime(1.2, ctx.currentTime + start);
+    filter.frequency.linearRampToValueAtTime(
+      Math.max(120, filterFreq * 0.3),
       ctx.currentTime + start + dur
     );
 
