@@ -683,8 +683,34 @@
         tables: rangeTables(10),
         problemType: "product",
         roundPlace: "10",
-        roundDigits: "2",
+        roundDigits: "3",
       },
+    };
+  }
+
+  function parseRoundPreset(value) {
+    const raw = String(value || "10:3");
+    const [place, digits] = raw.split(":");
+    return {
+      roundPlace: place === "100" || place === "mix" ? place : "10",
+      roundDigits: ["2", "3", "4", "mix"].includes(digits) ? digits : "3",
+    };
+  }
+
+  function roundPresetValue(roundPlace, roundDigits) {
+    const place = roundPlace === "100" || roundPlace === "mix" ? roundPlace : "10";
+    const digits = ["2", "3", "4", "mix"].includes(String(roundDigits))
+      ? String(roundDigits)
+      : "3";
+    return `${place}:${digits}`;
+  }
+
+  function readRoundSettings() {
+    const preset = $("round-preset");
+    if (preset?.value) return parseRoundPreset(preset.value);
+    return {
+      roundPlace: $("round-place")?.value || "10",
+      roundDigits: $("round-digits")?.value || "3",
     };
   }
 
@@ -792,8 +818,14 @@
     if ($("operation")) $("operation").value = state.settings.operation || "multiply";
     if ($("difficulty")) $("difficulty").value = state.settings.difficulty;
     if ($("digit-level")) $("digit-level").value = state.settings.digitLevel || "single";
+    if ($("round-preset")) {
+      $("round-preset").value = roundPresetValue(
+        state.settings.roundPlace || "10",
+        state.settings.roundDigits || "3"
+      );
+    }
     if ($("round-place")) $("round-place").value = state.settings.roundPlace || "10";
-    if ($("round-digits")) $("round-digits").value = state.settings.roundDigits || "2";
+    if ($("round-digits")) $("round-digits").value = state.settings.roundDigits || "3";
     if ($("mode")) $("mode").value = state.settings.mode;
     if ($("problem-type")) $("problem-type").value = state.settings.problemType || "product";
     if ($("in-order")) $("in-order").checked = !state.settings.shuffle;
@@ -828,7 +860,7 @@
     setSetupVisible($("table-picker"), isMult);
     setSetupVisible($("digit-wrap"), isAddSub);
     setSetupVisible($("round-wrap"), isRound);
-    setSetupVisible($("round-digits-wrap"), isRound);
+    setSetupVisible($("round-digits-wrap"), false);
     setSetupVisible($("problem-type-wrap"), !isRound);
     // In-order (13, 14, 15…) is for tables — rounding should stay random
     const inOrderRow = $("in-order")?.closest("label");
@@ -1027,7 +1059,7 @@
     };
 
     if (operation === "round") {
-      return buildRoundPool(roundPlace || "10", roundDigits || "2");
+      return buildRoundPool(roundPlace || "10", roundDigits || "3");
     }
 
     if (operation === "multiply") {
@@ -1083,7 +1115,7 @@
     const wantOrder =
       operation !== "round" && (session ? session.shuffle === false : !shuffle);
     const place = roundPlace || session?.roundPlace || "10";
-    const digits = roundDigits || session?.roundDigits || "2";
+    const digits = roundDigits || session?.roundDigits || "3";
 
     // In-order mode: strict walk — never weighted-random
     if (wantOrder) {
@@ -1093,7 +1125,7 @@
       }
       if (!session.queue.length) {
         return operation === "round"
-          ? { a: 45, b: 10, key: factKey(45, 10, "round") }
+          ? { a: 346, b: 10, key: factKey(346, 10, "round") }
           : { a: 1, b: 1, key: factKey(1, 1, operation) };
       }
       if (session.queueIndex >= session.queue.length) {
@@ -1107,7 +1139,7 @@
     const pool = buildPool(operation, max, tables, digitLevel, place, digits);
     if (!pool.length) {
       return operation === "round"
-        ? { a: 45, b: 10, key: factKey(45, 10, "round") }
+        ? { a: 346, b: 10, key: factKey(346, 10, "round") }
         : { a: 1, b: 1, key: factKey(1, 1, operation) };
     }
 
@@ -1173,7 +1205,7 @@
     const max = DIFFICULTY[opts.difficulty] || 10;
     const digitLevel = opts.digitLevel || "single";
     const roundPlace = opts.roundPlace || "10";
-    const roundDigits = opts.roundDigits || "2";
+    const roundDigits = opts.roundDigits || "3";
     let tables = (opts.tables || [])
       .map(Number)
       .filter((n) => n >= 1 && n <= max)
@@ -1745,8 +1777,7 @@
       operation,
       difficulty: $("difficulty")?.value || "medium",
       digitLevel: $("digit-level")?.value || "single",
-      roundPlace: $("round-place")?.value || "10",
-      roundDigits: $("round-digits")?.value || "2",
+      ...readRoundSettings(),
       mode: $("mode")?.value || "endless",
       shuffle: readShuffleSetting(),
       voiceMode: voiceOn,
@@ -1839,7 +1870,7 @@
       difficulty: state.settings.difficulty,
       digitLevel: state.settings.digitLevel || "single",
       roundPlace: state.settings.roundPlace || "10",
-      roundDigits: state.settings.roundDigits || "2",
+      roundDigits: state.settings.roundDigits || "3",
       mode: state.settings.mode,
       shuffle: state.settings.shuffle,
       voiceMode: !!state.settings.voiceMode,

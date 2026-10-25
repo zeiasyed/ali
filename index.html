@@ -109,7 +109,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v39 · Rounding questions are random</p>
+        <p class="setup-note" id="app-version-note">App v40 · Nearest 10 with 3-digit numbers supported</p>
 
         <label id="difficulty-wrap">
           Difficulty
@@ -130,23 +130,29 @@
         </label>
 
         <label id="round-wrap" hidden>
-          Round to
-          <select id="round-place" name="roundPlace">
-            <option value="10" selected>Nearest 10</option>
-            <option value="100">Nearest 100</option>
-            <option value="mix">Mix 10s and 100s</option>
+          Rounding practice
+          <select id="round-preset" name="roundPreset">
+            <option value="10:2">Nearest 10 · 2 digits (10–99)</option>
+            <option value="10:3" selected>Nearest 10 · 3 digits (100–999)</option>
+            <option value="10:4">Nearest 10 · 4 digits (1000–9999)</option>
+            <option value="100:2">Nearest 100 · 2 digits (50–99)</option>
+            <option value="100:3">Nearest 100 · 3 digits (100–999)</option>
+            <option value="100:4">Nearest 100 · 4 digits (1000–9999)</option>
+            <option value="mix:mix">Mix 10s &amp; 100s · all digit sizes</option>
           </select>
         </label>
-
-        <label id="round-digits-wrap" hidden>
-          Number size
-          <select id="round-digits" name="roundDigits">
-            <option value="2" selected>2 digits (10–99)</option>
-            <option value="3">3 digits (100–999)</option>
-            <option value="4">4 digits (1000–9999)</option>
-            <option value="mix">Mix 2, 3, and 4 digits</option>
-          </select>
-        </label>
+        <!-- Kept for older saved settings / fallback -->
+        <select id="round-place" hidden aria-hidden="true">
+          <option value="10" selected>10</option>
+          <option value="100">100</option>
+          <option value="mix">mix</option>
+        </select>
+        <select id="round-digits" hidden aria-hidden="true">
+          <option value="2">2</option>
+          <option value="3" selected>3</option>
+          <option value="4">4</option>
+          <option value="mix">mix</option>
+        </select>
 
         <fieldset class="table-picker" id="table-picker">
           <legend>Practice tables</legend>
@@ -322,6 +328,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v39.js"></script>
+  <script src="app-v40.js"></script>
 </body>
 </html>
