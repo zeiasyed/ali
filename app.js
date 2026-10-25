@@ -1020,6 +1020,8 @@
       if (seen.has(id)) return;
       // Skip questions that round to 0 (awkward for kids)
       if (roundToPlace(a, b) === 0) return;
+      // Skip numbers already on the place (e.g. 240 → nearest 10)
+      if (a % b === 0) return;
       seen.add(id);
       const key = factKey(a, b, "round");
       const fact = ensureFact(key);

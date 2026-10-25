@@ -1,0 +1,1909 @@
+(() => {
+  const STORAGE_KEY = "ali-ayaan-hero-times-v1";
+  const CHILD = "Ali Ayaan";
+  const MASTERY_STREAK = 5;
+  const QUESTION_SECS = 5;
+
+  const DIFFICULTY = {
+    easy: 5,
+    medium: 10,
+    hard: 12,
+    expert: 15,
+  };
+
+  const HEROES = [
+    // Marvel first
+    { id: "spiderman", icon: "🕷️", name: "Spider-Man", need: 0, universe: "Marvel" },
+    { id: "ironman", icon: "🦾", name: "Iron Man", need: 25, universe: "Marvel" },
+    { id: "cap", icon: "🛡️", name: "Captain America", need: 50, universe: "Marvel" },
+    { id: "thor", icon: "⚡", name: "Thor", need: 75, universe: "Marvel" },
+    { id: "hulk", icon: "💪", name: "Hulk", need: 100, universe: "Marvel" },
+    { id: "blackpanther", icon: "🐆", name: "Black Panther", need: 130, universe: "Marvel" },
+    { id: "strange", icon: "🌀", name: "Doctor Strange", need: 160, universe: "Marvel" },
+    { id: "captainmarvel", icon: "⭐", name: "Captain Marvel", need: 200, universe: "Marvel" },
+    // Then Roblox
+    { id: "roblox-noob", icon: "🧱", name: "Noob", need: 240, universe: "Roblox" },
+    { id: "roblox-guest", icon: "👤", name: "Guest", need: 280, universe: "Roblox" },
+    { id: "roblox-builderman", icon: "🔧", name: "Builderman", need: 320, universe: "Roblox" },
+    { id: "roblox-bloxy", icon: "🏆", name: "Bloxy", need: 360, universe: "Roblox" },
+    { id: "roblox-bacon", icon: "🥓", name: "Bacon Hair", need: 400, universe: "Roblox" },
+    // Then Fortnite
+    { id: "fortnite-jonesy", icon: "🤠", name: "Jonesy", need: 450, universe: "Fortnite" },
+    { id: "fortnite-peely", icon: "🍌", name: "Peely", need: 500, universe: "Fortnite" },
+    { id: "fortnite-fishstick", icon: "🐟", name: "Fishstick", need: 560, universe: "Fortnite" },
+    { id: "fortnite-raven", icon: "🦅", name: "Raven", need: 620, universe: "Fortnite" },
+    { id: "fortnite-meowscles", icon: "🐱", name: "Meowscles", need: 700, universe: "Fortnite" },
+  ];
+
+  const BADGES = [
+    { id: "first", icon: "🎯", name: "First Pow", desc: "Get 1 correct answer", check: (s) => s.totalCorrect >= 1 },
+    { id: "streak5", icon: "🔥", name: "Hot Streak", desc: "Reach a streak of 5", check: (s) => s.bestStreak >= 5 },
+    { id: "streak10", icon: "💫", name: "Power 10", desc: "Reach a streak of 10", check: (s) => s.bestStreak >= 10 },
+    { id: "stars50", icon: "⭐", name: "Star Collector", desc: "Earn 50 stars", check: (s) => s.stars >= 50 },
+    { id: "stars200", icon: "🌠", name: "Galaxy Stars", desc: "Earn 200 stars", check: (s) => s.stars >= 200 },
+    { id: "table5", icon: "5️⃣", name: "Table Titan 5", desc: "Master the 5 times table", check: (s) => isTableMastered(s, 5) },
+    { id: "table10", icon: "🔟", name: "Table Titan 10", desc: "Master the 10 times table", check: (s) => isTableMastered(s, 10) },
+    { id: "missions5", icon: "🚀", name: "Mission Pro", desc: "Finish 5 missions", check: (s) => s.missionsCompleted >= 5 },
+    { id: "marvel-set", icon: "🦸", name: "Avenger Squad", desc: "Unlock all Marvel heroes", check: (s) => HEROES.filter((h) => h.universe === "Marvel").every((h) => s.unlockedHeroes[h.id]) },
+    { id: "roblox-set", icon: "🧱", name: "Roblox Crew", desc: "Unlock all Roblox heroes", check: (s) => HEROES.filter((h) => h.universe === "Roblox").every((h) => s.unlockedHeroes[h.id]) },
+    { id: "fortnite-set", icon: "🍌", name: "Victory Royale", desc: "Unlock all Fortnite heroes", check: (s) => HEROES.filter((h) => h.universe === "Fortnite").every((h) => s.unlockedHeroes[h.id]) },
+  ];
+
+  const CHEERS = [
+    "You got this!",
+    "Hero mode!",
+    "Power punch!",
+    "Lightning brain!",
+    "Keep flying!",
+    "Super focus!",
+  ];
+
+  const WIN_LINES = [
+    "POW! Correct!",
+    "Boom! Nailed it!",
+    "Yes! Hero hit!",
+    "Zap! Perfect!",
+  ];
+
+  /** @type {ReturnType<typeof defaultState>} */
+  let state = loadState();
+  /** @type {null | {
+   *  operation: string,
+   *  difficulty: string,
+   *  digitLevel: string,
+   *  mode: string,
+   *  shuffle: boolean,
+   *  tables: number[],
+   *  problemType: string,
+   *  max: number,
+   *  asked: number,
+   *  target: number | null,
+   *  correct: number,
+   *  firstTryCorrect: number,
+   *  attemptsOnCurrent: number,
+   *  sessionStars: number,
+   *  current: {a:number,b:number,key:string,promptType:string,expected:number,display:string} | null,
+   *  ended: boolean,
+   *  timerId: number | null,
+   *  timeLeft: number,
+   * }} */
+  let session = null;
+  let speechRec = null;
+  let listening = false;
+  let wantListen = false;
+  let micPrimed = false;
+  let speechStartLock = false;
+  let audioCtx = null;
+  let audioReady = false;
+  let masterGain = null;
+  let sfxPrimed = false;
+  const sfx = { correct: null, wrong: null, start: null };
+
+  const $ = (id) => document.getElementById(id);
+
+  function isAppleMobile() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }
+
+  function loadSfx() {
+    sfx.correct = new Audio("sfx-correct.wav?v=34");
+    sfx.wrong = new Audio("sfx-wrong.wav?v=34");
+    sfx.start = new Audio("sfx-start.wav?v=34");
+    for (const a of Object.values(sfx)) {
+      a.preload = "auto";
+      a.setAttribute("playsinline", "true");
+    }
+  }
+
+  async function unlockAudio() {
+    try {
+      if (navigator.audioSession) navigator.audioSession.type = "playback";
+    } catch { /* ignore */ }
+
+    if (!sfx.correct) loadSfx();
+
+    // Prime HTML audio once inside a user gesture (iPhone requirement)
+    if (!sfxPrimed) {
+      try {
+        for (const a of [sfx.start, sfx.correct, sfx.wrong]) {
+          if (!a) continue;
+          a.muted = true;
+          a.currentTime = 0;
+          const p = a.play();
+          if (p && p.then) await p.catch(() => {});
+          a.pause();
+          a.currentTime = 0;
+          a.muted = false;
+        }
+        sfxPrimed = true;
+      } catch { /* ignore */ }
+    }
+
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (AC) {
+      if (!audioCtx) {
+        audioCtx = new AC();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.9;
+        masterGain.connect(audioCtx.destination);
+      }
+      if (audioCtx.state === "suspended") {
+        try { await audioCtx.resume(); } catch { /* ignore */ }
+      }
+    }
+    audioReady = true;
+    return true;
+  }
+
+  function playSfx(audio, volume = 1) {
+    if (!audio) return false;
+    try {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = volume;
+      const p = audio.play();
+      if (p && p.catch) p.catch(() => {});
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async function playCorrectSound() {
+    await unlockAudio();
+    playSfx(sfx.correct, 1);
+  }
+
+  async function playWrongSound() {
+    await unlockAudio();
+    playSfx(sfx.wrong, 1);
+  }
+
+  async function playStartSound() {
+    await unlockAudio();
+    playSfx(sfx.start, 1);
+  }
+
+  const ONES = {
+    zero: 0, oh: 0, o: 0,
+    one: 1, won: 1, juan: 1,
+    two: 2, too: 2,
+    three: 3, four: 4, five: 5,
+    six: 6, seven: 7, eight: 8, nine: 9,
+    ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14,
+    fifteen: 15, sixteen: 16, seventeen: 17, eighteen: 18, nineteen: 19,
+  };
+  const TENS = {
+    twenty: 20, thirty: 30, forty: 40, fifty: 50,
+    sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+  };
+
+  /** Pull separate number values: "twenty one" → [21], "eight one" → [8, 1] (never 9). */
+  function extractSpokenNumbers(tokens) {
+    const nums = [];
+    let i = 0;
+    while (i < tokens.length) {
+      const w = tokens[i];
+      if (/^\d{1,4}$/.test(w)) {
+        nums.push(Number(w));
+        i += 1;
+        continue;
+      }
+      if (TENS[w] != null) {
+        let n = TENS[w];
+        const next = tokens[i + 1];
+        if (next && ONES[next] != null && ONES[next] < 10) {
+          n += ONES[next];
+          i += 2;
+        } else {
+          i += 1;
+        }
+        nums.push(n);
+        continue;
+      }
+      if (ONES[w] != null) {
+        let n = ONES[w];
+        if (tokens[i + 1] === "hundred") {
+          n *= 100;
+          i += 2;
+          const next = tokens[i];
+          if (next && TENS[next] != null) {
+            n += TENS[next];
+            i += 1;
+            const ones = tokens[i];
+            if (ones && ONES[ones] != null && ONES[ones] < 10) {
+              n += ONES[ones];
+              i += 1;
+            }
+          } else if (next && ONES[next] != null) {
+            n += ONES[next];
+            i += 1;
+          }
+        } else {
+          i += 1;
+        }
+        nums.push(n);
+        continue;
+      }
+      i += 1;
+    }
+    return nums;
+  }
+
+  function parseTailNumber(tail) {
+    if (!tail) return null;
+    const digitTail = tail.match(/\b\d{1,4}\b/);
+    if (digitTail) return Number(digitTail[0]);
+    const skip = new Set(["to", "the", "answer", "a", "an"]);
+    const tokens = tail.split(" ").filter(Boolean).filter((w) => !skip.has(w));
+    const nums = extractSpokenNumbers(tokens);
+    return nums.length ? nums[nums.length - 1] : null;
+  }
+
+  function looksLikeReadingFactors(nums, a, b) {
+    if (!nums || nums.length < 2) return false;
+    const factors = [Number(a), Number(b)].sort((x, y) => x - y);
+    const head = nums.slice(0, 2).slice().sort((x, y) => x - y);
+    return head[0] === factors[0] && head[1] === factors[1];
+  }
+
+  /** "11" from saying 1×1, "81" from 8×1, etc. */
+  function looksLikeFactorConcat(value, a, b) {
+    const s = String(value);
+    const as = String(a);
+    const bs = String(b);
+    return s === as + bs || s === bs + as;
+  }
+
+  /**
+   * Final gate: reject mic guesses that are really the kid reading the problem.
+   * Returns the value to fill, or null to ignore.
+   */
+  function acceptSpokenAnswer(value, problem, transcript) {
+    if (value == null || !Number.isFinite(value)) return null;
+    if (!problem) return value;
+
+    const a = Number(problem.a);
+    const b = Number(problem.b);
+    const expected = Number(problem.expected);
+
+    if (looksLikeFactorConcat(value, a, b)) return null;
+
+    // Said a factor instead of the product/missing number (e.g. "one" on 8×1)
+    if (value !== expected && (value === a || value === b)) return null;
+
+    // 1×1 is uniquely ambiguous — only accept a lone "one"/"1"
+    if (a === 1 && b === 1 && expected === 1) {
+      const t = String(transcript || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9\s]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (!/^(1|one|won|juan)$/.test(t)) return null;
+      return 1;
+    }
+
+    return value;
+  }
+
+  /**
+   * Parse a spoken answer. Uses the current problem so reading
+   * "one times one" / "eight one" does not overwrite the real answer.
+   */
+  function parseSpokenNumber(text, problem) {
+    if (!text) return null;
+    const cleaned = String(text)
+      .toLowerCase()
+      .replace(/×/g, " times ")
+      .replace(/\*/g, " times ")
+      .replace(/\bby\b/g, " times ")
+      .replace(/[^a-z0-9\s-]/g, " ")
+      .replace(/-/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    if (!cleaned) return null;
+
+    const hasOp =
+      /\b(times|multiplied|plus|minus|divided|over)\b/.test(cleaned) ||
+      /\bx\b/.test(cleaned);
+
+    // "eight times one equals eight" / "is 8" → answer after equals/is
+    // Avoid splitting short words like "this" — use careful boundaries
+    const afterEquals = cleaned.split(/\b(?:equals|equal|=)\b|\bis\b/);
+    if (afterEquals.length > 1) {
+      const n = parseTailNumber(afterEquals[afterEquals.length - 1].trim());
+      if (n != null) return acceptSpokenAnswer(n, problem, afterEquals[afterEquals.length - 1]);
+    }
+
+    // Kid is reading the problem out loud — ignore
+    if (hasOp) return null;
+
+    const skip = new Set([
+      "its", "it's", "the", "answer", "um", "uh", "like", "just",
+      "i", "think", "say", "said", "a", "an", "to", "my",
+    ]);
+    const tokens = cleaned.split(" ").filter(Boolean).filter((w) => !skip.has(w));
+    if (!tokens.length) return null;
+
+    const nums = extractSpokenNumbers(tokens);
+    if (!nums.length) return null;
+
+    // "eight one" / "one one" without "times" = reading factors, not 9 or 2
+    if (problem && looksLikeReadingFactors(nums, problem.a, problem.b)) {
+      if (nums.length >= 3) {
+        const last = nums[nums.length - 1];
+        if (last === Number(problem.expected)) {
+          return acceptSpokenAnswer(last, problem, cleaned);
+        }
+      }
+      return null;
+    }
+
+    // Single clear number ("one", "8", "twelve")
+    if (nums.length === 1) {
+      return acceptSpokenAnswer(nums[0], problem, cleaned);
+    }
+
+    // Multiple unrelated numbers — take the last (often the answer)
+    return acceptSpokenAnswer(nums[nums.length - 1], problem, cleaned);
+  }
+
+  function choosePromptType(problemType, a, b, operation) {
+    if (operation === "round") return "product";
+    let type = problemType || "product";
+    if (type === "mix") {
+      const kinds = ["product", "missing-b", "missing-a"];
+      type = kinds[Math.floor(Math.random() * kinds.length)];
+    }
+    // Avoid confusing prompts like 8 × ? = 8 (kids answer 8)
+    if (
+      operation === "multiply" &&
+      (type === "missing-a" || type === "missing-b") &&
+      (Number(a) === 1 || Number(b) === 1)
+    ) {
+      type = "product";
+    }
+    return type;
+  }
+
+  function speechSupported() {
+    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+  }
+
+  function setVoiceStatus(msg) {
+    const el = $("voice-status");
+    if (el) el.textContent = msg || "";
+  }
+
+  function setListeningUI(on) {
+    listening = on;
+    const btn = $("btn-mic");
+    if (btn) {
+      btn.classList.toggle("listening", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+      btn.textContent = on ? "Listening…" : "Tap Mic";
+    }
+  }
+
+  async function ensureMicAccess() {
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setVoiceStatus("This browser can’t use the mic — type the answer");
+      return false;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop());
+      micPrimed = true;
+      return true;
+    } catch {
+      micPrimed = false;
+      setVoiceStatus("Allow microphone access, then tap Mic");
+      wantListen = false;
+      setListeningUI(false);
+      return false;
+    }
+  }
+
+  function stopListening(clearWant = true) {
+    if (clearWant) wantListen = false;
+    try {
+      speechRec?.stop();
+    } catch {
+      try {
+        speechRec?.abort();
+      } catch {
+        /* ignore */
+      }
+    }
+    setListeningUI(false);
+  }
+
+  function getSpeechRec() {
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SR) return null;
+
+    // Reuse one instance on iPhone/iPad — recreating breaks the mic
+    if (!speechRec) {
+      speechRec = new SR();
+      speechRec.lang = "en-US";
+      speechRec.interimResults = true;
+      speechRec.maxAlternatives = 5;
+      speechRec.continuous = false;
+    }
+    return speechRec;
+  }
+
+  function wireSpeechHandlers(rec) {
+    const applySpokenValue = (alts, allowInterim) => {
+      let value = null;
+      let matchedExpected = null;
+      const problem = session?.current || null;
+      const expected = problem ? Number(problem.expected) : null;
+
+      for (const t of alts) {
+        const trimmed = String(t || "").trim();
+        if (!trimmed) continue;
+        if (allowInterim && trimmed.split(/\s+/).length > 4) continue;
+
+        const v = parseSpokenNumber(trimmed, problem);
+        if (v == null) continue;
+        if (expected != null && v === expected) {
+          matchedExpected = v;
+          break;
+        }
+        if (value == null) value = v;
+      }
+      value = matchedExpected ?? value;
+      if (value == null) return false;
+
+      const box = $("answer");
+      if (!box) return false;
+      const already = String(box.value || "").replace(/[^\d]/g, "");
+      if (
+        already &&
+        expected != null &&
+        Number(already) === expected &&
+        value !== expected
+      ) {
+        return true;
+      }
+
+      if (box.value !== String(value)) {
+        box.value = String(value);
+      }
+      setVoiceStatus(`Got it: ${value} — hit POW!`);
+      return true;
+    };
+
+    rec.onresult = (event) => {
+      let finalAlts = [];
+      let interimAlts = [];
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const result = event.results[i];
+        const texts = [];
+        for (let j = 0; j < result.length; j++) texts.push(result[j].transcript);
+        if (!texts.length && result[0]) texts.push(result[0].transcript);
+        if (result.isFinal) finalAlts = texts;
+        else interimAlts = texts;
+      }
+
+      if (finalAlts.length) {
+        applySpokenValue(finalAlts, false);
+        return;
+      }
+      if (interimAlts.length) {
+        applySpokenValue(interimAlts, true);
+      }
+    };
+
+    rec.onerror = (event) => {
+      if (event.error === "not-allowed" || event.error === "service-not-allowed") {
+        wantListen = false;
+        setListeningUI(false);
+        setVoiceStatus("Mic blocked — allow microphone for this site, or type");
+        return;
+      }
+      if (event.error === "no-speech" || event.error === "aborted") return;
+      setVoiceStatus("Couldn’t hear that — tap Mic and say it again");
+    };
+
+    rec.onend = () => {
+      setListeningUI(false);
+      speechStartLock = false;
+      if (
+        wantListen &&
+        session &&
+        !session.ended &&
+        session.accepting !== false &&
+        !session.waitingNext
+      ) {
+        window.setTimeout(() => {
+          if (wantListen && session && session.accepting && !session.waitingNext) {
+            startListening();
+          }
+        }, isAppleMobile() ? 180 : 80);
+      }
+    };
+  }
+
+  function startListening() {
+    if (!speechSupported()) {
+      setVoiceStatus("Voice not supported here — type the answer");
+      const btn = $("btn-mic");
+      if (btn) btn.textContent = "Type instead";
+      return;
+    }
+    if (!session || session.ended || session.accepting === false || session.waitingNext) return;
+    if (speechStartLock) return;
+
+    const rec = getSpeechRec();
+    if (!rec) return;
+    wireSpeechHandlers(rec);
+
+    wantListen = true;
+    setListeningUI(true);
+    setVoiceStatus("Listening… say the number");
+
+    speechStartLock = true;
+    try {
+      rec.start();
+    } catch {
+      // Already started — treat as listening
+      speechStartLock = false;
+      try {
+        rec.stop();
+      } catch {
+        /* ignore */
+      }
+      window.setTimeout(() => {
+        if (wantListen) startListening();
+      }, 160);
+    }
+  }
+
+  async function startListeningWithPermission() {
+    if (!speechSupported()) {
+      setVoiceStatus("Voice not supported here — type the answer");
+      return;
+    }
+    const ok = micPrimed || (await ensureMicAccess());
+    if (!ok) return;
+    startListening();
+  }
+
+  function maybeAutoListen() {
+    if (!session || session.ended || session.waitingNext) return;
+    if (session.accepting === false) return;
+    if (!(state.settings.voiceMode || $("voice-mode")?.checked)) {
+      setVoiceStatus("Tap Mic to talk, or type the answer");
+      return;
+    }
+    if (!speechSupported()) {
+      setVoiceStatus("Type your answer, then hit POW!");
+      return;
+    }
+    // On phones, only auto-listen after mic was allowed via a tap
+    if (!micPrimed) {
+      setVoiceStatus("Tap Mic once to allow the microphone");
+      setListeningUI(false);
+      return;
+    }
+    window.setTimeout(() => {
+      if (session && !session.ended && session.accepting && !session.waitingNext) {
+        startListening();
+      }
+    }, 60);
+  }
+
+  function setPowLabel(text) {
+    const btn = $("btn-pow");
+    if (btn) btn.textContent = text;
+  }
+
+  function focusAnswer() {
+    const input = $("answer");
+    if (!input) return;
+    // Slight delay helps iPad/Safari apply focus after UI updates
+    window.setTimeout(() => {
+      input.focus({ preventScroll: false });
+      try {
+        input.select();
+      } catch {
+        /* ignore */
+      }
+    }, 50);
+  }
+
+  function rangeTables(max) {
+    return Array.from({ length: max }, (_, i) => i + 1);
+  }
+
+  function opSymbol(operation) {
+    if (operation === "add") return "+";
+    if (operation === "sub") return "−";
+    if (operation === "round") return "≈";
+    return "×";
+  }
+
+  function roundToPlace(n, place) {
+    place = Number(place) || 10;
+    return Math.round(Number(n) / place) * place;
+  }
+
+  function computeResult(a, b, operation) {
+    if (operation === "add") return a + b;
+    if (operation === "sub") return a - b;
+    if (operation === "round") return roundToPlace(a, b);
+    return a * b;
+  }
+
+  function defaultState() {
+    return {
+      stars: 0,
+      streak: 0,
+      bestStreak: 0,
+      totalCorrect: 0,
+      totalAttempts: 0,
+      missionsCompleted: 0,
+      badges: {},
+      unlockedHeroes: { spiderman: true },
+      activeHero: "spiderman",
+      facts: {},
+      settings: {
+        operation: "multiply",
+        difficulty: "medium",
+        digitLevel: "single",
+        mode: "endless",
+        shuffle: false,
+        voiceMode: true,
+        perQuestionTimer: false,
+        tables: rangeTables(10),
+        problemType: "product",
+        roundPlace: "10",
+        roundDigits: "3",
+      },
+    };
+  }
+
+  function parseRoundPreset(value) {
+    const raw = String(value || "10:3");
+    const [place, digits] = raw.split(":");
+    return {
+      roundPlace: place === "100" || place === "mix" ? place : "10",
+      roundDigits: ["2", "3", "4", "mix"].includes(digits) ? digits : "3",
+    };
+  }
+
+  function roundPresetValue(roundPlace, roundDigits) {
+    const place = roundPlace === "100" || roundPlace === "mix" ? roundPlace : "10";
+    const digits = ["2", "3", "4", "mix"].includes(String(roundDigits))
+      ? String(roundDigits)
+      : "3";
+    return `${place}:${digits}`;
+  }
+
+  function readRoundSettings() {
+    const preset = $("round-preset");
+    if (preset?.value) return parseRoundPreset(preset.value);
+    return {
+      roundPlace: $("round-place")?.value || "10",
+      roundDigits: $("round-digits")?.value || "3",
+    };
+  }
+
+  function loadState() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return defaultState();
+      const parsed = JSON.parse(raw);
+      const base = defaultState();
+      const merged = {
+        ...base,
+        ...parsed,
+        settings: {
+          ...base.settings,
+          ...(parsed.settings || {}),
+        },
+        facts: parsed.facts || {},
+        badges: parsed.badges || {},
+        unlockedHeroes: { ...base.unlockedHeroes, ...(parsed.unlockedHeroes || {}) },
+      };
+      if (!Array.isArray(merged.settings.tables) || !merged.settings.tables.length) {
+        const max = DIFFICULTY[merged.settings.difficulty] || 10;
+        merged.settings.tables = rangeTables(max);
+      }
+      merged.settings.tables = merged.settings.tables
+        .map(Number)
+        .filter((n) => n >= 1 && n <= 15);
+      // Migrate old starter hero id
+      if (merged.unlockedHeroes?.spark || merged.activeHero === "spark") {
+        merged.unlockedHeroes = { ...merged.unlockedHeroes, spiderman: true };
+        delete merged.unlockedHeroes.spark;
+        if (merged.activeHero === "spark") merged.activeHero = "spiderman";
+      }
+      if (!merged.unlockedHeroes?.spiderman) {
+        merged.unlockedHeroes = { ...merged.unlockedHeroes, spiderman: true };
+      }
+      return merged;
+    } catch {
+      return defaultState();
+    }
+  }
+
+  function saveState() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+
+  function factKey(a, b, operation = "multiply") {
+    if (operation === "add") {
+      const x = Math.min(a, b);
+      const y = Math.max(a, b);
+      return `+:${x}+${y}`;
+    }
+    if (operation === "sub") {
+      return `-:${a}-${b}`;
+    }
+    if (operation === "round") {
+      return `r${b}:${a}`;
+    }
+    const x = Math.min(a, b);
+    const y = Math.max(a, b);
+    return `${x}x${y}`;
+  }
+
+  function ensureFact(key) {
+    if (!state.facts[key]) {
+      state.facts[key] = {
+        weight: 1,
+        correctStreak: 0,
+        wrongs: 0,
+        corrects: 0,
+        mastered: false,
+      };
+    }
+    return state.facts[key];
+  }
+
+  function isTableMastered(s, n) {
+    const maxOther = Math.max(DIFFICULTY.easy, ...Object.values(DIFFICULTY).filter(() => true));
+    // Master table n within 1..12 range for badge fairness
+    const limit = Math.min(12, maxOther);
+    for (let i = 1; i <= limit; i++) {
+      const f = s.facts[factKey(n, i)];
+      if (!f || !f.mastered) return false;
+    }
+    return true;
+  }
+
+  function levelFromStars(stars) {
+    return Math.floor(stars / 25) + 1;
+  }
+
+  function showScreen(name) {
+    document.querySelectorAll(".screen").forEach((el) => el.classList.remove("active"));
+    $(`screen-${name}`).classList.add("active");
+    if (name === "home") renderHome();
+    if (name === "map") renderMap();
+    if (name === "badges") renderBadges();
+    if (name === "parent") renderParent();
+  }
+
+  function renderHome() {
+    $("stat-stars").textContent = String(state.stars);
+    $("stat-streak").textContent = String(state.bestStreak);
+    $("stat-level").textContent = String(levelFromStars(state.stars));
+    if ($("operation")) $("operation").value = state.settings.operation || "multiply";
+    if ($("difficulty")) $("difficulty").value = state.settings.difficulty;
+    if ($("digit-level")) $("digit-level").value = state.settings.digitLevel || "single";
+    if ($("round-preset")) {
+      $("round-preset").value = roundPresetValue(
+        state.settings.roundPlace || "10",
+        state.settings.roundDigits || "3"
+      );
+    }
+    if ($("round-place")) $("round-place").value = state.settings.roundPlace || "10";
+    if ($("round-digits")) $("round-digits").value = state.settings.roundDigits || "3";
+    if ($("mode")) $("mode").value = state.settings.mode;
+    if ($("problem-type")) $("problem-type").value = state.settings.problemType || "product";
+    if ($("in-order")) $("in-order").checked = !state.settings.shuffle;
+    if ($("per-question-timer")) {
+      $("per-question-timer").checked = !!state.settings.perQuestionTimer;
+    }
+    if ($("question-order")) {
+      $("question-order").value = state.settings.shuffle ? "shuffle" : "order";
+    }
+    if ($("shuffle")) $("shuffle").checked = !!state.settings.shuffle;
+    if ($("voice-mode")) $("voice-mode").checked = !!state.settings.voiceMode;
+    renderTableChips();
+    syncOperationUI();
+    updateHeroAvatar();
+  }
+
+  function setSetupVisible(el, visible) {
+    if (!el) return;
+    el.hidden = !visible;
+    el.style.display = visible ? "" : "none";
+    el.setAttribute("aria-hidden", visible ? "false" : "true");
+  }
+
+  function syncOperationUI() {
+    const op = $("operation")?.value || state.settings.operation || "multiply";
+    const isMult = op === "multiply";
+    const isRound = op === "round";
+    const isAddSub = op === "add" || op === "sub";
+
+    // Rounding must not show multiplication table chips / difficulty
+    setSetupVisible($("difficulty-wrap"), isMult);
+    setSetupVisible($("table-picker"), isMult);
+    setSetupVisible($("digit-wrap"), isAddSub);
+    setSetupVisible($("round-wrap"), isRound);
+    setSetupVisible($("round-digits-wrap"), false);
+    setSetupVisible($("problem-type-wrap"), !isRound);
+    // In-order (13, 14, 15…) is for tables — rounding should stay random
+    const inOrderRow = $("in-order")?.closest("label");
+    setSetupVisible(inOrderRow, !isRound);
+    if (isRound && $("in-order")) $("in-order").checked = false;
+
+    const tag = $("home-tagline");
+    if (tag) {
+      if (op === "add") tag.textContent = "Power up your addition!";
+      else if (op === "sub") tag.textContent = "Power up your subtraction!";
+      else if (op === "round") tag.textContent = "Power up your rounding!";
+      else tag.textContent = "Power up your multiplication!";
+    }
+
+    updateProblemTypeOptions(op);
+  }
+
+  function updateProblemTypeOptions(operation) {
+    const select = $("problem-type");
+    if (!select) return;
+    if (operation === "round") {
+      select.innerHTML = "";
+      const opt = document.createElement("option");
+      opt.value = "product";
+      opt.textContent = "Round to the nearest 10 or 100";
+      select.appendChild(opt);
+      select.value = "product";
+      return;
+    }
+    const current = select.value || state.settings.problemType || "product";
+    const sym = opSymbol(operation);
+    const samples =
+      operation === "add"
+        ? { a: 4, b: 3, r: 7 }
+        : operation === "sub"
+          ? { a: 12, b: 4, r: 8 }
+          : { a: 4, b: 3, r: 12 };
+
+    const options = [
+      ["product", `${samples.a} ${sym} ${samples.b} = ?`],
+      ["missing-b", `${samples.a} ${sym} ? = ${samples.r}`],
+      ["missing-a", `? ${sym} ${samples.b} = ${samples.r}`],
+      ["mix", "Mix all styles"],
+    ];
+
+    select.innerHTML = "";
+    for (const [value, label] of options) {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = label;
+      select.appendChild(opt);
+    }
+    select.value = options.some(([v]) => v === current) ? current : "product";
+  }
+
+  function currentMax() {
+    return DIFFICULTY[$("difficulty")?.value || state.settings.difficulty] || 10;
+  }
+
+  function getSelectedTables() {
+    const max = currentMax();
+    return [...document.querySelectorAll(".table-chip[aria-pressed='true']")]
+      .map((btn) => Number(btn.dataset.table))
+      .filter((n) => n >= 1 && n <= max);
+  }
+
+  function renderTableChips() {
+    const host = $("table-chips");
+    if (!host) return;
+
+    const max = currentMax();
+    let selected = (state.settings.tables || [])
+      .map(Number)
+      .filter((n) => n >= 1 && n <= max);
+    if (!selected.length) selected = rangeTables(max);
+    const selectedSet = new Set(selected);
+
+    const chips = [...host.querySelectorAll(".table-chip")];
+    if (!chips.length) {
+      // Fallback: build chips if HTML is empty / outdated cache
+      host.innerHTML = "";
+      for (let n = 1; n <= 15; n++) {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "table-chip";
+        btn.dataset.table = String(n);
+        btn.textContent = `${n}×`;
+        host.appendChild(btn);
+      }
+    }
+
+    host.querySelectorAll(".table-chip").forEach((btn) => {
+      const n = Number(btn.dataset.table);
+      const inRange = n >= 1 && n <= max;
+      btn.hidden = !inRange;
+      if (!inRange) {
+        btn.setAttribute("aria-pressed", "false");
+        return;
+      }
+      btn.setAttribute("aria-pressed", selectedSet.has(n) ? "true" : "false");
+    });
+  }
+
+  function updateHeroAvatar() {
+    const hero = HEROES.find((h) => h.id === state.activeHero) || HEROES[0];
+    const el = $("hero-avatar");
+    if (el) {
+      el.dataset.hero = hero.id;
+      el.textContent = hero.icon;
+    }
+  }
+
+  function unlockRewards() {
+    for (const hero of HEROES) {
+      if (state.stars >= hero.need) state.unlockedHeroes[hero.id] = true;
+    }
+    const unlocked = HEROES.filter((h) => state.unlockedHeroes[h.id]);
+    state.activeHero = unlocked[unlocked.length - 1].id;
+
+    for (const badge of BADGES) {
+      if (!state.badges[badge.id] && badge.check(state)) {
+        state.badges[badge.id] = { earnedAt: Date.now() };
+      }
+    }
+  }
+
+  function digitRange(digitLevel) {
+    if (digitLevel === "dual") return { min: 10, max: 99 };
+    return { min: 1, max: 9 };
+  }
+
+  function roundDigitRanges(roundDigits) {
+    const key = String(roundDigits || "2");
+    if (key === "mix") {
+      return [
+        { min: 10, max: 99 },
+        { min: 100, max: 999 },
+        { min: 1000, max: 9999 },
+      ];
+    }
+    if (key === "3") return [{ min: 100, max: 999 }];
+    if (key === "4") return [{ min: 1000, max: 9999 }];
+    return [{ min: 10, max: 99 }];
+  }
+
+  function buildRoundPool(roundPlace, roundDigits) {
+    const pool = [];
+    const seen = new Set();
+    const places =
+      roundPlace === "mix" ? [10, 100] : [Number(roundPlace) === 100 ? 100 : 10];
+    const ranges = roundDigitRanges(roundDigits);
+
+    const pushPair = (a, b) => {
+      a = Number(a);
+      b = Number(b);
+      const id = `${a}:${b}`;
+      if (seen.has(id)) return;
+      // Skip questions that round to 0 (awkward for kids)
+      if (roundToPlace(a, b) === 0) return;
+      // Skip numbers already on the place (e.g. 240 → nearest 10)
+      if (a % b === 0) return;
+      seen.add(id);
+      const key = factKey(a, b, "round");
+      const fact = ensureFact(key);
+      const weight = fact.mastered ? 0.35 : Math.max(1, fact.weight);
+      pool.push({ a, b, key, weight });
+    };
+
+    for (const place of places) {
+      for (const range of ranges) {
+        let min = range.min;
+        let max = range.max;
+        // 2-digit + nearest 100: keep numbers that round to 100
+        if (place === 100 && max < 100) {
+          min = Math.max(min, 50);
+          max = Math.min(max, 99);
+        }
+        for (let n = min; n <= max; n++) pushPair(n, place);
+      }
+    }
+    return pool;
+  }
+
+  function buildPool(operation, max, tables, digitLevel, roundPlace, roundDigits) {
+    const pool = [];
+    const seen = new Set();
+
+    const pushPair = (a, b) => {
+      a = Number(a);
+      b = Number(b);
+      const id = `${a}:${b}`;
+      if (seen.has(id)) return;
+      seen.add(id);
+      const key = factKey(a, b, operation);
+      const fact = ensureFact(key);
+      const weight = fact.mastered ? 0.35 : Math.max(1, fact.weight);
+      pool.push({ a, b, key, weight });
+    };
+
+    if (operation === "round") {
+      return buildRoundPool(roundPlace || "10", roundDigits || "3");
+    }
+
+    if (operation === "multiply") {
+      const focus = (tables && tables.length ? tables : rangeTables(max))
+        .map(Number)
+        .filter((n) => n >= 1 && n <= max);
+      for (const a of focus) {
+        for (let b = 1; b <= max; b++) pushPair(a, b);
+      }
+      return pool;
+    }
+
+    const { min, max: hi } = digitRange(digitLevel || "single");
+    for (let a = min; a <= hi; a++) {
+      for (let b = min; b <= hi; b++) {
+        if (operation === "sub" && a < b) continue;
+        pushPair(a, b);
+      }
+    }
+    return pool;
+  }
+
+  function readShuffleSetting() {
+    // Prefer the clear "Go in order" toggle (checked = sequential)
+    const inOrder = $("in-order");
+    if (inOrder) return !inOrder.checked;
+
+    const orderSelect = $("question-order");
+    if (orderSelect) return orderSelect.value !== "order";
+
+    const legacy = $("shuffle");
+    if (legacy) return !!legacy.checked;
+
+    return !!state.settings.shuffle;
+  }
+
+  function buildOrderedQueue(operation, max, tables, digitLevel, roundPlace, roundDigits) {
+    const pool = buildPool(operation, max, tables, digitLevel, roundPlace, roundDigits);
+    // Stable order: tables 7×1, 7×2… or rounding place then number
+    pool.sort((x, y) => {
+      if (operation === "round") {
+        if (x.b !== y.b) return x.b - y.b;
+        return x.a - y.a;
+      }
+      if (x.a !== y.a) return x.a - y.a;
+      return x.b - y.b;
+    });
+    return pool.map((p) => ({ a: p.a, b: p.b, key: p.key }));
+  }
+
+  function pickQuestion(operation, max, shuffle, tables, digitLevel, roundPlace, roundDigits) {
+    // Rounding is always random (never 13, then 14, then 15…)
+    const wantOrder =
+      operation !== "round" && (session ? session.shuffle === false : !shuffle);
+    const place = roundPlace || session?.roundPlace || "10";
+    const digits = roundDigits || session?.roundDigits || "3";
+
+    // In-order mode: strict walk — never weighted-random
+    if (wantOrder) {
+      if (!session.queue || !session.queue.length) {
+        session.queue = buildOrderedQueue(operation, max, tables, digitLevel, place, digits);
+        session.queueIndex = 0;
+      }
+      if (!session.queue.length) {
+        return operation === "round"
+          ? { a: 346, b: 10, key: factKey(346, 10, "round") }
+          : { a: 1, b: 1, key: factKey(1, 1, operation) };
+      }
+      if (session.queueIndex >= session.queue.length) {
+        session.queueIndex = 0;
+      }
+      const p = session.queue[session.queueIndex];
+      session.queueIndex += 1;
+      return { a: Number(p.a), b: Number(p.b), key: p.key };
+    }
+
+    const pool = buildPool(operation, max, tables, digitLevel, place, digits);
+    if (!pool.length) {
+      return operation === "round"
+        ? { a: 346, b: 10, key: factKey(346, 10, "round") }
+        : { a: 1, b: 1, key: factKey(1, 1, operation) };
+    }
+
+    const filtered =
+      session?.current && pool.length > 1
+        ? pool.filter((p) => !(p.a === session.current.a && p.b === session.current.b) || p.weight > 3)
+        : pool;
+
+    const use = filtered.length ? filtered : pool;
+    const total = use.reduce((sum, p) => sum + p.weight, 0);
+    let r = Math.random() * total;
+    for (const p of use) {
+      r -= p.weight;
+      if (r <= 0) return { a: p.a, b: p.b, key: p.key };
+    }
+    const last = use[use.length - 1];
+    return { a: last.a, b: last.b, key: last.key };
+  }
+
+  function formatProblem(a, b, promptType, operation) {
+    a = Number(a);
+    b = Number(b);
+
+    if (operation === "round") {
+      const result = roundToPlace(a, b);
+      const placeWord = b === 100 ? "100" : "10";
+      return {
+        display: `Round ${a} to the nearest ${placeWord}`,
+        expected: result,
+        hint: "5 or more rounds up · type or say the answer",
+      };
+    }
+
+    const sym = opSymbol(operation);
+    const result = Number(computeResult(a, b, operation));
+    const blank = "?";
+
+    if (promptType === "missing-b") {
+      return {
+        display: `${a} ${sym} ${blank} = ${result}`,
+        expected: b,
+        hint: "Fill in the missing number — type it or say it",
+      };
+    }
+    if (promptType === "missing-a") {
+      return {
+        display: `${blank} ${sym} ${b} = ${result}`,
+        expected: a,
+        hint: "Fill in the missing number — type it or say it",
+      };
+    }
+    return {
+      display: `${a} ${sym} ${b} = ${blank}`,
+      expected: result,
+      hint: "Type it or tap 🎤 and say it",
+    };
+  }
+
+  function startMission(opts) {
+    stopTimer();
+    stopQuestionTimer();
+    const operation = opts.operation || "multiply";
+    const max = DIFFICULTY[opts.difficulty] || 10;
+    const digitLevel = opts.digitLevel || "single";
+    const roundPlace = opts.roundPlace || "10";
+    const roundDigits = opts.roundDigits || "3";
+    let tables = (opts.tables || [])
+      .map(Number)
+      .filter((n) => n >= 1 && n <= max)
+      .sort((x, y) => x - y);
+    if (!tables.length) tables = rangeTables(max);
+    const problemType = operation === "round" ? "product" : opts.problemType || "product";
+    // Rounding always shuffles; sequential order is for times-table drill only
+    const shuffle = operation === "round" ? true : !!opts.shuffle;
+    const perQuestionTimer = !!opts.perQuestionTimer;
+    const queue = shuffle
+      ? null
+      : buildOrderedQueue(operation, max, tables, digitLevel, roundPlace, roundDigits);
+
+    session = {
+      operation,
+      difficulty: opts.difficulty,
+      digitLevel,
+      roundPlace,
+      roundDigits,
+      mode: opts.mode,
+      shuffle,
+      perQuestionTimer,
+      tables,
+      problemType,
+      max,
+      queue,
+      queueIndex: 0,
+      asked: 0,
+      target: opts.mode === "10" || opts.mode === "20" ? Number(opts.mode) : null,
+      correct: 0,
+      firstTryCorrect: 0,
+      attemptsOnCurrent: 0,
+      sessionStars: 0,
+      current: null,
+      ended: false,
+      waitingNext: false,
+      timerId: null,
+      questionTimerId: null,
+      questionTimeLeft: QUESTION_SECS,
+      timeLeft: 60,
+    };
+
+    state.settings = {
+      operation,
+      difficulty: opts.difficulty,
+      digitLevel,
+      roundPlace,
+      roundDigits,
+      mode: opts.mode,
+      shuffle: opts.shuffle,
+      voiceMode: !!opts.voiceMode,
+      perQuestionTimer,
+      tables,
+      problemType,
+    };
+    saveState();
+
+    $("play-stars").textContent = "0";
+    $("live-streak").textContent = String(state.streak);
+    $("feedback").textContent = "";
+    $("feedback").className = "feedback";
+    setVoiceStatus("");
+    updateHeroAvatar();
+    $("hero-cheer").textContent = CHEERS[Math.floor(Math.random() * CHEERS.length)];
+
+    const timerEl = $("play-timer");
+    if (opts.mode === "timed" && !perQuestionTimer) {
+      timerEl.hidden = false;
+      timerEl.textContent = "60s";
+      session.timerId = window.setInterval(() => {
+        session.timeLeft -= 1;
+        timerEl.textContent = `${session.timeLeft}s`;
+        if (session.timeLeft <= 0) endMission("Time’s up!");
+      }, 1000);
+    } else if (!perQuestionTimer) {
+      timerEl.hidden = true;
+    }
+
+    showScreen("play");
+    nextQuestion();
+  }
+
+  function stopTimer() {
+    if (session?.timerId) {
+      clearInterval(session.timerId);
+      session.timerId = null;
+    }
+  }
+
+  function stopQuestionTimer() {
+    if (session?.questionTimerId) {
+      clearInterval(session.questionTimerId);
+      session.questionTimerId = null;
+    }
+  }
+
+  function updateQuestionTimerUI() {
+    const timerEl = $("play-timer");
+    if (!timerEl || !session) return;
+    if (!session.perQuestionTimer) return;
+    timerEl.hidden = false;
+    timerEl.textContent = `${session.questionTimeLeft}s`;
+  }
+
+  function startQuestionTimer() {
+    stopQuestionTimer();
+    if (!session || !session.perQuestionTimer || session.ended) return;
+
+    session.questionTimeLeft = QUESTION_SECS;
+    updateQuestionTimerUI();
+
+    session.questionTimerId = window.setInterval(() => {
+      if (!session || session.ended || !session.accepting || session.waitingNext) {
+        stopQuestionTimer();
+        return;
+      }
+      session.questionTimeLeft -= 1;
+      updateQuestionTimerUI();
+      if (session.questionTimeLeft <= 0) {
+        onQuestionTimeout();
+      }
+    }, 1000);
+  }
+
+  function onQuestionTimeout() {
+    if (!session || session.ended || !session.current) return;
+    if (!session.accepting || session.waitingNext) return;
+
+    stopQuestionTimer();
+    stopListening();
+    session.accepting = false;
+    session.attemptsOnCurrent += 1;
+    playWrongSound();
+
+    const card = $("problem-card");
+    card.classList.remove("shake");
+    void card.offsetWidth;
+    card.classList.add("shake");
+    $("feedback").textContent = "Time’s up!";
+    $("feedback").className = "feedback wrong";
+    $("hero-cheer").textContent = "Faster next time!";
+    $("answer").value = "";
+
+    state.streak = 0;
+    $("live-streak").textContent = "0";
+
+    const fact = ensureFact(session.current.key);
+    fact.weight = Math.min(20, fact.weight + 4);
+    fact.correctStreak = 0;
+    fact.wrongs += 1;
+    fact.mastered = false;
+    state.totalAttempts += 1;
+    saveState();
+
+    window.setTimeout(() => {
+      if (session && !session.ended) nextQuestion();
+    }, 650);
+  }
+
+  function nextQuestion() {
+    if (!session || session.ended) return;
+    stopQuestionTimer();
+
+    if (session.target != null && session.asked >= session.target) {
+      endMission("Mission complete!");
+      return;
+    }
+
+    const picked = pickQuestion(
+      session.operation,
+      session.max,
+      session.shuffle,
+      session.tables,
+      session.digitLevel,
+      session.roundPlace,
+      session.roundDigits
+    );
+    const promptType = choosePromptType(
+      session.problemType,
+      picked.a,
+      picked.b,
+      session.operation
+    );
+    const formatted = formatProblem(picked.a, picked.b, promptType, session.operation);
+    session.current = {
+      ...picked,
+      a: Number(picked.a),
+      b: Number(picked.b),
+      promptType,
+      expected: Number(formatted.expected),
+      display: formatted.display,
+      hint: formatted.hint,
+    };
+    session.attemptsOnCurrent = 0;
+    session.accepting = true;
+    session.waitingNext = false;
+    session.asked += 1;
+
+    const problemEl = $("problem-text");
+    problemEl.textContent = session.current.display;
+    problemEl.classList.toggle("equation", session.operation !== "round");
+    problemEl.classList.toggle("round-prompt", session.operation === "round");
+    const hintEl = $("problem-hint");
+    if (hintEl) {
+      if (session.operation === "round") {
+        hintEl.textContent = session.current.hint || "Type or say the rounded number, then POW!";
+      } else if (session.perQuestionTimer) {
+        hintEl.textContent = `Beat the clock — ${QUESTION_SECS} seconds!`;
+      } else if (!session.shuffle) {
+        hintEl.textContent = "In order — type or say the answer, then POW!";
+      } else {
+        hintEl.textContent = "Say it or type it — then hit POW!";
+      }
+    }
+    $("answer").value = "";
+    $("feedback").textContent = "";
+    $("feedback").className = "feedback";
+    $("problem-card").classList.remove("shake", "pop");
+    setPowLabel("POW!");
+    stopListening();
+    setVoiceStatus("");
+    maybeAutoListen();
+    startQuestionTimer();
+
+    if (session.target != null) {
+      $("play-progress").textContent = `Q ${session.asked} / ${session.target}`;
+    } else if (session.mode === "timed") {
+      $("play-progress").textContent = `Solved ${session.correct}`;
+    } else {
+      $("play-progress").textContent = `Q ${session.asked}`;
+    }
+
+    focusAnswer();
+  }
+
+  function onWrong() {
+    stopListening();
+    stopQuestionTimer();
+    playWrongSound();
+    const card = $("problem-card");
+    card.classList.remove("shake");
+    void card.offsetWidth;
+    card.classList.add("shake");
+    $("feedback").textContent = "Not yet — try again!";
+    $("feedback").className = "feedback wrong";
+    $("hero-cheer").textContent = "Shake it off. Try once more!";
+
+    state.streak = 0;
+    $("live-streak").textContent = "0";
+
+    const fact = ensureFact(session.current.key);
+    if (session.attemptsOnCurrent === 1) {
+      // First miss on this prompt: bump frequency hard
+      fact.weight = Math.min(20, fact.weight + 4);
+      fact.correctStreak = 0;
+      fact.wrongs += 1;
+      fact.mastered = false;
+    } else {
+      fact.weight = Math.min(20, fact.weight + 1);
+    }
+    state.totalAttempts += 1;
+    saveState();
+    maybeAutoListen();
+    // Wrong answer still on same question — restart the 5s clock if timed
+    if (session.perQuestionTimer) startQuestionTimer();
+    focusAnswer();
+  }
+
+  function onCorrect() {
+    stopListening();
+    stopQuestionTimer();
+    playCorrectSound();
+    session.accepting = false;
+    const firstTry = session.attemptsOnCurrent === 1;
+    const fact = ensureFact(session.current.key);
+
+    fact.corrects += 1;
+    fact.correctStreak += 1;
+    if (fact.correctStreak >= MASTERY_STREAK) {
+      fact.mastered = true;
+      fact.weight = 0.5;
+    } else {
+      // Still reinforce until mastery, but ease a bit after success
+      fact.weight = Math.max(1, fact.weight - 1);
+    }
+
+    state.totalCorrect += 1;
+    state.totalAttempts += 1;
+    state.streak += 1;
+    state.bestStreak = Math.max(state.bestStreak, state.streak);
+
+    const starGain = firstTry ? 2 : 1;
+    state.stars += starGain;
+    session.sessionStars += starGain;
+    session.correct += 1;
+    if (firstTry) session.firstTryCorrect += 1;
+
+    unlockRewards();
+    saveState();
+
+    $("play-stars").textContent = String(session.sessionStars);
+    $("live-streak").textContent = String(state.streak);
+    $("feedback").textContent = WIN_LINES[Math.floor(Math.random() * WIN_LINES.length)];
+    $("feedback").className = "feedback right";
+    $("hero-cheer").textContent = fact.mastered
+      ? session.operation === "round"
+        ? `${session.current.a} → ${session.current.expected} mastered!`
+        : `${session.current.a}${opSymbol(session.operation)}${session.current.b} mastered!`
+      : CHEERS[Math.floor(Math.random() * CHEERS.length)];
+
+    const card = $("problem-card");
+    card.classList.remove("pop");
+    void card.offsetWidth;
+    card.classList.add("pop");
+    burstStars();
+
+    session.waitingNext = true;
+    setPowLabel("NEXT!");
+
+    // Timed rounds keep moving — auto-advance after a short cheer
+    if (session.perQuestionTimer) {
+      window.setTimeout(() => {
+        if (session && !session.ended && session.waitingNext) {
+          session.waitingNext = false;
+          nextQuestion();
+        }
+      }, 500);
+    }
+  }
+
+  function burstStars() {
+    const fx = $("fx");
+    for (let i = 0; i < 6; i++) {
+      const el = document.createElement("div");
+      el.className = "star-burst";
+      el.textContent = "★";
+      el.style.left = `${20 + Math.random() * 60}%`;
+      el.style.top = `${40 + Math.random() * 30}%`;
+      el.style.color = Math.random() > 0.5 ? "#e6392e" : "#ffc107";
+      fx.appendChild(el);
+      window.setTimeout(() => el.remove(), 900);
+    }
+  }
+
+  function endMission(title) {
+    if (!session || session.ended) return;
+    session.ended = true;
+    stopListening();
+    stopTimer();
+    stopQuestionTimer();
+    state.missionsCompleted += 1;
+    unlockRewards();
+    saveState();
+    setVoiceStatus("");
+
+    $("results-title").textContent = title;
+    $("results-sub").textContent = `${CHILD} powered through another mission.`;
+
+    const accuracy =
+      session.correct + (session.asked ? 0 : 0) === 0 && session.correct === 0
+        ? 0
+        : Math.round((session.firstTryCorrect / Math.max(1, session.correct)) * 100);
+
+    $("results-grid").innerHTML = `
+      <div class="stat-card"><strong>${session.sessionStars}</strong>stars earned</div>
+      <div class="stat-card"><strong>${session.correct}</strong>solved</div>
+      <div class="stat-card"><strong>${session.firstTryCorrect}</strong>first-try hits</div>
+      <div class="stat-card"><strong>${state.bestStreak}</strong>best streak</div>
+    `;
+
+    void accuracy;
+    showScreen("results");
+  }
+
+  function tableMasteryPercent(n, maxCheck) {
+    let done = 0;
+    const limit = maxCheck;
+    for (let i = 1; i <= limit; i++) {
+      const f = state.facts[factKey(n, i)];
+      if (f?.mastered) done += 1;
+    }
+    return Math.round((done / limit) * 100);
+  }
+
+  function renderMap() {
+    const max = DIFFICULTY[state.settings.difficulty] || 10;
+    const grid = $("map-grid");
+    grid.innerHTML = "";
+    for (let n = 1; n <= max; n++) {
+      const pct = tableMasteryPercent(n, max);
+      const cell = document.createElement("div");
+      cell.className = "map-cell";
+      if (pct >= 100) cell.classList.add("mastered");
+      else if (pct > 0) cell.classList.add("training");
+      else cell.classList.add("locked");
+      cell.innerHTML = `<span class="table-n">${n}s</span>${pct}%`;
+      grid.appendChild(cell);
+    }
+  }
+
+  function renderBadges() {
+    const grid = $("badge-grid");
+    grid.innerHTML = "";
+
+    const universes = ["Marvel", "Roblox", "Fortnite"];
+    for (const universe of universes) {
+      const heading = document.createElement("h2");
+      heading.className = "badge-universe";
+      heading.textContent = universe;
+      grid.appendChild(heading);
+
+      const row = document.createElement("div");
+      row.className = "badge-universe-grid";
+      for (const hero of HEROES.filter((h) => h.universe === universe)) {
+        const unlocked = !!state.unlockedHeroes[hero.id];
+        const card = document.createElement("div");
+        card.className = `badge-card${unlocked ? "" : " locked"}`;
+        card.innerHTML = `
+          <span class="icon">${hero.icon}</span>
+          <h3>${hero.name}</h3>
+          <p>${unlocked ? "Unlocked hero" : `Need ${hero.need} stars`}</p>
+        `;
+        row.appendChild(card);
+      }
+      grid.appendChild(row);
+    }
+
+    const badgeHeading = document.createElement("h2");
+    badgeHeading.className = "badge-universe";
+    badgeHeading.textContent = "Power Badges";
+    grid.appendChild(badgeHeading);
+
+    const badgeRow = document.createElement("div");
+    badgeRow.className = "badge-universe-grid";
+    for (const badge of BADGES) {
+      const earned = !!state.badges[badge.id];
+      const card = document.createElement("div");
+      card.className = `badge-card${earned ? "" : " locked"}`;
+      card.innerHTML = `
+        <span class="icon">${badge.icon}</span>
+        <h3>${badge.name}</h3>
+        <p>${badge.desc}</p>
+      `;
+      badgeRow.appendChild(card);
+    }
+    grid.appendChild(badgeRow);
+  }
+
+  function weakFacts(limit = 8) {
+    return Object.entries(state.facts)
+      .filter(([, f]) => f.wrongs > 0 || (!f.mastered && f.corrects + f.wrongs > 0))
+      .sort((a, b) => b[1].weight - a[1].weight || b[1].wrongs - a[1].wrongs)
+      .slice(0, limit);
+  }
+
+  function renderParent() {
+    const weak = weakFacts();
+    const mastered = Object.values(state.facts).filter((f) => f.mastered).length;
+    const accuracy =
+      state.totalAttempts === 0
+        ? 0
+        : Math.round((state.totalCorrect / state.totalAttempts) * 100);
+
+    $("parent-summary").innerHTML = `
+      <div class="parent-card">
+        <h3>Overview</h3>
+        <ul>
+          <li>Stars: ${state.stars}</li>
+          <li>Best streak: ${state.bestStreak}</li>
+          <li>Missions finished: ${state.missionsCompleted}</li>
+          <li>Facts mastered: ${mastered}</li>
+          <li>Lifetime accuracy: ${accuracy}%</li>
+          <li>Hero level: ${levelFromStars(state.stars)}</li>
+          <li>Focus tables: ${(state.settings.tables || []).map((n) => `${n}×`).join(", ") || "all"}</li>
+          <li>Skill: ${
+            state.settings.operation === "add"
+              ? "Addition"
+              : state.settings.operation === "sub"
+                ? "Subtraction"
+                : state.settings.operation === "round"
+                  ? "Rounding"
+                  : "Multiplication"
+          }${
+            state.settings.operation === "round"
+              ? ` · nearest ${
+                  state.settings.roundPlace === "mix"
+                    ? "10s & 100s"
+                    : state.settings.roundPlace === "100"
+                      ? "100"
+                      : "10"
+                } · ${
+                  state.settings.roundDigits === "mix"
+                    ? "2/3/4 digits"
+                    : `${state.settings.roundDigits || "2"} digits`
+                }`
+              : state.settings.operation === "add" || state.settings.operation === "sub"
+                ? ` · ${state.settings.digitLevel === "dual" ? "dual digit" : "single digit"}`
+                : ""
+          }</li>
+        </ul>
+      </div>
+      <div class="parent-card">
+        <h3>Needs more practice</h3>
+        ${
+          weak.length
+            ? `<ul>${weak
+                .map(([key, f]) => {
+                  let pretty = key;
+                  const roundMatch = key.match(/^r(\d+):(\d+)$/);
+                  if (roundMatch) {
+                    pretty = `Round ${roundMatch[2]} → nearest ${roundMatch[1]}`;
+                  } else {
+                    pretty = key
+                      .replace(/^.:/, "")
+                      .replace("x", " × ")
+                      .replace("+", " + ")
+                      .replace("-", " − ");
+                  }
+                  return `<li>${pretty} · weight ${f.weight.toFixed(1)} · ${f.correctStreak}/${MASTERY_STREAK} streak</li>`;
+                })
+                .join("")}</ul>`
+            : "<p>No weak facts yet — start a mission!</p>"
+        }
+      </div>
+      <div class="parent-card">
+        <h3>How mastery works</h3>
+        <p style="margin:0;font-weight:700;color:var(--muted)">
+          Missed facts show up more often. A fact is mastered after ${MASTERY_STREAK} correct answers in a row.
+          Wrong answers must be retried until correct (no hint).
+        </p>
+      </div>
+    `;
+  }
+
+  function submitAnswer(guess) {
+    if (!session || session.ended || !session.current) return;
+    if (session.waitingNext) return;
+    if (session.accepting === false) return;
+
+    guess = Number(guess);
+    if (!Number.isFinite(guess)) return;
+
+    const expected = Number(session.current.expected);
+    session.attemptsOnCurrent += 1;
+
+    if (guess === expected) onCorrect();
+    else {
+      onWrong();
+      $("answer").value = "";
+    }
+  }
+
+  // Events
+  $("setup-form")?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const operation = $("operation")?.value || "multiply";
+    const tables = operation === "multiply" ? getSelectedTables() : state.settings.tables || rangeTables(10);
+    if (operation === "multiply" && !tables.length) {
+      alert("Pick at least one times table (like 2× or 7×).");
+      return;
+    }
+    const voiceOn = !!$("voice-mode")?.checked;
+    await unlockAudio();
+    await playStartSound();
+    if (voiceOn && speechSupported()) {
+      await ensureMicAccess();
+    }
+    startMission({
+      operation,
+      difficulty: $("difficulty")?.value || "medium",
+      digitLevel: $("digit-level")?.value || "single",
+      ...readRoundSettings(),
+      mode: $("mode")?.value || "endless",
+      shuffle: readShuffleSetting(),
+      voiceMode: voiceOn,
+      perQuestionTimer: !!$("per-question-timer")?.checked,
+      tables,
+      problemType: $("problem-type")?.value || "product",
+    });
+  });
+
+  $("operation")?.addEventListener("change", () => {
+    syncOperationUI();
+  });
+
+  $("difficulty")?.addEventListener("change", () => {
+    const max = currentMax();
+    state.settings.tables = getSelectedTables().filter((n) => n <= max);
+    if (!state.settings.tables.length) state.settings.tables = rangeTables(max);
+    renderTableChips();
+  });
+
+  $("table-chips")?.addEventListener("click", (e) => {
+    const btn = e.target.closest(".table-chip");
+    if (!btn || btn.hidden) return;
+    e.preventDefault();
+    const on = btn.getAttribute("aria-pressed") === "true";
+    btn.setAttribute("aria-pressed", on ? "false" : "true");
+  });
+
+  $("tables-all")?.addEventListener("click", () => {
+    document.querySelectorAll(".table-chip").forEach((btn) => {
+      if (btn.hidden) return;
+      btn.setAttribute("aria-pressed", "true");
+    });
+  });
+
+  $("tables-none")?.addEventListener("click", () => {
+    document.querySelectorAll(".table-chip").forEach((btn) => {
+      btn.setAttribute("aria-pressed", "false");
+    });
+  });
+
+  $("answer-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!session || session.ended || !session.current) return;
+
+    // After a correct answer, POW becomes NEXT!
+    if (session.waitingNext) {
+      session.waitingNext = false;
+      nextQuestion();
+      return;
+    }
+
+    if (session.accepting === false) return;
+
+    const raw = String($("answer").value || "").replace(/[^\d]/g, "");
+    if (!raw) {
+      $("feedback").textContent = "Say or type a number, then hit POW!";
+      $("feedback").className = "feedback wrong";
+      return;
+    }
+
+    await unlockAudio();
+    submitAnswer(Number(raw));
+  });
+
+  $("btn-mic")?.addEventListener("click", async () => {
+    if (session?.waitingNext) return;
+    await unlockAudio();
+    if (listening) {
+      stopListening();
+      setVoiceStatus("Mic paused — tap Mic to listen");
+      return;
+    }
+    await startListeningWithPermission();
+  });
+
+  $("btn-quit").addEventListener("click", () => {
+    if (!session || session.ended) {
+      showScreen("home");
+      return;
+    }
+    if (confirm("Quit this mission?")) {
+      endMission("Mission paused");
+    }
+  });
+
+  $("btn-again").addEventListener("click", () => {
+    startMission({
+      operation: state.settings.operation || "multiply",
+      difficulty: state.settings.difficulty,
+      digitLevel: state.settings.digitLevel || "single",
+      roundPlace: state.settings.roundPlace || "10",
+      roundDigits: state.settings.roundDigits || "3",
+      mode: state.settings.mode,
+      shuffle: state.settings.shuffle,
+      voiceMode: !!state.settings.voiceMode,
+      perQuestionTimer: !!state.settings.perQuestionTimer,
+      tables: state.settings.tables,
+      problemType: state.settings.problemType || "product",
+    });
+  });
+
+  function resetProgress() {
+    if (!confirm("Reset all progress for Ali Ayaan?")) return;
+    state = defaultState();
+    saveState();
+    renderParent();
+    renderHome();
+    showScreen("home");
+  }
+
+  $("btn-reset").addEventListener("click", resetProgress);
+  $("btn-reset-results").addEventListener("click", resetProgress);
+
+  document.querySelectorAll("[data-go]").forEach((btn) => {
+    btn.addEventListener("click", () => showScreen(btn.getAttribute("data-go")));
+  });
+
+  // iPad: keep input usable
+  $("answer").addEventListener("focus", () => {
+    window.setTimeout(() => {
+      $("answer").scrollIntoView({ block: "center", behavior: "smooth" });
+    }, 300);
+  });
+
+  renderHome();
+})();
