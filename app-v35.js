@@ -1331,6 +1331,7 @@
     const problemEl = $("problem-text");
     problemEl.textContent = session.current.display;
     problemEl.classList.toggle("equation", session.operation !== "round");
+    problemEl.classList.toggle("round-prompt", session.operation === "round");
     const hintEl = $("problem-hint");
     if (hintEl) {
       if (session.operation === "round") {
