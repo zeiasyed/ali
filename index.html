@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v26.css" />
+  <link rel="stylesheet" href="styles-v27.css" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -109,7 +109,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v37 · Rounding hides tables · numbers up to 9999</p>
+        <p class="setup-note" id="app-version-note">App v38 · Rounding: pick 2 / 3 / 4 digit numbers</p>
 
         <label id="difficulty-wrap">
           Difficulty
@@ -135,6 +135,16 @@
             <option value="10" selected>Nearest 10</option>
             <option value="100">Nearest 100</option>
             <option value="mix">Mix 10s and 100s</option>
+          </select>
+        </label>
+
+        <label id="round-digits-wrap" hidden>
+          Number size
+          <select id="round-digits" name="roundDigits">
+            <option value="2" selected>2 digits (10–99)</option>
+            <option value="3">3 digits (100–999)</option>
+            <option value="4">4 digits (1000–9999)</option>
+            <option value="mix">Mix 2, 3, and 4 digits</option>
           </select>
         </label>
 
@@ -312,6 +322,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v37.js"></script>
+  <script src="app-v38.js"></script>
 </body>
 </html>

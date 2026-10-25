@@ -683,6 +683,7 @@
         tables: rangeTables(10),
         problemType: "product",
         roundPlace: "10",
+        roundDigits: "2",
       },
     };
   }
@@ -792,6 +793,7 @@
     if ($("difficulty")) $("difficulty").value = state.settings.difficulty;
     if ($("digit-level")) $("digit-level").value = state.settings.digitLevel || "single";
     if ($("round-place")) $("round-place").value = state.settings.roundPlace || "10";
+    if ($("round-digits")) $("round-digits").value = state.settings.roundDigits || "2";
     if ($("mode")) $("mode").value = state.settings.mode;
     if ($("problem-type")) $("problem-type").value = state.settings.problemType || "product";
     if ($("in-order")) $("in-order").checked = !state.settings.shuffle;
@@ -826,6 +828,7 @@
     setSetupVisible($("table-picker"), isMult);
     setSetupVisible($("digit-wrap"), isAddSub);
     setSetupVisible($("round-wrap"), isRound);
+    setSetupVisible($("round-digits-wrap"), isRound);
     setSetupVisible($("problem-type-wrap"), !isRound);
 
     const tag = $("home-tagline");
@@ -953,17 +956,34 @@
     return { min: 1, max: 9 };
   }
 
-  function buildRoundPool(roundPlace) {
+  function roundDigitRanges(roundDigits) {
+    const key = String(roundDigits || "2");
+    if (key === "mix") {
+      return [
+        { min: 10, max: 99 },
+        { min: 100, max: 999 },
+        { min: 1000, max: 9999 },
+      ];
+    }
+    if (key === "3") return [{ min: 100, max: 999 }];
+    if (key === "4") return [{ min: 1000, max: 9999 }];
+    return [{ min: 10, max: 99 }];
+  }
+
+  function buildRoundPool(roundPlace, roundDigits) {
     const pool = [];
     const seen = new Set();
     const places =
       roundPlace === "mix" ? [10, 100] : [Number(roundPlace) === 100 ? 100 : 10];
+    const ranges = roundDigitRanges(roundDigits);
 
     const pushPair = (a, b) => {
       a = Number(a);
       b = Number(b);
       const id = `${a}:${b}`;
       if (seen.has(id)) return;
+      // Skip questions that round to 0 (awkward for kids)
+      if (roundToPlace(a, b) === 0) return;
       seen.add(id);
       const key = factKey(a, b, "round");
       const fact = ensureFact(key);
@@ -972,18 +992,21 @@
     };
 
     for (const place of places) {
-      if (place === 10) {
-        // Nearest 10 across 1–9999 (not limited to teens/forties)
-        for (let n = 1; n <= 9999; n++) pushPair(n, 10);
-      } else {
-        // Nearest 100 across 1–9999
-        for (let n = 1; n <= 9999; n++) pushPair(n, 100);
+      for (const range of ranges) {
+        let min = range.min;
+        let max = range.max;
+        // 2-digit + nearest 100: keep numbers that round to 100
+        if (place === 100 && max < 100) {
+          min = Math.max(min, 50);
+          max = Math.min(max, 99);
+        }
+        for (let n = min; n <= max; n++) pushPair(n, place);
       }
     }
     return pool;
   }
 
-  function buildPool(operation, max, tables, digitLevel, roundPlace) {
+  function buildPool(operation, max, tables, digitLevel, roundPlace, roundDigits) {
     const pool = [];
     const seen = new Set();
 
@@ -1000,7 +1023,7 @@
     };
 
     if (operation === "round") {
-      return buildRoundPool(roundPlace || "10");
+      return buildRoundPool(roundPlace || "10", roundDigits || "2");
     }
 
     if (operation === "multiply") {
@@ -1037,8 +1060,8 @@
     return !!state.settings.shuffle;
   }
 
-  function buildOrderedQueue(operation, max, tables, digitLevel, roundPlace) {
-    const pool = buildPool(operation, max, tables, digitLevel, roundPlace);
+  function buildOrderedQueue(operation, max, tables, digitLevel, roundPlace, roundDigits) {
+    const pool = buildPool(operation, max, tables, digitLevel, roundPlace, roundDigits);
     // Stable order: tables 7×1, 7×2… or rounding place then number
     pool.sort((x, y) => {
       if (operation === "round") {
@@ -1051,14 +1074,15 @@
     return pool.map((p) => ({ a: p.a, b: p.b, key: p.key }));
   }
 
-  function pickQuestion(operation, max, shuffle, tables, digitLevel, roundPlace) {
+  function pickQuestion(operation, max, shuffle, tables, digitLevel, roundPlace, roundDigits) {
     const wantOrder = session ? session.shuffle === false : !shuffle;
     const place = roundPlace || session?.roundPlace || "10";
+    const digits = roundDigits || session?.roundDigits || "2";
 
     // In-order mode: strict walk — never weighted-random
     if (wantOrder) {
       if (!session.queue || !session.queue.length) {
-        session.queue = buildOrderedQueue(operation, max, tables, digitLevel, place);
+        session.queue = buildOrderedQueue(operation, max, tables, digitLevel, place, digits);
         session.queueIndex = 0;
       }
       if (!session.queue.length) {
@@ -1074,7 +1098,7 @@
       return { a: Number(p.a), b: Number(p.b), key: p.key };
     }
 
-    const pool = buildPool(operation, max, tables, digitLevel, place);
+    const pool = buildPool(operation, max, tables, digitLevel, place, digits);
     if (!pool.length) {
       return operation === "round"
         ? { a: 45, b: 10, key: factKey(45, 10, "round") }
@@ -1143,6 +1167,7 @@
     const max = DIFFICULTY[opts.difficulty] || 10;
     const digitLevel = opts.digitLevel || "single";
     const roundPlace = opts.roundPlace || "10";
+    const roundDigits = opts.roundDigits || "2";
     let tables = (opts.tables || [])
       .map(Number)
       .filter((n) => n >= 1 && n <= max)
@@ -1153,13 +1178,14 @@
     const perQuestionTimer = !!opts.perQuestionTimer;
     const queue = shuffle
       ? null
-      : buildOrderedQueue(operation, max, tables, digitLevel, roundPlace);
+      : buildOrderedQueue(operation, max, tables, digitLevel, roundPlace, roundDigits);
 
     session = {
       operation,
       difficulty: opts.difficulty,
       digitLevel,
       roundPlace,
+      roundDigits,
       mode: opts.mode,
       shuffle,
       perQuestionTimer,
@@ -1188,6 +1214,7 @@
       difficulty: opts.difficulty,
       digitLevel,
       roundPlace,
+      roundDigits,
       mode: opts.mode,
       shuffle: opts.shuffle,
       voiceMode: !!opts.voiceMode,
@@ -1314,7 +1341,8 @@
       session.shuffle,
       session.tables,
       session.digitLevel,
-      session.roundPlace
+      session.roundPlace,
+      session.roundDigits
     );
     const promptType = choosePromptType(
       session.problemType,
@@ -1629,6 +1657,10 @@
                     : state.settings.roundPlace === "100"
                       ? "100"
                       : "10"
+                } · ${
+                  state.settings.roundDigits === "mix"
+                    ? "2/3/4 digits"
+                    : `${state.settings.roundDigits || "2"} digits`
                 }`
               : state.settings.operation === "add" || state.settings.operation === "sub"
                 ? ` · ${state.settings.digitLevel === "dual" ? "dual digit" : "single digit"}`
@@ -1707,6 +1739,7 @@
       difficulty: $("difficulty")?.value || "medium",
       digitLevel: $("digit-level")?.value || "single",
       roundPlace: $("round-place")?.value || "10",
+      roundDigits: $("round-digits")?.value || "2",
       mode: $("mode")?.value || "endless",
       shuffle: readShuffleSetting(),
       voiceMode: voiceOn,
@@ -1799,6 +1832,7 @@
       difficulty: state.settings.difficulty,
       digitLevel: state.settings.digitLevel || "single",
       roundPlace: state.settings.roundPlace || "10",
+      roundDigits: state.settings.roundDigits || "2",
       mode: state.settings.mode,
       shuffle: state.settings.shuffle,
       voiceMode: !!state.settings.voiceMode,

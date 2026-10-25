@@ -202,6 +202,7 @@ select, input[type="text"] {
 #difficulty-wrap[hidden],
 #digit-wrap[hidden],
 #round-wrap[hidden],
+#round-digits-wrap[hidden],
 #problem-type-wrap[hidden] {
   display: none !important;
 }
