@@ -830,6 +830,10 @@
     setSetupVisible($("round-wrap"), isRound);
     setSetupVisible($("round-digits-wrap"), isRound);
     setSetupVisible($("problem-type-wrap"), !isRound);
+    // In-order (13, 14, 15…) is for tables — rounding should stay random
+    const inOrderRow = $("in-order")?.closest("label");
+    setSetupVisible(inOrderRow, !isRound);
+    if (isRound && $("in-order")) $("in-order").checked = false;
 
     const tag = $("home-tagline");
     if (tag) {
@@ -1075,7 +1079,9 @@
   }
 
   function pickQuestion(operation, max, shuffle, tables, digitLevel, roundPlace, roundDigits) {
-    const wantOrder = session ? session.shuffle === false : !shuffle;
+    // Rounding is always random (never 13, then 14, then 15…)
+    const wantOrder =
+      operation !== "round" && (session ? session.shuffle === false : !shuffle);
     const place = roundPlace || session?.roundPlace || "10";
     const digits = roundDigits || session?.roundDigits || "2";
 
@@ -1174,7 +1180,8 @@
       .sort((x, y) => x - y);
     if (!tables.length) tables = rangeTables(max);
     const problemType = operation === "round" ? "product" : opts.problemType || "product";
-    const shuffle = !!opts.shuffle;
+    // Rounding always shuffles; sequential order is for times-table drill only
+    const shuffle = operation === "round" ? true : !!opts.shuffle;
     const perQuestionTimer = !!opts.perQuestionTimer;
     const queue = shuffle
       ? null
