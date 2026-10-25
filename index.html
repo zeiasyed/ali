@@ -106,6 +106,7 @@
             <option value="multiply" selected>Multiplication</option>
             <option value="add">Addition</option>
             <option value="sub">Subtraction</option>
+            <option value="round">Rounding</option>
           </select>
         </label>
 
@@ -124,6 +125,15 @@
           <select id="digit-level" name="digitLevel">
             <option value="single" selected>Single digit (1–9)</option>
             <option value="dual">Dual digit (10–99)</option>
+          </select>
+        </label>
+
+        <label id="round-wrap" hidden>
+          Round to
+          <select id="round-place" name="roundPlace">
+            <option value="10" selected>Nearest 10 · 45 → 50</option>
+            <option value="100">Nearest 100 · 372 → 400</option>
+            <option value="mix">Mix 10s and 100s</option>
           </select>
         </label>
 
@@ -163,7 +173,7 @@
           </select>
         </label>
 
-        <label>
+        <label id="problem-type-wrap">
           Problem type
           <select id="problem-type" name="problemType">
             <option value="product" selected>4 × 3 = ?</option>
@@ -231,7 +241,7 @@
               inputmode="numeric"
               pattern="[0-9]*"
               enterkeyhint="done"
-              maxlength="5"
+              maxlength="6"
               placeholder="Type here"
               autocomplete="off"
               autocapitalize="off"
@@ -301,6 +311,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v34.js"></script>
+  <script src="app-v35.js"></script>
 </body>
 </html>
