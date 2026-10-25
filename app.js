@@ -808,16 +808,25 @@
     updateHeroAvatar();
   }
 
+  function setSetupVisible(el, visible) {
+    if (!el) return;
+    el.hidden = !visible;
+    el.style.display = visible ? "" : "none";
+    el.setAttribute("aria-hidden", visible ? "false" : "true");
+  }
+
   function syncOperationUI() {
     const op = $("operation")?.value || state.settings.operation || "multiply";
     const isMult = op === "multiply";
     const isRound = op === "round";
     const isAddSub = op === "add" || op === "sub";
-    if ($("difficulty-wrap")) $("difficulty-wrap").hidden = !isMult;
-    if ($("table-picker")) $("table-picker").hidden = !isMult;
-    if ($("digit-wrap")) $("digit-wrap").hidden = !isAddSub;
-    if ($("round-wrap")) $("round-wrap").hidden = !isRound;
-    if ($("problem-type-wrap")) $("problem-type-wrap").hidden = isRound;
+
+    // Rounding must not show multiplication table chips / difficulty
+    setSetupVisible($("difficulty-wrap"), isMult);
+    setSetupVisible($("table-picker"), isMult);
+    setSetupVisible($("digit-wrap"), isAddSub);
+    setSetupVisible($("round-wrap"), isRound);
+    setSetupVisible($("problem-type-wrap"), !isRound);
 
     const tag = $("home-tagline");
     if (tag) {
@@ -837,7 +846,7 @@
       select.innerHTML = "";
       const opt = document.createElement("option");
       opt.value = "product";
-      opt.textContent = "Round 45 to the nearest 10";
+      opt.textContent = "Round to the nearest 10 or 100";
       select.appendChild(opt);
       select.value = "product";
       return;
@@ -964,11 +973,11 @@
 
     for (const place of places) {
       if (place === 10) {
-        // 1–199: lots of nearest-10 practice (45 → 50)
-        for (let n = 1; n <= 199; n++) pushPair(n, 10);
+        // Nearest 10 across 1–9999 (not limited to teens/forties)
+        for (let n = 1; n <= 9999; n++) pushPair(n, 10);
       } else {
-        // 50–999: nearest-100 practice (372 → 400)
-        for (let n = 50; n <= 999; n++) pushPair(n, 100);
+        // Nearest 100 across 1–9999
+        for (let n = 1; n <= 9999; n++) pushPair(n, 100);
       }
     }
     return pool;
@@ -1098,7 +1107,7 @@
       return {
         display: `Round ${a} to the nearest ${placeWord}`,
         expected: result,
-        hint: `Example: 45 → nearest 10 = 50`,
+        hint: "5 or more rounds up · type or say the answer",
       };
     }
 

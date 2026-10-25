@@ -198,6 +198,14 @@ select, input[type="text"] {
   min-width: 0;
 }
 
+#table-picker[hidden],
+#difficulty-wrap[hidden],
+#digit-wrap[hidden],
+#round-wrap[hidden],
+#problem-type-wrap[hidden] {
+  display: none !important;
+}
+
 .table-picker legend {
   font-weight: 800;
   font-size: clamp(1.05rem, 2.8vw, 1.25rem);
