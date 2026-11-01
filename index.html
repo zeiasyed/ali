@@ -101,6 +101,18 @@
 
       <form id="setup-form" class="setup">
         <label>
+          Grade
+          <select id="grade" name="grade">
+            <option value="prek">Pre-K</option>
+            <option value="k">Kindergarten</option>
+            <option value="1">Grade 1</option>
+            <option value="2" selected>Grade 2</option>
+            <option value="3">Grade 3</option>
+            <option value="4">Grade 4</option>
+          </select>
+        </label>
+
+        <label>
           Skill
           <select id="operation" name="operation">
             <option value="multiply" selected>Multiplication</option>
@@ -109,7 +121,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v41 · Skips numbers already on a 10 or 100</p>
+        <p class="setup-note" id="app-version-note">App v42 · Choose grade Pre-K through 4</p>
 
         <label id="difficulty-wrap">
           Difficulty
@@ -328,6 +340,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v41.js"></script>
+  <script src="app-v42.js"></script>
 </body>
 </html>

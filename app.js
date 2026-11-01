@@ -11,6 +11,65 @@
     expert: 15,
   };
 
+  /** Grade unlocks skills and sets kid-friendly defaults */
+  const GRADE_PROFILES = {
+    prek: {
+      label: "Pre-K",
+      skills: ["add"],
+      defaultOp: "add",
+      digitLevel: "single",
+      difficulty: "easy",
+      roundPreset: "10:2",
+    },
+    k: {
+      label: "Kindergarten",
+      skills: ["add", "sub"],
+      defaultOp: "add",
+      digitLevel: "single",
+      difficulty: "easy",
+      roundPreset: "10:2",
+    },
+    1: {
+      label: "Grade 1",
+      skills: ["add", "sub"],
+      defaultOp: "add",
+      digitLevel: "single",
+      difficulty: "easy",
+      roundPreset: "10:2",
+    },
+    2: {
+      label: "Grade 2",
+      skills: ["add", "sub", "multiply", "round"],
+      defaultOp: "multiply",
+      digitLevel: "dual",
+      difficulty: "easy",
+      roundPreset: "10:2",
+    },
+    3: {
+      label: "Grade 3",
+      skills: ["add", "sub", "multiply", "round"],
+      defaultOp: "multiply",
+      digitLevel: "dual",
+      difficulty: "medium",
+      roundPreset: "10:3",
+    },
+    4: {
+      label: "Grade 4",
+      skills: ["add", "sub", "multiply", "round"],
+      defaultOp: "multiply",
+      digitLevel: "dual",
+      difficulty: "hard",
+      roundPreset: "100:3",
+    },
+  };
+
+  const SKILL_LABELS = {
+    multiply: "Multiplication",
+    add: "Addition",
+    sub: "Subtraction",
+    round: "Rounding · nearest 10 / 100",
+  };
+
   const HEROES = [
     // Marvel first
     { id: "spiderman", icon: "🕷️", name: "Spider-Man", need: 0, universe: "Marvel" },
@@ -673,19 +732,90 @@
       activeHero: "spiderman",
       facts: {},
       settings: {
+        grade: "2",
         operation: "multiply",
-        difficulty: "medium",
-        digitLevel: "single",
+        difficulty: "easy",
+        digitLevel: "dual",
         mode: "endless",
         shuffle: false,
         voiceMode: true,
         perQuestionTimer: false,
-        tables: rangeTables(10),
+        tables: rangeTables(5),
         problemType: "product",
         roundPlace: "10",
-        roundDigits: "3",
+        roundDigits: "2",
       },
     };
+  }
+
+  function getGradeId() {
+    const fromUi = $("grade")?.value;
+    if (fromUi && GRADE_PROFILES[fromUi]) return fromUi;
+    const saved = state.settings.grade;
+    if (saved && GRADE_PROFILES[saved]) return saved;
+    return "2";
+  }
+
+  function getGradeProfile(gradeId = getGradeId()) {
+    return GRADE_PROFILES[gradeId] || GRADE_PROFILES["2"];
+  }
+
+  function syncGradeUI(gradeId = getGradeId(), { applyDefaults = false } = {}) {
+    const profile = getGradeProfile(gradeId);
+    state.settings.grade = gradeId;
+    if ($("grade")) $("grade").value = gradeId;
+
+    const opSelect = $("operation");
+    const previousOp = state.settings.operation || opSelect?.value;
+    if (opSelect) {
+      opSelect.innerHTML = "";
+      for (const skill of profile.skills) {
+        const opt = document.createElement("option");
+        opt.value = skill;
+        opt.textContent = SKILL_LABELS[skill] || skill;
+        opSelect.appendChild(opt);
+      }
+      const keepOp =
+        !applyDefaults && previousOp && profile.skills.includes(previousOp)
+          ? previousOp
+          : profile.defaultOp;
+      opSelect.value = keepOp;
+      state.settings.operation = keepOp;
+    }
+
+    const allowDual = gradeId === "2" || gradeId === "3" || gradeId === "4";
+    if ($("digit-level")) {
+      [...$("digit-level").options].forEach((opt) => {
+        if (opt.value === "dual") opt.hidden = !allowDual;
+      });
+      if (!allowDual && $("digit-level").value === "dual") {
+        $("digit-level").value = "single";
+        state.settings.digitLevel = "single";
+      }
+    }
+
+    if (applyDefaults) {
+      if ($("difficulty")) {
+        $("difficulty").value = profile.difficulty;
+        state.settings.difficulty = profile.difficulty;
+      }
+      if ($("digit-level")) {
+        const digit = allowDual ? profile.digitLevel : "single";
+        $("digit-level").value = digit;
+        state.settings.digitLevel = digit;
+      }
+      if ($("round-preset") && profile.roundPreset) {
+        $("round-preset").value = profile.roundPreset;
+        const parsed = parseRoundPreset(profile.roundPreset);
+        state.settings.roundPlace = parsed.roundPlace;
+        state.settings.roundDigits = parsed.roundDigits;
+      }
+      const max = DIFFICULTY[profile.difficulty] || 10;
+      state.settings.tables = rangeTables(max);
+    }
+
+    renderTableChips();
+    syncOperationUI();
   }
 
   function parseRoundPreset(value) {
@@ -746,6 +876,13 @@
       }
       if (!merged.unlockedHeroes?.spiderman) {
         merged.unlockedHeroes = { ...merged.unlockedHeroes, spiderman: true };
+      }
+      if (!GRADE_PROFILES[merged.settings.grade]) {
+        merged.settings.grade = "2";
+      }
+      const gradeSkills = GRADE_PROFILES[merged.settings.grade].skills;
+      if (!gradeSkills.includes(merged.settings.operation)) {
+        merged.settings.operation = GRADE_PROFILES[merged.settings.grade].defaultOp;
       }
       return merged;
     } catch {
@@ -815,7 +952,7 @@
     $("stat-stars").textContent = String(state.stars);
     $("stat-streak").textContent = String(state.bestStreak);
     $("stat-level").textContent = String(levelFromStars(state.stars));
-    if ($("operation")) $("operation").value = state.settings.operation || "multiply";
+    syncGradeUI(state.settings.grade || "2", { applyDefaults: false });
     if ($("difficulty")) $("difficulty").value = state.settings.difficulty;
     if ($("digit-level")) $("digit-level").value = state.settings.digitLevel || "single";
     if ($("round-preset")) {
@@ -837,8 +974,6 @@
     }
     if ($("shuffle")) $("shuffle").checked = !!state.settings.shuffle;
     if ($("voice-mode")) $("voice-mode").checked = !!state.settings.voiceMode;
-    renderTableChips();
-    syncOperationUI();
     updateHeroAvatar();
   }
 
@@ -987,8 +1122,12 @@
     }
   }
 
-  function digitRange(digitLevel) {
+  function digitRange(digitLevel, gradeId = getGradeId()) {
+    // Younger grades use smaller number ranges
+    if (gradeId === "prek") return { min: 1, max: 5 };
+    if (gradeId === "k") return { min: 1, max: 10 };
     if (digitLevel === "dual") return { min: 10, max: 99 };
+    if (gradeId === "1") return { min: 1, max: 20 };
     return { min: 1, max: 9 };
   }
 
@@ -1044,7 +1183,15 @@
     return pool;
   }
 
-  function buildPool(operation, max, tables, digitLevel, roundPlace, roundDigits) {
+  function buildPool(
+    operation,
+    max,
+    tables,
+    digitLevel,
+    roundPlace,
+    roundDigits,
+    gradeId
+  ) {
     const pool = [];
     const seen = new Set();
 
@@ -1074,7 +1221,10 @@
       return pool;
     }
 
-    const { min, max: hi } = digitRange(digitLevel || "single");
+    const { min, max: hi } = digitRange(
+      digitLevel || "single",
+      gradeId || session?.grade || state.settings.grade || "2"
+    );
     for (let a = min; a <= hi; a++) {
       for (let b = min; b <= hi; b++) {
         if (operation === "sub" && a < b) continue;
@@ -1098,8 +1248,24 @@
     return !!state.settings.shuffle;
   }
 
-  function buildOrderedQueue(operation, max, tables, digitLevel, roundPlace, roundDigits) {
-    const pool = buildPool(operation, max, tables, digitLevel, roundPlace, roundDigits);
+  function buildOrderedQueue(
+    operation,
+    max,
+    tables,
+    digitLevel,
+    roundPlace,
+    roundDigits,
+    gradeId
+  ) {
+    const pool = buildPool(
+      operation,
+      max,
+      tables,
+      digitLevel,
+      roundPlace,
+      roundDigits,
+      gradeId
+    );
     // Stable order: tables 7×1, 7×2… or rounding place then number
     pool.sort((x, y) => {
       if (operation === "round") {
@@ -1122,7 +1288,15 @@
     // In-order mode: strict walk — never weighted-random
     if (wantOrder) {
       if (!session.queue || !session.queue.length) {
-        session.queue = buildOrderedQueue(operation, max, tables, digitLevel, place, digits);
+        session.queue = buildOrderedQueue(
+          operation,
+          max,
+          tables,
+          digitLevel,
+          place,
+          digits,
+          session.grade
+        );
         session.queueIndex = 0;
       }
       if (!session.queue.length) {
@@ -1138,7 +1312,15 @@
       return { a: Number(p.a), b: Number(p.b), key: p.key };
     }
 
-    const pool = buildPool(operation, max, tables, digitLevel, place, digits);
+    const pool = buildPool(
+      operation,
+      max,
+      tables,
+      digitLevel,
+      place,
+      digits,
+      session?.grade
+    );
     if (!pool.length) {
       return operation === "round"
         ? { a: 346, b: 10, key: factKey(346, 10, "round") }
@@ -1217,11 +1399,21 @@
     // Rounding always shuffles; sequential order is for times-table drill only
     const shuffle = operation === "round" ? true : !!opts.shuffle;
     const perQuestionTimer = !!opts.perQuestionTimer;
+    const grade = opts.grade && GRADE_PROFILES[opts.grade] ? opts.grade : getGradeId();
     const queue = shuffle
       ? null
-      : buildOrderedQueue(operation, max, tables, digitLevel, roundPlace, roundDigits);
+      : buildOrderedQueue(
+          operation,
+          max,
+          tables,
+          digitLevel,
+          roundPlace,
+          roundDigits,
+          grade
+        );
 
     session = {
+      grade,
       operation,
       difficulty: opts.difficulty,
       digitLevel,
@@ -1251,6 +1443,7 @@
     };
 
     state.settings = {
+      grade,
       operation,
       difficulty: opts.difficulty,
       digitLevel,
@@ -1671,10 +1864,14 @@
         ? 0
         : Math.round((state.totalCorrect / state.totalAttempts) * 100);
 
+    const gradeLabel =
+      GRADE_PROFILES[state.settings.grade]?.label || "Grade 2";
+
     $("parent-summary").innerHTML = `
       <div class="parent-card">
         <h3>Overview</h3>
         <ul>
+          <li>Grade: ${gradeLabel}</li>
           <li>Stars: ${state.stars}</li>
           <li>Best streak: ${state.bestStreak}</li>
           <li>Missions finished: ${state.missionsCompleted}</li>
@@ -1776,6 +1973,7 @@
       await ensureMicAccess();
     }
     startMission({
+      grade: $("grade")?.value || state.settings.grade || "2",
       operation,
       difficulty: $("difficulty")?.value || "medium",
       digitLevel: $("digit-level")?.value || "single",
@@ -1789,8 +1987,16 @@
     });
   });
 
+  $("grade")?.addEventListener("change", () => {
+    const gradeId = $("grade").value;
+    syncGradeUI(gradeId, { applyDefaults: true });
+    saveState();
+  });
+
   $("operation")?.addEventListener("change", () => {
+    state.settings.operation = $("operation").value;
     syncOperationUI();
+    saveState();
   });
 
   $("difficulty")?.addEventListener("change", () => {
@@ -1868,6 +2074,7 @@
 
   $("btn-again").addEventListener("click", () => {
     startMission({
+      grade: state.settings.grade || "2",
       operation: state.settings.operation || "multiply",
       difficulty: state.settings.difficulty,
       digitLevel: state.settings.digitLevel || "single",
