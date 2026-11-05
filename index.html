@@ -9,11 +9,11 @@
   <title>Ali Ayaan · Hero Times</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v28.css" />
+  <link rel="stylesheet" href="styles-v29.css" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -54,9 +54,12 @@
     .badge-card,
     .streak-bar,
     .ss-card,
-    .ss-review-item,
-    .ss-lesson-card {
+    .ss-review-item {
       background: rgba(255, 248, 232, 0.96) !important;
+    }
+    /* Learning cards must stay fully opaque for reading */
+    .ss-lesson-card {
+      background: #fffdf6 !important;
     }
     .hero-brand h1 {
       color: #fff !important;
@@ -124,7 +127,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v45 · Social Studies Learning</p>
+        <p class="setup-note" id="app-version-note">App v46 · Cartoon learning cards</p>
 
         <label id="difficulty-wrap">
           Difficulty
@@ -296,20 +299,26 @@
 
     <!-- SOCIAL STUDIES · LEARNING -->
     <section id="screen-ss-learn" class="screen">
+      <div class="ss-learn-scrim" aria-hidden="true"></div>
       <div class="play-top">
         <button type="button" class="btn ghost small" id="btn-ss-learn-quit">Quit</button>
         <div class="play-meta">
-          <span id="ss-learn-progress">1 of 12</span>
+          <span id="ss-learn-progress" class="ss-learn-progress">1 of 12</span>
         </div>
         <div class="play-score ss-learn-dots" id="ss-learn-dots" aria-hidden="true"></div>
       </div>
 
       <article class="ss-lesson-card" id="ss-lesson-card">
-        <p class="ss-lesson-emoji" id="ss-lesson-emoji" aria-hidden="true">🌍</p>
-        <p class="ss-week-badge" id="ss-lesson-badge">Learning</p>
+        <div class="ss-lesson-emoji-wrap">
+          <span class="ss-lesson-emoji" id="ss-lesson-emoji" aria-hidden="true">🌍</span>
+        </div>
+        <p class="ss-lesson-badge" id="ss-lesson-badge">Learning</p>
         <h2 class="ss-lesson-title" id="ss-lesson-title">Title</h2>
         <div class="ss-lesson-body" id="ss-lesson-body"></div>
-        <p class="ss-lesson-remember" id="ss-lesson-remember"></p>
+        <div class="ss-lesson-remember" id="ss-lesson-remember" hidden>
+          <span class="ss-remember-label">Remember</span>
+          <p id="ss-lesson-remember-text"></p>
+        </div>
       </article>
 
       <div class="ss-learn-nav">
@@ -451,6 +460,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v45.js"></script>
+  <script src="app-v46.js"></script>
 </body>
 </html>

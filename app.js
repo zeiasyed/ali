@@ -1281,7 +1281,17 @@
     $("ss-lesson-body").innerHTML = (lesson.body || [])
       .map((p) => `<p>${p}</p>`)
       .join("");
-    $("ss-lesson-remember").textContent = lesson.remember || "";
+    const rememberBox = $("ss-lesson-remember");
+    const rememberText = $("ss-lesson-remember-text");
+    if (rememberBox && rememberText) {
+      if (lesson.remember) {
+        rememberText.textContent = lesson.remember;
+        rememberBox.hidden = false;
+      } else {
+        rememberText.textContent = "";
+        rememberBox.hidden = true;
+      }
+    }
 
     const dots = $("ss-learn-dots");
     if (dots) {
