@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v27.css" />
+  <link rel="stylesheet" href="styles-v28.css" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -52,7 +52,9 @@
     .stat-card,
     .map-cell,
     .badge-card,
-    .streak-bar {
+    .streak-bar,
+    .ss-card,
+    .ss-review-item {
       background: rgba(255, 248, 232, 0.96) !important;
     }
     .hero-brand h1 {
@@ -121,7 +123,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v42 · Choose grade Pre-K through 4</p>
+        <p class="setup-note" id="app-version-note">App v43 · Social Studies Week 7</p>
 
         <label id="difficulty-wrap">
           Difficulty
@@ -235,10 +237,92 @@
       </form>
 
       <nav class="home-nav">
+        <button type="button" class="btn primary" data-go="social">Social Studies</button>
         <button type="button" class="btn secondary" data-go="map">Hero Map</button>
         <button type="button" class="btn secondary" data-go="badges">Heroes</button>
         <button type="button" class="btn ghost" data-go="parent">Parent</button>
       </nav>
+    </section>
+
+    <!-- SOCIAL STUDIES · WEEK 7 -->
+    <section id="screen-social" class="screen">
+      <header class="hero-brand compact">
+        <p class="eyebrow">California Studies Weekly · Week 7</p>
+        <h1 class="ss-title">Thinking Like a Geographer</h1>
+        <p class="tagline">Unit: Geography · How do maps help us learn about the Earth?</p>
+      </header>
+
+      <div class="ss-actions">
+        <button type="button" class="btn primary big" id="btn-ss-quiz">Start Assessment</button>
+        <button type="button" class="btn secondary" id="btn-ss-study-jump">Study Notes</button>
+      </div>
+
+      <div class="ss-study" id="ss-study">
+        <article class="ss-card">
+          <h3>What are maps &amp; globes?</h3>
+          <ul>
+            <li>A <strong>globe</strong> is a model of the Earth. It shows water, land, and countries.</li>
+            <li>You would travel about <strong>25,000 miles</strong> to go around the Earth.</li>
+            <li><strong>Maps</strong> are models of places. They show sizes, shapes, locations, and distances.</li>
+            <li>Maps can show roads, cities, national parks, landforms, boundaries, and weather.</li>
+          </ul>
+        </article>
+        <article class="ss-card">
+          <h3>Cartographers &amp; map tools</h3>
+          <ul>
+            <li>A <strong>cartographer</strong> creates maps and decides what to include.</li>
+            <li>The <strong>title</strong> tells what the map is about.</li>
+            <li>The <strong>legend</strong> explains symbols and colors.</li>
+            <li>The <strong>compass rose</strong> shows cardinal directions: north, south, east, west.</li>
+            <li>The <strong>scale</strong> helps you tell distance (how far places are).</li>
+          </ul>
+        </article>
+        <article class="ss-card">
+          <h3>Kinds of maps</h3>
+          <ul>
+            <li><strong>Population map</strong> — where people live</li>
+            <li><strong>Political map</strong> — borders between cities, states, and countries</li>
+            <li><strong>Physical map</strong> — natural features (mountains, valleys, lakes, streams)</li>
+            <li><strong>Climate map</strong> — whether a place is usually warm, cold, wet, or dry</li>
+            <li><strong>Climate</strong> is the study of weather over time</li>
+          </ul>
+        </article>
+      </div>
+
+      <button type="button" class="btn secondary" data-go="home">Back</button>
+    </section>
+
+    <section id="screen-ss-quiz" class="screen">
+      <div class="play-top">
+        <button type="button" class="btn ghost small" id="btn-ss-quit">Quit</button>
+        <div class="play-meta">
+          <span id="ss-progress">Question 1</span>
+        </div>
+        <div class="play-score"><span id="ss-score">0</span> ★</div>
+      </div>
+
+      <div class="problem-card ss-quiz-card">
+        <p class="ss-week-badge">Week 7 Assessment · Thinking Like a Geographer</p>
+        <p class="problem ss-question" id="ss-question-text">Question</p>
+        <p class="ss-prompt" id="ss-prompt"></p>
+        <div class="ss-choices" id="ss-choices" role="listbox" aria-label="Answer choices"></div>
+        <p id="ss-feedback" class="feedback" role="status" aria-live="polite"></p>
+        <button type="button" class="btn primary big" id="btn-ss-next" hidden>Next</button>
+      </div>
+    </section>
+
+    <section id="screen-ss-results" class="screen">
+      <header class="hero-brand compact">
+        <h1 id="ss-results-title">Assessment Complete!</h1>
+        <p id="ss-results-sub" class="tagline"></p>
+      </header>
+      <div class="results-grid" id="ss-results-grid"></div>
+      <div class="ss-review" id="ss-review"></div>
+      <div class="actions">
+        <button type="button" class="btn primary big" id="btn-ss-retry">Try Again</button>
+        <button type="button" class="btn secondary" data-go="social">Study Notes</button>
+        <button type="button" class="btn ghost" data-go="home">Home Base</button>
+      </div>
     </section>
 
     <!-- PLAY -->
@@ -340,6 +424,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v42.js"></script>
+  <script src="app-v43.js"></script>
 </body>
 </html>

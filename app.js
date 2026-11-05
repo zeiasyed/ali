@@ -946,6 +946,304 @@
     if (name === "map") renderMap();
     if (name === "badges") renderBadges();
     if (name === "parent") renderParent();
+    if (name === "social") window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  // ---------------------------------------------------------------------------
+  // Social Studies · Week 7 · Thinking Like a Geographer
+  // ---------------------------------------------------------------------------
+  const SS_WEEK = {
+    week: 7,
+    unit: "Geography",
+    title: "Thinking Like a Geographer",
+    guiding: "How do maps help us learn about the Earth?",
+  };
+
+  /** Assessment-style questions matching Studies Weekly (fill-in / MC / T-F) */
+  const SS_QUESTIONS = [
+    {
+      type: "fill",
+      prompt: "Fill in the blank (tap the best word):",
+      text: "A __________ is a model of the Earth.",
+      choices: ["map", "globe", "legend", "scale"],
+      answer: "globe",
+      explain: "A globe is a model of the Earth. It shows water, land, and countries.",
+    },
+    {
+      type: "mc",
+      prompt: "Choose the best answer:",
+      text: "About how far would you travel to go around the Earth?",
+      choices: ["2,500 miles", "10,000 miles", "25,000 miles", "100,000 miles"],
+      answer: "25,000 miles",
+      explain: "You would have to travel about 25,000 miles to go around the Earth.",
+    },
+    {
+      type: "fill",
+      prompt: "Fill in the blank:",
+      text: "A person who creates a map is called a __________.",
+      choices: ["historian", "cartographer", "explorer", "geologist"],
+      answer: "cartographer",
+      explain: "A cartographer creates maps and decides what to include.",
+    },
+    {
+      type: "fill",
+      prompt: "Fill in the blank:",
+      text: "The map’s __________ explains what the symbols and colors represent.",
+      choices: ["title", "scale", "legend", "border"],
+      answer: "legend",
+      explain: "The legend explains symbols and colors on a map.",
+    },
+    {
+      type: "mc",
+      prompt: "Choose the best answer:",
+      text: "What does a compass rose show?",
+      choices: [
+        "How far places are",
+        "Where people live",
+        "Cardinal directions (N, S, E, W)",
+        "Weather over time",
+      ],
+      answer: "Cardinal directions (N, S, E, W)",
+      explain: "A compass rose shows north, south, east, and west.",
+    },
+    {
+      type: "fill",
+      prompt: "Fill in the blank:",
+      text: "You can tell the distance on a map by looking at the __________.",
+      choices: ["legend", "title", "compass rose", "scale"],
+      answer: "scale",
+      explain: "The scale helps you tell how far it is from one place to another.",
+    },
+    {
+      type: "fill",
+      prompt: "Fill in the blank:",
+      text: "A __________ map shows where people live.",
+      choices: ["political", "physical", "population", "climate"],
+      answer: "population",
+      explain: "A population map shows where people live.",
+    },
+    {
+      type: "fill",
+      prompt: "Fill in the blank:",
+      text: "A __________ map shows borders between cities, states, and countries.",
+      choices: ["population", "political", "climate", "road"],
+      answer: "political",
+      explain: "A political map shows dividing lines or borders governments make.",
+    },
+    {
+      type: "mc",
+      prompt: "Choose the best answer:",
+      text: "What does a physical map show?",
+      choices: [
+        "Only city names",
+        "Natural features like mountains, valleys, lakes, and streams",
+        "Only weather forecasts for today",
+        "How many people live in a place",
+      ],
+      answer: "Natural features like mountains, valleys, lakes, and streams",
+      explain: "A physical map shows the natural features of a place.",
+    },
+    {
+      type: "fill",
+      prompt: "Fill in the blank:",
+      text: "A climate map shows whether a place is usually warm, cold, wet, or __________.",
+      choices: ["dry", "loud", "crowded", "flat"],
+      answer: "dry",
+      explain: "Climate maps show if a place is usually warm, cold, wet, or dry.",
+    },
+    {
+      type: "fill",
+      prompt: "Fill in the blank:",
+      text: "Climate is the study of weather over __________.",
+      choices: ["one day", "time", "one hour", "maps only"],
+      answer: "time",
+      explain: "Climate is the study of weather over time.",
+    },
+    {
+      type: "tf",
+      prompt: "True or False:",
+      text: "Only one kind of map is useful for learning about the Earth.",
+      choices: ["TRUE", "FALSE"],
+      answer: "FALSE",
+      explain: "We use many kinds of maps — each gives specific information.",
+    },
+    {
+      type: "mc",
+      prompt: "Choose the best answer:",
+      text: "What does the title of a map tell us?",
+      choices: [
+        "How old the map is",
+        "What the map is about",
+        "Who lives there",
+        "The temperature today",
+      ],
+      answer: "What the map is about",
+      explain: "The title tells us what the map is about.",
+    },
+    {
+      type: "mc",
+      prompt: "Choose the best answer:",
+      text: "Maps are models of places. What can maps help us find?",
+      choices: [
+        "Only oceans",
+        "Roads, cities, and national parks",
+        "Only one country",
+        "Nothing useful",
+      ],
+      answer: "Roads, cities, and national parks",
+      explain: "Maps can help us find roads, cities, national parks, and more.",
+    },
+    {
+      type: "tf",
+      prompt: "True or False:",
+      text: "A cartographer has a point of view and a purpose, just like the author of a book.",
+      choices: ["TRUE", "FALSE"],
+      answer: "TRUE",
+      explain: "Like an author, a cartographer has a point of view and decides what to include.",
+    },
+  ];
+
+  let ssSession = null;
+
+  function shuffleInPlace(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function startSocialQuiz() {
+    const order = SS_QUESTIONS.map((_, i) => i);
+    shuffleInPlace(order);
+    ssSession = {
+      order,
+      index: 0,
+      correct: 0,
+      answered: false,
+      misses: [],
+    };
+    showScreen("ss-quiz");
+    renderSocialQuestion();
+  }
+
+  function currentSsQuestion() {
+    if (!ssSession) return null;
+    const qi = ssSession.order[ssSession.index];
+    return SS_QUESTIONS[qi];
+  }
+
+  function renderSocialQuestion() {
+    const q = currentSsQuestion();
+    if (!q || !ssSession) return;
+    ssSession.answered = false;
+    $("ss-progress").textContent = `Question ${ssSession.index + 1} of ${ssSession.order.length}`;
+    $("ss-score").textContent = String(ssSession.correct);
+    $("ss-question-text").textContent = q.text;
+    $("ss-prompt").textContent = q.prompt || "";
+    $("ss-feedback").textContent = "";
+    $("ss-feedback").className = "feedback";
+    const nextBtn = $("btn-ss-next");
+    if (nextBtn) {
+      nextBtn.hidden = true;
+      nextBtn.textContent =
+        ssSession.index + 1 >= ssSession.order.length ? "See Results" : "Next";
+    }
+
+    const box = $("ss-choices");
+    box.innerHTML = "";
+    const choices = q.choices.slice();
+    // Keep TRUE/FALSE order; shuffle other choice lists
+    if (q.type !== "tf") shuffleInPlace(choices);
+    choices.forEach((choice, i) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "ss-choice";
+      btn.setAttribute("role", "option");
+      const letter = String.fromCharCode(97 + i); // a, b, c...
+      btn.textContent = q.type === "tf" ? choice : `${letter}. ${choice}`;
+      btn.dataset.value = choice;
+      btn.addEventListener("click", () => answerSocial(choice, btn));
+      box.appendChild(btn);
+    });
+  }
+
+  async function answerSocial(choice, btn) {
+    if (!ssSession || ssSession.answered) return;
+    ssSession.answered = true;
+    const q = currentSsQuestion();
+    const ok = choice === q.answer;
+
+    [...$("ss-choices").querySelectorAll(".ss-choice")].forEach((el) => {
+      el.disabled = true;
+      if (el.dataset.value === q.answer) el.classList.add("correct");
+      if (el === btn && !ok) el.classList.add("wrong");
+      if (el === btn) el.classList.add("selected");
+    });
+
+    await unlockAudio();
+    if (ok) {
+      ssSession.correct += 1;
+      $("ss-score").textContent = String(ssSession.correct);
+      state.stars += 1;
+      saveState();
+      $("ss-feedback").textContent = `Correct! ${q.explain}`;
+      $("ss-feedback").className = "feedback right";
+      await playCorrectSound();
+    } else {
+      ssSession.misses.push({
+        text: q.text,
+        answer: q.answer,
+        picked: choice,
+        explain: q.explain,
+      });
+      $("ss-feedback").textContent = `Not quite. Correct: ${q.answer}. ${q.explain}`;
+      $("ss-feedback").className = "feedback wrong";
+      await playWrongSound();
+    }
+    const nextBtn = $("btn-ss-next");
+    if (nextBtn) nextBtn.hidden = false;
+  }
+
+  function advanceSocialQuiz() {
+    if (!ssSession) return;
+    if (ssSession.index + 1 >= ssSession.order.length) {
+      endSocialQuiz();
+      return;
+    }
+    ssSession.index += 1;
+    renderSocialQuestion();
+  }
+
+  function endSocialQuiz() {
+    const total = ssSession.order.length;
+    const right = ssSession.correct;
+    const pct = Math.round((right / total) * 100);
+    $("ss-results-title").textContent =
+      pct >= 80 ? "Geographer Hero!" : pct >= 60 ? "Nice Exploring!" : "Keep Studying!";
+    $("ss-results-sub").textContent = `${SS_WEEK.title} · ${right}/${total} correct (${pct}%)`;
+    $("ss-results-grid").innerHTML = `
+      <div class="stat-card"><span>${right}</span> correct</div>
+      <div class="stat-card"><span>${total - right}</span> missed</div>
+      <div class="stat-card"><span>${pct}%</span> score</div>
+    `;
+    const review = $("ss-review");
+    if (!ssSession.misses.length) {
+      review.innerHTML =
+        '<div class="ss-review-item"><p class="ss-rev-q">You got every question — awesome map skills!</p></div>';
+    } else {
+      review.innerHTML = ssSession.misses
+        .map(
+          (m) => `
+        <div class="ss-review-item missed">
+          <p class="ss-rev-q">${m.text}</p>
+          <p class="ss-rev-a">Answer: ${m.answer}</p>
+          <p>${m.explain}</p>
+        </div>`
+        )
+        .join("");
+    }
+    showScreen("ss-results");
   }
 
   function renderHome() {
@@ -2103,6 +2401,34 @@
 
   document.querySelectorAll("[data-go]").forEach((btn) => {
     btn.addEventListener("click", () => showScreen(btn.getAttribute("data-go")));
+  });
+
+  $("btn-ss-quiz")?.addEventListener("click", async () => {
+    await unlockAudio();
+    await playStartSound();
+    startSocialQuiz();
+  });
+
+  $("btn-ss-study-jump")?.addEventListener("click", () => {
+    $("ss-study")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  $("btn-ss-quit")?.addEventListener("click", () => {
+    if (!ssSession) {
+      showScreen("social");
+      return;
+    }
+    if (confirm("Quit this Social Studies assessment?")) {
+      ssSession = null;
+      showScreen("social");
+    }
+  });
+
+  $("btn-ss-next")?.addEventListener("click", () => advanceSocialQuiz());
+
+  $("btn-ss-retry")?.addEventListener("click", async () => {
+    await unlockAudio();
+    startSocialQuiz();
   });
 
   // iPad: keep input usable
