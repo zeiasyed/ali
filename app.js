@@ -2876,15 +2876,21 @@
     btn.addEventListener("click", () => showScreen(btn.getAttribute("data-go")));
   });
 
-  $("btn-ss-learn")?.addEventListener("click", async () => {
-    await unlockAudio();
-    await playStartSound();
+  function pokeAudio() {
+    // Never block UI on audio unlock / sound
+    Promise.resolve()
+      .then(() => unlockAudio())
+      .then(() => playStartSound())
+      .catch(() => {});
+  }
+
+  $("btn-ss-learn")?.addEventListener("click", () => {
+    pokeAudio();
     startSocialLearn();
   });
 
-  $("btn-ss-quiz")?.addEventListener("click", async () => {
-    await unlockAudio();
-    await playStartSound();
+  $("btn-ss-quiz")?.addEventListener("click", () => {
+    pokeAudio();
     startSocialQuiz();
   });
 
@@ -2898,11 +2904,8 @@
 
   $("btn-ss-learn-back")?.addEventListener("click", () => advanceSocialLearn(-1));
 
-  $("btn-ss-learn-next")?.addEventListener("click", async () => {
-    if (ssLearnIndex >= SS_LESSONS.length - 1) {
-      await unlockAudio();
-      await playStartSound();
-    }
+  $("btn-ss-learn-next")?.addEventListener("click", () => {
+    if (ssLearnIndex >= SS_LESSONS.length - 1) pokeAudio();
     advanceSocialLearn(1);
   });
 
@@ -2917,20 +2920,20 @@
     }
   });
 
-  $("btn-ss-quiz-go")?.addEventListener("click", async () => {
-    await unlockAudio();
+  $("btn-ss-quiz-go")?.addEventListener("click", () => {
+    pokeAudio();
     beginSocialQuizQuestions();
   });
 
   $("btn-ss-next")?.addEventListener("click", () => advanceSocialQuiz());
 
-  $("btn-ss-retry")?.addEventListener("click", async () => {
-    await unlockAudio();
+  $("btn-ss-retry")?.addEventListener("click", () => {
+    pokeAudio();
     startSocialQuiz();
   });
 
-  $("btn-ss-learn-again")?.addEventListener("click", async () => {
-    await unlockAudio();
+  $("btn-ss-learn-again")?.addEventListener("click", () => {
+    pokeAudio();
     startSocialLearn();
   });
 
