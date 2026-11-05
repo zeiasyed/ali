@@ -959,6 +959,164 @@
     guiding: "How do maps help us learn about the Earth?",
   };
 
+  /** Full-screen learning cards — kid language, one idea each */
+  const SS_LESSONS = [
+    {
+      emoji: "🌍",
+      badge: "Week 7 · Learning",
+      title: "Thinking Like a Geographer",
+      body: [
+        "A geographer is someone who studies the Earth — land, water, places, and people.",
+        "This week’s big question is:",
+        "How do maps help us learn about the Earth?",
+      ],
+      remember: "Maps and globes are tools that help our brains see the whole world.",
+    },
+    {
+      emoji: "🚀",
+      badge: "The Earth is HUGE",
+      title: "25,000 Miles Around!",
+      body: [
+        "Our planet is really, really big.",
+        "If you could walk all the way around Earth, you’d travel about 25,000 miles.",
+        "That’s why we need special tools to understand it.",
+      ],
+      remember: "Around Earth ≈ 25,000 miles.",
+    },
+    {
+      emoji: "🌐",
+      badge: "Tool #1",
+      title: "What is a Globe?",
+      body: [
+        "A globe is a round model of the Earth — like a mini planet you can hold.",
+        "It shows where the water is, where the land is, and where countries are.",
+        "Because it’s round like Earth, a globe shows shapes more truly than a flat paper.",
+      ],
+      remember: "Globe = a model of the Earth.",
+    },
+    {
+      emoji: "🗺️",
+      badge: "Tool #2",
+      title: "What is a Map?",
+      body: [
+        "A map is a flat model of a place.",
+        "Maps can show countries, roads, cities, parks, mountains, and more.",
+        "Different maps tell different stories — each one gives special information.",
+      ],
+      remember: "Map = a model of a place (flat).",
+    },
+    {
+      emoji: "✏️",
+      badge: "Who makes maps?",
+      title: "Meet the Cartographer",
+      body: [
+        "A cartographer is a person who makes maps.",
+        "Just like a book author chooses what to write, a cartographer chooses what to put on the map.",
+        "They have a purpose and a point of view — they decide what matters for that map.",
+      ],
+      remember: "Cartographer = map maker.",
+    },
+    {
+      emoji: "🏷️",
+      badge: "Map tool",
+      title: "The Title",
+      body: [
+        "Every good map needs a title.",
+        "The title tells you what the map is about — like “California Parks” or “World Countries.”",
+        "Always read the title first so you know what you’re looking at!",
+      ],
+      remember: "Title = what the map is about.",
+    },
+    {
+      emoji: "🔑",
+      badge: "Map tool",
+      title: "The Legend (Key)",
+      body: [
+        "Maps use symbols and colors — like a tiny tree for a park, or blue for water.",
+        "The legend (sometimes called the key) explains what those symbols and colors mean.",
+        "If you’re stuck, check the legend!",
+      ],
+      remember: "Legend = explains symbols & colors.",
+    },
+    {
+      emoji: "🧭",
+      badge: "Map tool",
+      title: "Compass Rose",
+      body: [
+        "A compass rose is the little symbol that shows directions.",
+        "The four main (cardinal) directions are: North, South, East, and West.",
+        "Tip: Never Eat Soggy Worms — North, East, South, West!",
+      ],
+      remember: "Compass rose → N, S, E, W.",
+    },
+    {
+      emoji: "📏",
+      badge: "Map tool",
+      title: "Scale = Distance",
+      body: [
+        "Distance means how far it is from one place to another.",
+        "On a map, the scale helps you figure out real-world distance.",
+        "A short line on the map might mean many miles in real life.",
+      ],
+      remember: "Scale tells you distance.",
+    },
+    {
+      emoji: "👥",
+      badge: "Map types",
+      title: "Population Map",
+      body: [
+        "A population map shows where people live.",
+        "Busy cities might look darker or fuller. Quiet places might look emptier.",
+        "It answers: “Where do lots of people live?”",
+      ],
+      remember: "Population map → where people live.",
+    },
+    {
+      emoji: "🏛️",
+      badge: "Map types",
+      title: "Political Map",
+      body: [
+        "A political map shows borders — the dividing lines governments make.",
+        "Those lines separate cities, states, and countries.",
+        "It helps you see “Who is in charge of this place?”",
+      ],
+      remember: "Political map → borders / countries / states.",
+    },
+    {
+      emoji: "⛰️",
+      badge: "Map types",
+      title: "Physical Map",
+      body: [
+        "A physical map shows nature’s features.",
+        "Look for mountains, valleys, lakes, and streams.",
+        "It answers: “What does the land and water look like here?”",
+      ],
+      remember: "Physical map → mountains, valleys, lakes, streams.",
+    },
+    {
+      emoji: "🌤️",
+      badge: "Map types",
+      title: "Climate Map",
+      body: [
+        "A climate map shows if a place is usually warm or cold, wet or dry.",
+        "Climate is not just today’s weather — it’s weather studied over a long time.",
+        "So climate = the usual weather pattern of a place.",
+      ],
+      remember: "Climate = weather over time. Climate map → warm/cold/wet/dry.",
+    },
+    {
+      emoji: "⭐",
+      badge: "You did it!",
+      title: "Ready, Geographer!",
+      body: [
+        "You learned: globe, map, cartographer, title, legend, compass rose, scale,",
+        "and four map types — population, political, physical, and climate.",
+        "Next, try the assessment. Take your time. If you miss one, try again!",
+      ],
+      remember: "Start Learning → then Take Assessment.",
+    },
+  ];
+
   /** Assessment-style questions matching Studies Weekly (fill-in / MC / T-F) */
   const SS_QUESTIONS = [
     {
@@ -1104,6 +1262,63 @@
   ];
 
   let ssSession = null;
+  let ssLearnIndex = 0;
+
+  function startSocialLearn() {
+    ssLearnIndex = 0;
+    showScreen("ss-learn");
+    renderSocialLesson();
+  }
+
+  function renderSocialLesson() {
+    const lesson = SS_LESSONS[ssLearnIndex];
+    if (!lesson) return;
+    const total = SS_LESSONS.length;
+    $("ss-learn-progress").textContent = `${ssLearnIndex + 1} of ${total}`;
+    $("ss-lesson-emoji").textContent = lesson.emoji || "";
+    $("ss-lesson-badge").textContent = lesson.badge || "Learning";
+    $("ss-lesson-title").textContent = lesson.title || "";
+    $("ss-lesson-body").innerHTML = (lesson.body || [])
+      .map((p) => `<p>${p}</p>`)
+      .join("");
+    $("ss-lesson-remember").textContent = lesson.remember || "";
+
+    const dots = $("ss-learn-dots");
+    if (dots) {
+      dots.innerHTML = "";
+      for (let i = 0; i < total; i++) {
+        const d = document.createElement("span");
+        d.className = "ss-learn-dot";
+        if (i < ssLearnIndex) d.classList.add("done");
+        if (i === ssLearnIndex) d.classList.add("on");
+        dots.appendChild(d);
+      }
+    }
+
+    const back = $("btn-ss-learn-back");
+    const next = $("btn-ss-learn-next");
+    if (back) back.disabled = ssLearnIndex === 0;
+    if (next) {
+      next.textContent =
+        ssLearnIndex >= total - 1 ? "Take Assessment" : "Next";
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function advanceSocialLearn(dir) {
+    if (dir < 0) {
+      if (ssLearnIndex <= 0) return;
+      ssLearnIndex -= 1;
+      renderSocialLesson();
+      return;
+    }
+    if (ssLearnIndex >= SS_LESSONS.length - 1) {
+      startSocialQuiz();
+      return;
+    }
+    ssLearnIndex += 1;
+    renderSocialLesson();
+  }
 
   function shuffleInPlace(arr) {
     for (let i = arr.length - 1; i > 0; i--) {
@@ -2441,6 +2656,12 @@
     btn.addEventListener("click", () => showScreen(btn.getAttribute("data-go")));
   });
 
+  $("btn-ss-learn")?.addEventListener("click", async () => {
+    await unlockAudio();
+    await playStartSound();
+    startSocialLearn();
+  });
+
   $("btn-ss-quiz")?.addEventListener("click", async () => {
     await unlockAudio();
     await playStartSound();
@@ -2449,6 +2670,20 @@
 
   $("btn-ss-study-jump")?.addEventListener("click", () => {
     $("ss-study")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
+  $("btn-ss-learn-quit")?.addEventListener("click", () => {
+    if (confirm("Leave Learning and go back?")) showScreen("social");
+  });
+
+  $("btn-ss-learn-back")?.addEventListener("click", () => advanceSocialLearn(-1));
+
+  $("btn-ss-learn-next")?.addEventListener("click", async () => {
+    if (ssLearnIndex >= SS_LESSONS.length - 1) {
+      await unlockAudio();
+      await playStartSound();
+    }
+    advanceSocialLearn(1);
   });
 
   $("btn-ss-quit")?.addEventListener("click", () => {
@@ -2467,6 +2702,11 @@
   $("btn-ss-retry")?.addEventListener("click", async () => {
     await unlockAudio();
     startSocialQuiz();
+  });
+
+  $("btn-ss-learn-again")?.addEventListener("click", async () => {
+    await unlockAudio();
+    startSocialLearn();
   });
 
   // iPad: keep input usable

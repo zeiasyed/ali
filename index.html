@@ -54,7 +54,8 @@
     .badge-card,
     .streak-bar,
     .ss-card,
-    .ss-review-item {
+    .ss-review-item,
+    .ss-lesson-card {
       background: rgba(255, 248, 232, 0.96) !important;
     }
     .hero-brand h1 {
@@ -123,7 +124,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v44 · SS quiz: try again before answer</p>
+        <p class="setup-note" id="app-version-note">App v45 · Social Studies Learning</p>
 
         <label id="difficulty-wrap">
           Difficulty
@@ -253,8 +254,9 @@
       </header>
 
       <div class="ss-actions">
-        <button type="button" class="btn primary big" id="btn-ss-quiz">Start Assessment</button>
-        <button type="button" class="btn secondary" id="btn-ss-study-jump">Study Notes</button>
+        <button type="button" class="btn primary big" id="btn-ss-learn">Start Learning</button>
+        <button type="button" class="btn secondary" id="btn-ss-quiz">Take Assessment</button>
+        <button type="button" class="btn ghost" id="btn-ss-study-jump">Quick Notes</button>
       </div>
 
       <div class="ss-study" id="ss-study">
@@ -292,6 +294,30 @@
       <button type="button" class="btn secondary" data-go="home">Back</button>
     </section>
 
+    <!-- SOCIAL STUDIES · LEARNING -->
+    <section id="screen-ss-learn" class="screen">
+      <div class="play-top">
+        <button type="button" class="btn ghost small" id="btn-ss-learn-quit">Quit</button>
+        <div class="play-meta">
+          <span id="ss-learn-progress">1 of 12</span>
+        </div>
+        <div class="play-score ss-learn-dots" id="ss-learn-dots" aria-hidden="true"></div>
+      </div>
+
+      <article class="ss-lesson-card" id="ss-lesson-card">
+        <p class="ss-lesson-emoji" id="ss-lesson-emoji" aria-hidden="true">🌍</p>
+        <p class="ss-week-badge" id="ss-lesson-badge">Learning</p>
+        <h2 class="ss-lesson-title" id="ss-lesson-title">Title</h2>
+        <div class="ss-lesson-body" id="ss-lesson-body"></div>
+        <p class="ss-lesson-remember" id="ss-lesson-remember"></p>
+      </article>
+
+      <div class="ss-learn-nav">
+        <button type="button" class="btn secondary" id="btn-ss-learn-back">Back</button>
+        <button type="button" class="btn primary" id="btn-ss-learn-next">Next</button>
+      </div>
+    </section>
+
     <section id="screen-ss-quiz" class="screen">
       <div class="play-top">
         <button type="button" class="btn ghost small" id="btn-ss-quit">Quit</button>
@@ -320,7 +346,8 @@
       <div class="ss-review" id="ss-review"></div>
       <div class="actions">
         <button type="button" class="btn primary big" id="btn-ss-retry">Try Again</button>
-        <button type="button" class="btn secondary" data-go="social">Study Notes</button>
+        <button type="button" class="btn secondary" id="btn-ss-learn-again">Learn Again</button>
+        <button type="button" class="btn ghost" data-go="social">Week 7 Home</button>
         <button type="button" class="btn ghost" data-go="home">Home Base</button>
       </div>
     </section>
@@ -424,6 +451,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v44.js"></script>
+  <script src="app-v45.js"></script>
 </body>
 </html>

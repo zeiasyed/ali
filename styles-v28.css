@@ -790,6 +790,100 @@ select, input[type="text"] {
   margin: 0.5rem 0 1.1rem;
 }
 
+.ss-lesson-card {
+  background: rgba(255, 248, 232, 0.97);
+  border: 3px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: var(--shadow);
+  padding: 1.35rem 1.25rem 1.5rem;
+  min-height: min(62dvh, 520px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.ss-lesson-emoji {
+  margin: 0 0 0.35rem;
+  font-size: clamp(3.2rem, 14vw, 4.8rem);
+  line-height: 1;
+}
+
+.ss-lesson-title {
+  margin: 0.15rem 0 0.85rem;
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 8vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+}
+
+.ss-lesson-body {
+  text-align: left;
+  font-weight: 800;
+  font-size: clamp(1.15rem, 4vw, 1.4rem);
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.ss-lesson-body p {
+  margin: 0 0 0.75rem;
+}
+
+.ss-lesson-body p:last-child {
+  margin-bottom: 0;
+}
+
+.ss-lesson-remember {
+  margin: 1.1rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border-radius: 14px;
+  background: #fff3bf;
+  border: 2px solid var(--ink);
+  font-weight: 900;
+  font-size: clamp(1.05rem, 3.6vw, 1.2rem);
+  line-height: 1.35;
+  text-align: left;
+}
+
+.ss-lesson-remember:empty {
+  display: none;
+}
+
+.ss-learn-nav {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr;
+  gap: 0.65rem;
+}
+
+.ss-learn-dots {
+  display: flex;
+  gap: 0.28rem;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  max-width: 7rem;
+}
+
+.ss-learn-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid rgba(0, 0, 0, 0.35);
+}
+
+.ss-learn-dot.on {
+  background: var(--gold);
+  border-color: var(--ink);
+}
+
+.ss-learn-dot.done {
+  background: var(--green);
+  border-color: var(--ink);
+}
+
 .ss-study {
   display: grid;
   gap: 0.85rem;
