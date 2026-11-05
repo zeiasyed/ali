@@ -1433,12 +1433,24 @@
     renderSocialQuizIntro();
   }
 
-  function renderSocialQuizIntro() {
-    renderRobloxBank();
+  function setQuizIntroMode(showIntro) {
     const intro = $("ss-quiz-intro");
     const card = $("ss-quiz-card");
-    if (intro) intro.hidden = false;
-    if (card) card.hidden = true;
+    if (intro) {
+      intro.hidden = !showIntro;
+      intro.style.display = showIntro ? "" : "none";
+      intro.classList.toggle("ss-panel-hidden", !showIntro);
+    }
+    if (card) {
+      card.hidden = !!showIntro;
+      card.style.display = showIntro ? "none" : "";
+      card.classList.toggle("ss-panel-hidden", !!showIntro);
+    }
+  }
+
+  function renderSocialQuizIntro() {
+    renderRobloxBank();
+    setQuizIntroMode(true);
     $("ss-progress").textContent = "Quiz goal";
     $("ss-score").textContent = "0";
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1447,10 +1459,7 @@
   function beginSocialQuizQuestions() {
     if (!ssSession) return;
     ssSession.intro = false;
-    const intro = $("ss-quiz-intro");
-    const card = $("ss-quiz-card");
-    if (intro) intro.hidden = true;
-    if (card) card.hidden = false;
+    setQuizIntroMode(false);
     renderSocialQuestion();
   }
 

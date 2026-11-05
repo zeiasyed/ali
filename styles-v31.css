@@ -870,6 +870,10 @@ select, input[type="text"] {
   margin: 0.25rem 0;
 }
 
+.ss-panel-hidden {
+  display: none !important;
+}
+
 .ss-quiz-intro {
   background: #fffdf6;
   border: 4px solid var(--ink);
@@ -878,6 +882,11 @@ select, input[type="text"] {
   padding: 1.25rem 1.2rem 1.35rem;
   text-align: center;
   margin-bottom: 1rem;
+}
+
+.ss-quiz-intro[hidden],
+.ss-quiz-card[hidden] {
+  display: none !important;
 }
 
 .ss-quiz-intro .ss-lesson-body {
