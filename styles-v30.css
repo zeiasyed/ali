@@ -791,6 +791,120 @@ select, input[type="text"] {
   margin: 0.5rem 0 1.1rem;
 }
 
+.ss-roblox-bank {
+  display: grid;
+  gap: 0.2rem;
+  margin: 0 0 0.9rem;
+  padding: 0.85rem 1rem;
+  background: #fffdf6;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 4px 4px 0 var(--ink);
+  font-family: var(--font-cartoon);
+  text-align: center;
+}
+
+.ss-roblox-label {
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+}
+
+.ss-roblox-bank strong {
+  font-size: 1.55rem;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.ss-roblox-hint {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--muted);
+}
+
+.ss-reward-box {
+  margin: 0.85rem 0 1rem;
+  padding: 1rem 1.05rem;
+  border-radius: 18px;
+  border: 4px solid var(--ink);
+  box-shadow: 4px 4px 0 var(--ink);
+  background: #fffdf6;
+  font-family: var(--font-cartoon);
+  font-weight: 600;
+  text-align: center;
+}
+
+.ss-reward-box.won {
+  background: #7dff9a;
+  border-color: #0b7a35;
+}
+
+.ss-reward-box.ok {
+  background: #fff3bf;
+}
+
+.ss-reward-box.miss {
+  background: #ffe0d6;
+}
+
+.ss-reward-emoji {
+  margin: 0;
+  font-size: 2.4rem;
+}
+
+.ss-reward-title {
+  margin: 0.25rem 0 0.45rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.ss-reward-note {
+  margin: 0.45rem 0 0;
+  font-size: 0.95rem;
+  color: #333;
+}
+
+.ss-reward-box p {
+  margin: 0.25rem 0;
+}
+
+.ss-quiz-intro {
+  background: #fffdf6;
+  border: 4px solid var(--ink);
+  border-radius: 26px;
+  box-shadow: 6px 6px 0 #1a1f36;
+  padding: 1.25rem 1.2rem 1.35rem;
+  text-align: center;
+  margin-bottom: 1rem;
+}
+
+.ss-quiz-intro .ss-lesson-body {
+  margin-bottom: 0.85rem;
+}
+
+.ss-quiz-intro .ss-lesson-remember {
+  margin-bottom: 1rem;
+}
+
+.ss-quiz-intro .btn.big {
+  margin-top: 0.25rem;
+}
+
+.ss-quiz-goal-bar {
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  background: #ffe566;
+  border: 3px solid var(--ink);
+  font-family: var(--font-cartoon);
+  font-weight: 700;
+  font-size: 1.02rem;
+  color: #1a1f36;
+  text-align: center;
+}
+
 #screen-ss-learn {
   position: relative;
 }

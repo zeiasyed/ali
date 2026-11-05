@@ -719,6 +719,9 @@
     return a * b;
   }
 
+  const ROBLOX_REWARD_POINTS = 5;
+  const ROBLOX_PASS_PCT = 90;
+
   function defaultState() {
     return {
       stars: 0,
@@ -731,6 +734,9 @@
       unlockedHeroes: { spiderman: true },
       activeHero: "spiderman",
       facts: {},
+      robloxPoints: 0,
+      robloxLog: [],
+      robloxLastAwardDay: "",
       settings: {
         grade: "2",
         operation: "multiply",
@@ -746,6 +752,71 @@
         roundDigits: "2",
       },
     };
+  }
+
+  function todayKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
+
+  function getRobloxPoints() {
+    return Number(state.robloxPoints) || 0;
+  }
+
+  function renderRobloxBank() {
+    const pts = getRobloxPoints();
+    document.querySelectorAll("[data-roblox-points]").forEach((el) => {
+      el.textContent = String(pts);
+    });
+  }
+
+  /** Award once per day when quiz score meets pass % */
+  function maybeAwardRobloxPoints(pct, right, total) {
+    if (pct < ROBLOX_PASS_PCT) {
+      return { awarded: false, reason: `Need ${ROBLOX_PASS_PCT}% or higher for Roblox points.` };
+    }
+    const day = todayKey();
+    if (state.robloxLastAwardDay === day) {
+      return {
+        awarded: false,
+        already: true,
+        reason: "Already earned today’s Roblox points. Come back tomorrow!",
+      };
+    }
+    state.robloxPoints = getRobloxPoints() + ROBLOX_REWARD_POINTS;
+    state.robloxLastAwardDay = day;
+    if (!Array.isArray(state.robloxLog)) state.robloxLog = [];
+    state.robloxLog.unshift({
+      day,
+      points: ROBLOX_REWARD_POINTS,
+      pct,
+      right,
+      total,
+      week: SS_WEEK.week,
+      title: SS_WEEK.title,
+      at: Date.now(),
+    });
+    state.robloxLog = state.robloxLog.slice(0, 40);
+    saveState();
+    renderRobloxBank();
+    return {
+      awarded: true,
+      points: ROBLOX_REWARD_POINTS,
+      total: getRobloxPoints(),
+      reason: `+${ROBLOX_REWARD_POINTS} Roblox points! Bank: ${getRobloxPoints()}`,
+    };
+  }
+
+  function clearRobloxBank() {
+    if (!confirm(`Clear Ali’s Roblox points bank? (Currently ${getRobloxPoints()} points)`)) {
+      return;
+    }
+    state.robloxPoints = 0;
+    state.robloxLog = [];
+    state.robloxLastAwardDay = "";
+    saveState();
+    renderRobloxBank();
+    renderParent();
   }
 
   function getGradeId() {
@@ -884,6 +955,9 @@
       if (!gradeSkills.includes(merged.settings.operation)) {
         merged.settings.operation = GRADE_PROFILES[merged.settings.grade].defaultOp;
       }
+      if (typeof merged.robloxPoints !== "number") merged.robloxPoints = 0;
+      if (!Array.isArray(merged.robloxLog)) merged.robloxLog = [];
+      if (typeof merged.robloxLastAwardDay !== "string") merged.robloxLastAwardDay = "";
       return merged;
     } catch {
       return defaultState();
@@ -946,7 +1020,10 @@
     if (name === "map") renderMap();
     if (name === "badges") renderBadges();
     if (name === "parent") renderParent();
-    if (name === "social") window.scrollTo({ top: 0, behavior: "smooth" });
+    if (name === "social") {
+      renderRobloxBank();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -1350,8 +1427,30 @@
       answered: false,
       attemptsOnCurrent: 0,
       misses: [],
+      intro: true,
     };
     showScreen("ss-quiz");
+    renderSocialQuizIntro();
+  }
+
+  function renderSocialQuizIntro() {
+    renderRobloxBank();
+    const intro = $("ss-quiz-intro");
+    const card = $("ss-quiz-card");
+    if (intro) intro.hidden = false;
+    if (card) card.hidden = true;
+    $("ss-progress").textContent = "Quiz goal";
+    $("ss-score").textContent = "0";
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function beginSocialQuizQuestions() {
+    if (!ssSession) return;
+    ssSession.intro = false;
+    const intro = $("ss-quiz-intro");
+    const card = $("ss-quiz-card");
+    if (intro) intro.hidden = true;
+    if (card) card.hidden = false;
     renderSocialQuestion();
   }
 
@@ -1366,7 +1465,7 @@
     if (!q || !ssSession) return;
     ssSession.answered = false;
     ssSession.attemptsOnCurrent = 0;
-    document.querySelector(".ss-quiz-card")?.classList.remove("ss-revealed");
+    $("ss-quiz-card")?.classList.remove("ss-revealed");
     $("ss-progress").textContent = `Question ${ssSession.index + 1} of ${ssSession.order.length}`;
     $("ss-score").textContent = String(ssSession.correct);
     $("ss-question-text").textContent = q.text;
@@ -1402,7 +1501,7 @@
 
   function revealSocialAnswer(wrongBtn) {
     const q = currentSsQuestion();
-    const card = $("ss-quiz-card") || document.querySelector(".ss-quiz-card");
+    const card = $("ss-quiz-card");
     card?.classList.add("ss-revealed");
 
     let correctBtn = null;
@@ -1519,14 +1618,53 @@
     const total = ssSession.order.length;
     const right = ssSession.correct;
     const pct = Math.round((right / total) * 100);
+    const reward = maybeAwardRobloxPoints(pct, right, total);
+
     $("ss-results-title").textContent =
-      pct >= 80 ? "Geographer Hero!" : pct >= 60 ? "Nice Exploring!" : "Keep Studying!";
+      pct >= ROBLOX_PASS_PCT
+        ? "Geographer Hero!"
+        : pct >= 70
+          ? "Nice Exploring!"
+          : "Keep Studying!";
     $("ss-results-sub").textContent = `${SS_WEEK.title} · ${right}/${total} correct (${pct}%)`;
     $("ss-results-grid").innerHTML = `
       <div class="stat-card"><span>${right}</span> correct</div>
       <div class="stat-card"><span>${total - right}</span> missed</div>
       <div class="stat-card"><span>${pct}%</span> score</div>
+      <div class="stat-card"><span data-roblox-points>${getRobloxPoints()}</span> Roblox pts</div>
     `;
+
+    const rewardBox = $("ss-reward-box");
+    if (rewardBox) {
+      if (reward.awarded) {
+        rewardBox.hidden = false;
+        rewardBox.className = "ss-reward-box won";
+        rewardBox.innerHTML = `
+          <p class="ss-reward-emoji">🧱</p>
+          <p class="ss-reward-title">You earned ${reward.points} Roblox points!</p>
+          <p>Score ${pct}% (need ${ROBLOX_PASS_PCT}%+). Bank now: <strong>${reward.total}</strong> points.</p>
+          <p class="ss-reward-note">Dad buys the bank at the end of the week.</p>
+        `;
+      } else if (pct >= ROBLOX_PASS_PCT && reward.already) {
+        rewardBox.hidden = false;
+        rewardBox.className = "ss-reward-box ok";
+        rewardBox.innerHTML = `
+          <p class="ss-reward-title">Great score — ${pct}%!</p>
+          <p>${reward.reason}</p>
+          <p>Bank: <strong data-roblox-points>${getRobloxPoints()}</strong> Roblox points</p>
+        `;
+      } else {
+        rewardBox.hidden = false;
+        rewardBox.className = "ss-reward-box miss";
+        rewardBox.innerHTML = `
+          <p class="ss-reward-title">Roblox points: not yet</p>
+          <p>Get <strong>${ROBLOX_PASS_PCT}%</strong> or higher to earn <strong>${ROBLOX_REWARD_POINTS}</strong> Roblox points.</p>
+          <p>You got ${pct}%. Study a bit and try again!</p>
+          <p>Bank: <strong data-roblox-points>${getRobloxPoints()}</strong> points</p>
+        `;
+      }
+    }
+
     const review = $("ss-review");
     if (!ssSession.misses.length) {
       review.innerHTML =
@@ -1550,6 +1688,7 @@
     $("stat-stars").textContent = String(state.stars);
     $("stat-streak").textContent = String(state.bestStreak);
     $("stat-level").textContent = String(levelFromStars(state.stars));
+    renderRobloxBank();
     syncGradeUI(state.settings.grade || "2", { applyDefaults: false });
     if ($("difficulty")) $("difficulty").value = state.settings.difficulty;
     if ($("digit-level")) $("digit-level").value = state.settings.digitLevel || "single";
@@ -2465,7 +2604,31 @@
     const gradeLabel =
       GRADE_PROFILES[state.settings.grade]?.label || "Grade 2";
 
+    const robloxLog = Array.isArray(state.robloxLog) ? state.robloxLog : [];
+    const robloxLogHtml = robloxLog.length
+      ? `<ul>${robloxLog
+          .slice(0, 10)
+          .map(
+            (e) =>
+              `<li>${e.day}: +${e.points} pts · Week ${e.week || "?"} · ${e.pct}% (${e.right}/${e.total})</li>`
+          )
+          .join("")}</ul>`
+      : "<p>No Roblox points earned yet.</p>";
+
     $("parent-summary").innerHTML = `
+      <div class="parent-card">
+        <h3>Roblox points bank</h3>
+        <p style="margin:0 0 0.5rem;font-weight:900;font-size:1.35rem">
+          <span data-roblox-points>${getRobloxPoints()}</span> points to buy
+        </p>
+        <p style="margin:0 0 0.65rem;font-weight:700;color:var(--muted)">
+          Earn ${ROBLOX_REWARD_POINTS} points for a Social Studies quiz at ${ROBLOX_PASS_PCT}%+. Once per day. Buy the bank at week’s end, then clear.
+        </p>
+        ${robloxLogHtml}
+        <button type="button" class="btn secondary" id="btn-clear-roblox" style="margin-top:0.75rem;width:100%">
+          Clear bank (after you buy)
+        </button>
+      </div>
       <div class="parent-card">
         <h3>Overview</h3>
         <ul>
@@ -2535,6 +2698,7 @@
         </p>
       </div>
     `;
+    $("btn-clear-roblox")?.addEventListener("click", clearRobloxBank);
   }
 
   function submitAnswer(guess) {
@@ -2742,6 +2906,11 @@
       ssSession = null;
       showScreen("social");
     }
+  });
+
+  $("btn-ss-quiz-go")?.addEventListener("click", async () => {
+    await unlockAudio();
+    beginSocialQuizQuestions();
   });
 
   $("btn-ss-next")?.addEventListener("click", () => advanceSocialQuiz());

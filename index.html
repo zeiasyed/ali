@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v30.css" />
+  <link rel="stylesheet" href="styles-v31.css" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -127,7 +127,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v48 · 2 tries, clear right answer</p>
+        <p class="setup-note" id="app-version-note">App v49 · Quiz goal shown up front</p>
 
         <label id="difficulty-wrap">
           Difficulty
@@ -256,6 +256,12 @@
         <p class="tagline">Unit: Geography · How do maps help us learn about the Earth?</p>
       </header>
 
+      <div class="ss-roblox-bank" id="ss-roblox-bank">
+        <span class="ss-roblox-label">Roblox points bank</span>
+        <strong><span data-roblox-points>0</span> pts</strong>
+        <span class="ss-roblox-hint">Get 90%+ on the quiz → earn 5 pts (once a day)</span>
+      </div>
+
       <div class="ss-actions">
         <button type="button" class="btn primary big" id="btn-ss-learn">Start Learning</button>
         <button type="button" class="btn secondary" id="btn-ss-quiz">Take Assessment</button>
@@ -336,8 +342,26 @@
         <div class="play-score"><span id="ss-score">0</span> ★</div>
       </div>
 
-      <div class="problem-card ss-quiz-card">
+      <div class="ss-quiz-intro" id="ss-quiz-intro">
+        <p class="ss-lesson-emoji" aria-hidden="true">🧱</p>
+        <p class="ss-lesson-badge">Quiz goal</p>
+        <h2 class="ss-lesson-title">Earn Roblox Points!</h2>
+        <div class="ss-lesson-body">
+          <p>Get <strong>90% or higher</strong> on this quiz.</p>
+          <p>If you do, you earn <strong>5 Roblox points</strong>.</p>
+          <p>Dad will buy your points at the end of the week.</p>
+          <p>You can earn the 5 points <strong>once per day</strong>.</p>
+        </div>
+        <div class="ss-lesson-remember">
+          <span class="ss-remember-label">Bank now</span>
+          <p><span data-roblox-points>0</span> Roblox points saved</p>
+        </div>
+        <button type="button" class="btn primary big" id="btn-ss-quiz-go">Let’s Go!</button>
+      </div>
+
+      <div class="problem-card ss-quiz-card" id="ss-quiz-card" hidden>
         <p class="ss-week-badge">Week 7 Assessment · Thinking Like a Geographer</p>
+        <p class="ss-quiz-goal-bar" id="ss-quiz-goal-bar">Goal: 90%+ = 5 Roblox points</p>
         <p class="problem ss-question" id="ss-question-text">Question</p>
         <p class="ss-prompt" id="ss-prompt"></p>
         <div class="ss-choices" id="ss-choices" role="listbox" aria-label="Answer choices"></div>
@@ -352,6 +376,7 @@
         <p id="ss-results-sub" class="tagline"></p>
       </header>
       <div class="results-grid" id="ss-results-grid"></div>
+      <div class="ss-reward-box" id="ss-reward-box" hidden></div>
       <div class="ss-review" id="ss-review"></div>
       <div class="actions">
         <button type="button" class="btn primary big" id="btn-ss-retry">Try Again</button>
@@ -460,6 +485,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v48.js"></script>
+  <script src="app-v49.js"></script>
 </body>
 </html>
