@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#1e6fff" />
+  <title>Ali Ayaan · Hero Times</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Fredoka:wght@500;600;700&family=Nunito:wght@700;800;900&display=swap" rel="stylesheet" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <link rel="stylesheet" href="styles-v33.css?v=53go" />
+  <style>
+    /* Inline so a cached old styles.css can't hide the background */
+    html, body {
+      background-color: #1a2744 !important;
+    }
+    .page-bg {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100% !important;
+      height: 100% !important;
+      object-fit: cover !important;
+      object-position: center top !important;
+      z-index: 0 !important;
+      pointer-events: none !important;
+    }
+    .page-bg::after { content: none; }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      background: linear-gradient(
+        180deg,
+        rgba(10, 20, 40, 0.25) 0%,
+        rgba(10, 20, 40, 0.15) 45%,
+        rgba(255, 160, 60, 0.2) 100%
+      );
+    }
+    .sky, .burst { display: none !important; }
+    .app { position: relative; z-index: 1; }
+    .setup,
+    .problem-card,
+    .stats-strip div,
+    .parent-card,
+    .stat-card,
+    .map-cell,
+    .badge-card,
+    .streak-bar,
+    .ss-card,
+    .ss-review-item {
+      background: rgba(255, 248, 232, 0.96) !important;
+    }
+    /* Learning cards must stay fully opaque for reading */
+    .ss-lesson-card {
+      background: #fffdf6 !important;
+    }
+    .hero-brand h1 {
+      color: #fff !important;
+      text-shadow: 3px 3px 0 #1a1f36, 0 0 16px rgba(0,0,0,0.5) !important;
+    }
+    .tagline, .cheer, .eyebrow {
+      text-shadow: 1px 1px 0 rgba(0,0,0,0.65) !important;
+    }
+  </style>
+</head>
+<body>
+  <img
+    class="page-bg"
+    src="bg-spiderman.png"
+    alt=""
+    aria-hidden="true"
+    decoding="async"
+  />
+  <div class="sky" aria-hidden="true"></div>
+  <div class="burst" aria-hidden="true"></div>
+
+  <div id="app" class="app">
+    <!-- HOME -->
+    <section id="screen-home" class="screen active">
+      <header class="hero-brand">
+        <p class="eyebrow">Hero Times</p>
+        <h1>ALI AYAAN</h1>
+        <div class="hero-photo-wrap">
+          <img
+            class="hero-photo"
+            src="ali-ayaan.png"
+            alt="Ali Ayaan smiling in Mickey ears"
+            width="320"
+            height="320"
+          />
+        </div>
+        <p class="tagline" id="home-tagline">Power up your math skills!</p>
+      </header>
+
+      <div class="stats-strip" id="home-stats">
+        <div><span id="stat-stars">0</span> stars</div>
+        <div><span id="stat-streak">0</span> streak</div>
+        <div><span id="stat-level">1</span> level</div>
+      </div>
+
+      <form id="setup-form" class="setup">
+        <label>
+          Grade
+          <select id="grade" name="grade">
+            <option value="prek">Pre-K</option>
+            <option value="k">Kindergarten</option>
+            <option value="1">Grade 1</option>
+            <option value="2" selected>Grade 2</option>
+            <option value="3">Grade 3</option>
+            <option value="4">Grade 4</option>
+          </select>
+        </label>
+
+        <label>
+          Skill
+          <select id="operation" name="operation">
+            <option value="multiply" selected>Multiplication</option>
+            <option value="add">Addition</option>
+            <option value="sub">Subtraction</option>
+            <option value="round">Rounding · nearest 10 / 100</option>
+          </select>
+        </label>
+        <p class="setup-note" id="app-version-note">App v53 · open via /go.html</p>
+
+        <label id="difficulty-wrap">
+          Difficulty
+          <select id="difficulty" name="difficulty">
+            <option value="easy">Easy · tables 1–5</option>
+            <option value="medium" selected>Medium · tables 1–10</option>
+            <option value="hard">Hard · tables 1–12</option>
+            <option value="expert">Expert · tables 1–15</option>
+          </select>
+        </label>
+
+        <label id="digit-wrap" hidden>
+          Number size
+          <select id="digit-level" name="digitLevel">
+            <option value="single" selected>Single digit (1–9)</option>
+            <option value="dual">Dual digit (10–99)</option>
+          </select>
+        </label>
+
+        <label id="round-wrap" hidden>
+          Rounding practice
+          <select id="round-preset" name="roundPreset">
+            <option value="10:2">Nearest 10 · 2 digits (10–99)</option>
+            <option value="10:3" selected>Nearest 10 · 3 digits (100–999)</option>
+            <option value="10:4">Nearest 10 · 4 digits (1000–9999)</option>
+            <option value="100:2">Nearest 100 · 2 digits (50–99)</option>
+            <option value="100:3">Nearest 100 · 3 digits (100–999)</option>
+            <option value="100:4">Nearest 100 · 4 digits (1000–9999)</option>
+            <option value="mix:mix">Mix 10s &amp; 100s · all digit sizes</option>
+          </select>
+        </label>
+        <!-- Kept for older saved settings / fallback -->
+        <select id="round-place" hidden aria-hidden="true">
+          <option value="10" selected>10</option>
+          <option value="100">100</option>
+          <option value="mix">mix</option>
+        </select>
+        <select id="round-digits" hidden aria-hidden="true">
+          <option value="2">2</option>
+          <option value="3" selected>3</option>
+          <option value="4">4</option>
+          <option value="mix">mix</option>
+        </select>
+
+        <fieldset class="table-picker" id="table-picker">
+          <legend>Practice tables</legend>
+          <p class="table-hint">Tap the tables to practice (gold = on)</p>
+          <div class="table-actions">
+            <button type="button" class="btn-link" id="tables-all">All</button>
+            <button type="button" class="btn-link" id="tables-none">None</button>
+          </div>
+          <div id="table-chips" class="table-chips" role="group" aria-label="Times tables">
+            <button type="button" class="table-chip" data-table="1" aria-pressed="true">1×</button>
+            <button type="button" class="table-chip" data-table="2" aria-pressed="true">2×</button>
+            <button type="button" class="table-chip" data-table="3" aria-pressed="true">3×</button>
+            <button type="button" class="table-chip" data-table="4" aria-pressed="true">4×</button>
+            <button type="button" class="table-chip" data-table="5" aria-pressed="true">5×</button>
+            <button type="button" class="table-chip" data-table="6" aria-pressed="true">6×</button>
+            <button type="button" class="table-chip" data-table="7" aria-pressed="true">7×</button>
+            <button type="button" class="table-chip" data-table="8" aria-pressed="true">8×</button>
+            <button type="button" class="table-chip" data-table="9" aria-pressed="true">9×</button>
+            <button type="button" class="table-chip" data-table="10" aria-pressed="true">10×</button>
+            <button type="button" class="table-chip" data-table="11" aria-pressed="true">11×</button>
+            <button type="button" class="table-chip" data-table="12" aria-pressed="true">12×</button>
+            <button type="button" class="table-chip" data-table="13" aria-pressed="true">13×</button>
+            <button type="button" class="table-chip" data-table="14" aria-pressed="true">14×</button>
+            <button type="button" class="table-chip" data-table="15" aria-pressed="true">15×</button>
+          </div>
+        </fieldset>
+
+        <label>
+          Mission mode
+          <select id="mode" name="mode">
+            <option value="endless">Endless practice</option>
+            <option value="10">Fixed round · 10 questions</option>
+            <option value="20">Fixed round · 20 questions</option>
+            <option value="timed">Timed challenge · 60 seconds</option>
+          </select>
+        </label>
+
+        <label id="problem-type-wrap">
+          Problem type
+          <select id="problem-type" name="problemType">
+            <option value="product" selected>4 × 3 = ?</option>
+            <option value="missing-b">4 × ? = 12</option>
+            <option value="missing-a">? × 3 = 12</option>
+            <option value="mix">Mix all styles</option>
+          </select>
+        </label>
+
+        <label class="toggle-row">
+          <span>Auto-listen each question</span>
+          <input type="checkbox" id="voice-mode" checked />
+          <span class="switch" aria-hidden="true"></span>
+        </label>
+
+        <label class="toggle-row">
+          <span>Go in order (7×1, 7×2, 7×3…)</span>
+          <input type="checkbox" id="in-order" checked />
+          <span class="switch" aria-hidden="true"></span>
+        </label>
+
+        <label class="toggle-row">
+          <span>Timed · 5 seconds per question</span>
+          <input type="checkbox" id="per-question-timer" />
+          <span class="switch" aria-hidden="true"></span>
+        </label>
+        <p class="setup-note">In order = sequential tables. Timed = 5 seconds each, then next question. Mic listens automatically.</p>
+
+        <button type="submit" class="btn primary big">Start Mission</button>
+      </form>
+
+      <nav class="home-nav">
+        <button type="button" class="btn primary" data-go="social">Social Studies</button>
+        <button type="button" class="btn secondary" data-go="map">Hero Map</button>
+        <button type="button" class="btn secondary" data-go="badges">Heroes</button>
+        <button type="button" class="btn ghost" data-go="parent">Parent</button>
+      </nav>
+    </section>
+
+    <!-- SOCIAL STUDIES · WEEK 7 -->
+    <section id="screen-social" class="screen">
+      <header class="hero-brand compact">
+        <p class="eyebrow">California Studies Weekly · Week 7</p>
+        <h1 class="ss-title">Thinking Like a Geographer</h1>
+        <p class="tagline">Unit: Geography · How do maps help us learn about the Earth?</p>
+      </header>
+
+      <div class="ss-roblox-bank" id="ss-roblox-bank">
+        <span class="ss-roblox-label">Roblox points bank</span>
+        <strong><span data-roblox-points>0</span> pts</strong>
+        <span class="ss-roblox-hint">Get 90%+ on the quiz ? earn 5 pts (once a day)</span>
+      </div>
+
+      <div class="ss-actions">
+        <button type="button" class="btn primary big" id="btn-ss-learn">Start Learning</button>
+        <button type="button" class="btn secondary" id="btn-ss-quiz">Take Assessment</button>
+        <button type="button" class="btn ghost" id="btn-ss-study-jump">Quick Notes</button>
+      </div>
+
+      <div class="ss-study" id="ss-study">
+        <article class="ss-card">
+          <h3>What are maps &amp; globes?</h3>
+          <ul>
+            <li>A <strong>globe</strong> is a model of the Earth. It shows water, land, and countries.</li>
+            <li>You would travel about <strong>25,000 miles</strong> to go around the Earth.</li>
+            <li><strong>Maps</strong> are models of places. They show sizes, shapes, locations, and distances.</li>
+            <li>Maps can show roads, cities, national parks, landforms, boundaries, and weather.</li>
+          </ul>
+        </article>
+        <article class="ss-card">
+          <h3>Cartographers &amp; map tools</h3>
+          <ul>
+            <li>A <strong>cartographer</strong> creates maps and decides what to include.</li>
+            <li>The <strong>title</strong> tells what the map is about.</li>
+            <li>The <strong>legend</strong> explains symbols and colors.</li>
+            <li>The <strong>compass rose</strong> shows cardinal directions: north, south, east, west.</li>
+            <li>The <strong>scale</strong> helps you tell distance (how far places are).</li>
+          </ul>
+        </article>
+        <article class="ss-card">
+          <h3>Kinds of maps</h3>
+          <ul>
+            <li><strong>Population map</strong> — where people live</li>
+            <li><strong>Political map</strong> — borders between cities, states, and countries</li>
+            <li><strong>Physical map</strong> — natural features (mountains, valleys, lakes, streams)</li>
+            <li><strong>Climate map</strong> — whether a place is usually warm, cold, wet, or dry</li>
+            <li><strong>Climate</strong> is the study of weather over time</li>
+          </ul>
+        </article>
+      </div>
+
+      <button type="button" class="btn secondary" data-go="home">Back</button>
+    </section>
+
+    <!-- SOCIAL STUDIES · LEARNING -->
+    <section id="screen-ss-learn" class="screen">
+      <div class="ss-learn-scrim" aria-hidden="true"></div>
+      <div class="play-top">
+        <button type="button" class="btn ghost small" id="btn-ss-learn-quit">Quit</button>
+        <div class="play-meta">
+          <span id="ss-learn-progress" class="ss-learn-progress">1 of 12</span>
+        </div>
+        <div class="play-score ss-learn-dots" id="ss-learn-dots" aria-hidden="true"></div>
+      </div>
+
+      <article class="ss-lesson-card" id="ss-lesson-card">
+        <div class="ss-lesson-emoji-wrap">
+          <span class="ss-lesson-emoji" id="ss-lesson-emoji" aria-hidden="true">??</span>
+        </div>
+        <p class="ss-lesson-badge" id="ss-lesson-badge">Learning</p>
+        <h2 class="ss-lesson-title" id="ss-lesson-title">Title</h2>
+        <div class="ss-lesson-body" id="ss-lesson-body"></div>
+        <div class="ss-lesson-remember" id="ss-lesson-remember" hidden>
+          <span class="ss-remember-label">Remember</span>
+          <p id="ss-lesson-remember-text"></p>
+        </div>
+      </article>
+
+      <div class="ss-learn-nav">
+        <button type="button" class="btn secondary" id="btn-ss-learn-back">Back</button>
+        <button type="button" class="btn primary" id="btn-ss-learn-next">Next</button>
+      </div>
+    </section>
+
+    <section id="screen-ss-quiz" class="screen">
+      <div class="play-top">
+        <button type="button" class="btn ghost small" id="btn-ss-quit">Quit</button>
+        <div class="play-meta">
+          <span id="ss-progress">Question 1</span>
+          <span id="ss-left" class="ss-left-pill">15 left</span>
+        </div>
+        <div class="play-score"><span id="ss-score">0</span> ?</div>
+      </div>
+
+      <div class="ss-quiz-intro" id="ss-quiz-intro">
+        <p class="ss-lesson-emoji" aria-hidden="true">??</p>
+        <p class="ss-lesson-badge">Quiz goal</p>
+        <h2 class="ss-lesson-title">Earn Roblox Points!</h2>
+        <div class="ss-lesson-body">
+          <p>Get <strong>90% or higher</strong> on this quiz.</p>
+          <p>If you do, you earn <strong>5 Roblox points</strong>.</p>
+          <p>Dad will buy your points at the end of the week.</p>
+          <p>You can earn the 5 points <strong>once per day</strong>.</p>
+          <p id="ss-quiz-intro-extra">Questions change each time you play!</p>
+        </div>
+        <div class="ss-lesson-remember">
+          <span class="ss-remember-label">Bank now</span>
+          <p><span data-roblox-points>0</span> Roblox points saved</p>
+        </div>
+        <button type="button" class="btn primary big" id="btn-ss-quiz-go">Let’s Go!</button>
+      </div>
+
+      <div class="problem-card ss-quiz-card" id="ss-quiz-card" hidden>
+        <p class="ss-week-badge">Week 7 Assessment · Thinking Like a Geographer</p>
+        <p class="ss-quiz-goal-bar" id="ss-quiz-goal-bar">Goal: 90%+ = 5 Roblox points</p>
+        <p class="problem ss-question" id="ss-question-text">Question</p>
+        <p class="ss-prompt" id="ss-prompt"></p>
+        <div class="ss-choices" id="ss-choices" role="listbox" aria-label="Answer choices"></div>
+        <p id="ss-feedback" class="feedback" role="status" aria-live="polite"></p>
+        <button type="button" class="btn primary big" id="btn-ss-next" hidden>Next</button>
+      </div>
+    </section>
+
+    <section id="screen-ss-results" class="screen">
+      <header class="hero-brand compact">
+        <h1 id="ss-results-title">Assessment Complete!</h1>
+        <p id="ss-results-sub" class="tagline"></p>
+      </header>
+      <div class="results-grid" id="ss-results-grid"></div>
+      <div class="ss-reward-box" id="ss-reward-box" hidden></div>
+      <div class="ss-review" id="ss-review"></div>
+      <div class="actions">
+        <button type="button" class="btn primary big" id="btn-ss-retry">Try Again</button>
+        <button type="button" class="btn secondary" id="btn-ss-learn-again">Learn Again</button>
+        <button type="button" class="btn ghost" data-go="social">Week 7 Home</button>
+        <button type="button" class="btn ghost" data-go="home">Home Base</button>
+      </div>
+    </section>
+
+    <!-- PLAY -->
+    <section id="screen-play" class="screen">
+      <div class="play-top">
+        <button type="button" class="btn ghost small" id="btn-quit">Quit</button>
+        <div class="play-meta">
+          <span id="play-progress"></span>
+          <span id="play-timer" hidden></span>
+        </div>
+        <div class="play-score"><span id="play-stars">0</span> ?</div>
+      </div>
+
+      <div class="character-stage">
+        <div id="hero-avatar" class="hero-avatar" data-hero="spiderman">???</div>
+        <p id="hero-cheer" class="cheer">You got this!</p>
+      </div>
+
+      <div class="problem-card" id="problem-card">
+        <p class="problem equation" id="problem-text">3 × 4 = ?</p>
+        <p class="problem-hint" id="problem-hint">Say it or type it — then hit POW!</p>
+        <form id="answer-form" autocomplete="off">
+          <label class="sr-only" for="answer">Your answer</label>
+          <div class="answer-row">
+            <input
+              id="answer"
+              name="answer"
+              type="text"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              enterkeyhint="done"
+              maxlength="6"
+              placeholder="Type here"
+              autocomplete="off"
+              autocapitalize="off"
+              spellcheck="false"
+            />
+            <button type="submit" class="btn primary" id="btn-pow">POW!</button>
+          </div>
+          <button type="button" class="btn say-it" id="btn-mic" aria-label="Microphone">
+            Tap Mic
+          </button>
+        </form>
+        <p id="voice-status" class="voice-status" aria-live="polite"></p>
+        <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
+      </div>
+
+      <div class="streak-bar">
+        Streak <strong id="live-streak">0</strong>
+      </div>
+    </section>
+
+    <!-- RESULTS -->
+    <section id="screen-results" class="screen">
+      <header class="hero-brand compact">
+        <h1 id="results-title">Mission Complete!</h1>
+        <p id="results-sub" class="tagline"></p>
+      </header>
+      <div class="results-grid" id="results-grid"></div>
+      <div class="actions">
+        <button type="button" class="btn primary big" data-go="home">Home Base</button>
+        <button type="button" class="btn secondary" id="btn-again">Play Again</button>
+        <button type="button" class="btn-text" id="btn-reset-results">Reset progress</button>
+      </div>
+    </section>
+
+    <!-- MAP -->
+    <section id="screen-map" class="screen">
+      <header class="hero-brand compact">
+        <h1>Hero Map</h1>
+        <p class="tagline">Conquer the multiplication tables</p>
+      </header>
+      <div id="map-grid" class="map-grid"></div>
+      <button type="button" class="btn secondary" data-go="home">Back</button>
+    </section>
+
+    <!-- BADGES -->
+    <section id="screen-badges" class="screen">
+      <header class="hero-brand compact">
+        <h1>Hero Roster</h1>
+        <p class="tagline">Marvel ? Roblox ? Fortnite unlocks</p>
+      </header>
+      <div id="badge-grid" class="badge-grid"></div>
+      <button type="button" class="btn secondary" data-go="home">Back</button>
+    </section>
+
+    <!-- PARENT -->
+    <section id="screen-parent" class="screen">
+      <header class="hero-brand compact">
+        <h1>Parent Summary</h1>
+        <p class="tagline">Ali Ayaan’s training report</p>
+      </header>
+      <div id="parent-summary" class="parent-panel"></div>
+      <div class="actions">
+        <button type="button" class="btn ghost" id="btn-reset">Reset progress</button>
+        <button type="button" class="btn secondary" data-go="home">Back</button>
+      </div>
+    </section>
+  </div>
+
+  <div id="fx" class="fx" aria-hidden="true"></div>
+  <script src="app-v53.js?v=53go"></script>
+</body>
+</html>
