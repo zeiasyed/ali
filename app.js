@@ -1196,149 +1196,762 @@
     },
   ];
 
-  /** Assessment-style questions matching Studies Weekly (fill-in / MC / T-F) */
-  const SS_QUESTIONS = [
+  /**
+   * Each bank = one skill. Each bank has 4–5 alternate questions.
+   * Every quiz picks ONE random question from each bank, then shuffles order.
+   */
+  const SS_QUESTION_BANKS = [
     {
-      type: "fill",
-      prompt: "Tap the best word:",
-      text: "A __________ is a round model of Earth.",
-      choices: ["map", "globe", "legend", "scale"],
-      answer: "globe",
-      explain: "A globe is a round model of Earth.",
-    },
-    {
-      type: "mc",
-      prompt: "Pick the best answer:",
-      text: "About how far is it around Earth?",
-      choices: ["2,500 miles", "10,000 miles", "25,000 miles", "100,000 miles"],
-      answer: "25,000 miles",
-      explain: "Around Earth is about 25,000 miles.",
-    },
-    {
-      type: "fill",
-      prompt: "Tap the best word:",
-      text: "A person who makes maps is called a __________.",
-      choices: ["historian", "cartographer", "explorer", "geologist"],
-      answer: "cartographer",
-      explain: "A cartographer is a map maker.",
-    },
-    {
-      type: "fill",
-      prompt: "Tap the best word:",
-      text: "The __________ tells what the pictures and colors on a map mean.",
-      choices: ["title", "scale", "legend", "border"],
-      answer: "legend",
-      explain: "The legend tells what map pictures mean.",
-    },
-    {
-      type: "mc",
-      prompt: "Pick the best answer:",
-      text: "What does a compass rose show?",
-      choices: [
-        "How far places are",
-        "Where people live",
-        "North, South, East, West",
-        "Today’s weather",
+      id: "globe",
+      variants: [
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "A __________ is a round model of Earth.",
+          choices: ["map", "globe", "legend", "scale"],
+          answer: "globe",
+          explain: "A globe is a round model of Earth.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "What is a globe?",
+          choices: [
+            "A flat road map",
+            "A round model of Earth",
+            "A weather report",
+            "A list of cities",
+          ],
+          answer: "A round model of Earth",
+          explain: "A globe is a round model of Earth.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "A globe shows water, land, and __________.",
+          choices: ["toys", "countries", "songs", "foods"],
+          answer: "countries",
+          explain: "A globe shows water, land, and countries.",
+        },
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "A globe is shaped like Earth — round.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "Yes — a globe is round like Earth.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which one is a model of the whole Earth?",
+          choices: ["A street map", "A globe", "A book title", "A compass only"],
+          answer: "A globe",
+          explain: "A globe is a model of the whole Earth.",
+        },
       ],
-      answer: "North, South, East, West",
-      explain: "A compass rose shows N, S, E, and W.",
     },
     {
-      type: "fill",
-      prompt: "Tap the best word:",
-      text: "The __________ helps you know how far places are on a map.",
-      choices: ["legend", "title", "compass rose", "scale"],
-      answer: "scale",
-      explain: "Scale means how far.",
-    },
-    {
-      type: "fill",
-      prompt: "Tap the best word:",
-      text: "A __________ map shows where people live.",
-      choices: ["political", "physical", "population", "climate"],
-      answer: "population",
-      explain: "Population map = where people live.",
-    },
-    {
-      type: "fill",
-      prompt: "Tap the best word:",
-      text: "A __________ map shows borders of cities, states, and countries.",
-      choices: ["population", "political", "climate", "road"],
-      answer: "political",
-      explain: "Political map = borders.",
-    },
-    {
-      type: "mc",
-      prompt: "Pick the best answer:",
-      text: "What does a physical map show?",
-      choices: [
-        "Only city names",
-        "Mountains, valleys, lakes, and streams",
-        "Only today’s weather",
-        "How many people live somewhere",
+      id: "distance",
+      variants: [
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "About how far is it around Earth?",
+          choices: ["2,500 miles", "10,000 miles", "25,000 miles", "100,000 miles"],
+          answer: "25,000 miles",
+          explain: "Around Earth is about 25,000 miles.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "To go all the way around Earth is about __________ miles.",
+          choices: ["25", "250", "2,500", "25,000"],
+          answer: "25,000",
+          explain: "Around Earth is about 25,000 miles.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Earth is huge. About how many miles around is it?",
+          choices: ["250 miles", "2,500 miles", "25,000 miles", "250,000 miles"],
+          answer: "25,000 miles",
+          explain: "About 25,000 miles around.",
+        },
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "It is about 25,000 miles around Earth.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "True — about 25,000 miles.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which number matches “around Earth”?",
+          choices: ["25 miles", "250 miles", "2,500 miles", "25,000 miles"],
+          answer: "25,000 miles",
+          explain: "Around Earth ≈ 25,000 miles.",
+        },
       ],
-      answer: "Mountains, valleys, lakes, and streams",
-      explain: "A physical map shows nature — land and water.",
     },
     {
-      type: "fill",
-      prompt: "Tap the best word:",
-      text: "A climate map shows if a place is usually warm, cold, wet, or __________.",
-      choices: ["dry", "loud", "crowded", "flat"],
-      answer: "dry",
-      explain: "Climate maps show warm, cold, wet, or dry.",
-    },
-    {
-      type: "fill",
-      prompt: "Tap the best word:",
-      text: "Climate means weather over __________.",
-      choices: ["one day", "time", "one hour", "maps only"],
-      answer: "time",
-      explain: "Climate = weather over time.",
-    },
-    {
-      type: "tf",
-      prompt: "True or False:",
-      text: "Only one kind of map is useful.",
-      choices: ["TRUE", "FALSE"],
-      answer: "FALSE",
-      explain: "We use many kinds of maps.",
-    },
-    {
-      type: "mc",
-      prompt: "Pick the best answer:",
-      text: "What does a map title tell you?",
-      choices: [
-        "How old the map is",
-        "What the map is about",
-        "Who lives there",
-        "The weather today",
+      id: "cartographer",
+      variants: [
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "A person who makes maps is called a __________.",
+          choices: ["historian", "cartographer", "explorer", "geologist"],
+          answer: "cartographer",
+          explain: "A cartographer is a map maker.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Who makes maps?",
+          choices: ["A cartographer", "A dentist", "A chef", "A pilot only"],
+          answer: "A cartographer",
+          explain: "A cartographer makes maps.",
+        },
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "A cartographer is a map maker.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "True — cartographer = map maker.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Cartographer means __________ maker.",
+          choices: ["cake", "map", "song", "shoe"],
+          answer: "map",
+          explain: "Cartographer = map maker.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Like a writer picks words, a cartographer picks what goes on a __________.",
+          choices: ["map", "pizza", "movie", "song"],
+          answer: "map",
+          explain: "A cartographer chooses what goes on a map.",
+        },
       ],
-      answer: "What the map is about",
-      explain: "The title tells what the map is about.",
     },
     {
-      type: "mc",
-      prompt: "Pick the best answer:",
-      text: "What can a map help you find?",
-      choices: [
-        "Only oceans",
-        "Roads, cities, and parks",
-        "Only one country",
-        "Nothing",
+      id: "legend",
+      variants: [
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "The __________ tells what the pictures and colors on a map mean.",
+          choices: ["title", "scale", "legend", "border"],
+          answer: "legend",
+          explain: "The legend tells what map pictures mean.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "What does a map legend do?",
+          choices: [
+            "Tells how old the map is",
+            "Explains symbols and colors",
+            "Shows only north",
+            "Names the cartographer’s dog",
+          ],
+          answer: "Explains symbols and colors",
+          explain: "The legend explains symbols and colors.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Another name for a map legend is a __________.",
+          choices: ["key", "boat", "cloud", "desk"],
+          answer: "key",
+          explain: "The legend is also called the key.",
+        },
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "The legend explains what map symbols mean.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "True — check the legend for symbol meanings.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Blue means water on many maps. Where do you check that?",
+          choices: ["The legend", "The moon", "The title only", "Nowhere"],
+          answer: "The legend",
+          explain: "The legend explains colors and symbols.",
+        },
       ],
-      answer: "Roads, cities, and parks",
-      explain: "Maps can show roads, cities, and parks.",
     },
     {
-      type: "tf",
-      prompt: "True or False:",
-      text: "A cartographer picks what to put on a map.",
-      choices: ["TRUE", "FALSE"],
-      answer: "TRUE",
-      explain: "Yes — a cartographer chooses what goes on the map.",
+      id: "compass",
+      variants: [
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "What does a compass rose show?",
+          choices: [
+            "How far places are",
+            "Where people live",
+            "North, South, East, West",
+            "Today’s weather",
+          ],
+          answer: "North, South, East, West",
+          explain: "A compass rose shows N, S, E, and W.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "A compass rose shows __________ directions.",
+          choices: ["cardinal", "silly", "tiny", "secret"],
+          answer: "cardinal",
+          explain: "Cardinal directions are N, S, E, W.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which are the four main directions?",
+          choices: [
+            "Up, down, left, right only",
+            "North, South, East, West",
+            "Hot, cold, wet, dry",
+            "Red, blue, green, yellow",
+          ],
+          answer: "North, South, East, West",
+          explain: "Those are the cardinal directions.",
+        },
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "A compass rose helps you find north, south, east, and west.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "True — that’s what a compass rose shows.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Never Eat Soggy Worms helps you remember __________.",
+          choices: ["directions", "animals", "foods", "numbers"],
+          answer: "directions",
+          explain: "N-E-S-W are the directions.",
+        },
+      ],
+    },
+    {
+      id: "scale",
+      variants: [
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "The __________ helps you know how far places are on a map.",
+          choices: ["legend", "title", "compass rose", "scale"],
+          answer: "scale",
+          explain: "Scale means how far.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "What does map scale tell you?",
+          choices: [
+            "Distance (how far)",
+            "The map maker’s age",
+            "Only the color blue",
+            "Who lives there",
+          ],
+          answer: "Distance (how far)",
+          explain: "Scale tells distance.",
+        },
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "Scale helps you know distance on a map.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "True — scale = how far.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "A short line on a map can stand for many real __________.",
+          choices: ["miles", "jokes", "songs", "colors"],
+          answer: "miles",
+          explain: "Scale turns map length into real distance.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Distance means how __________.",
+          choices: ["far", "loud", "funny", "new"],
+          answer: "far",
+          explain: "Distance = how far.",
+        },
+      ],
+    },
+    {
+      id: "population",
+      variants: [
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "A __________ map shows where people live.",
+          choices: ["political", "physical", "population", "climate"],
+          answer: "population",
+          explain: "Population map = where people live.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which map shows where people live?",
+          choices: ["Population map", "Climate map", "Physical map", "Lunch map"],
+          answer: "Population map",
+          explain: "Population = people.",
+        },
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "A population map is about where people live.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "True — population means people.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Busy cities with lots of people show up on a __________ map.",
+          choices: ["population", "dessert", "music", "shoe"],
+          answer: "population",
+          explain: "Population maps show where people live.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Population means __________.",
+          choices: ["people", "rain", "rocks", "roads only"],
+          answer: "people",
+          explain: "Population = people.",
+        },
+      ],
+    },
+    {
+      id: "political",
+      variants: [
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "A __________ map shows borders of cities, states, and countries.",
+          choices: ["population", "political", "climate", "road"],
+          answer: "political",
+          explain: "Political map = borders.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which map shows borders between places?",
+          choices: ["Political map", "Climate map", "Only a globe", "A joke book"],
+          answer: "Political map",
+          explain: "Political maps show borders.",
+        },
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "A political map shows borders.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "True — borders of cities, states, countries.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Borders are __________ between places.",
+          choices: ["lines", "songs", "clouds", "pets"],
+          answer: "lines",
+          explain: "Borders are dividing lines.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "States and countries are shown with borders on a __________ map.",
+          choices: ["political", "bedtime", "funny", "empty"],
+          answer: "political",
+          explain: "Political map = borders.",
+        },
+      ],
+    },
+    {
+      id: "physical",
+      variants: [
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "What does a physical map show?",
+          choices: [
+            "Only city names",
+            "Mountains, valleys, lakes, and streams",
+            "Only today’s weather",
+            "How many people live somewhere",
+          ],
+          answer: "Mountains, valleys, lakes, and streams",
+          explain: "A physical map shows nature — land and water.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "A __________ map shows mountains, valleys, lakes, and streams.",
+          choices: ["political", "physical", "population", "shopping"],
+          answer: "physical",
+          explain: "Physical map = nature features.",
+        },
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "A physical map shows natural features like mountains and lakes.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "True — physical = nature.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which map is best for finding mountains?",
+          choices: ["Physical map", "Population map", "Only a title", "A menu"],
+          answer: "Physical map",
+          explain: "Physical maps show landforms.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Physical maps show __________ features.",
+          choices: ["natural", "cartoon", "secret", "tiny only"],
+          answer: "natural",
+          explain: "Natural features = mountains, lakes, and more.",
+        },
+      ],
+    },
+    {
+      id: "climate-map",
+      variants: [
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "A climate map shows if a place is usually warm, cold, wet, or __________.",
+          choices: ["dry", "loud", "crowded", "flat"],
+          answer: "dry",
+          explain: "Climate maps show warm, cold, wet, or dry.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "What does a climate map show?",
+          choices: [
+            "If a place is usually warm/cold or wet/dry",
+            "Only one road name",
+            "Who made the map yesterday",
+            "How tall a mountain is in inches only",
+          ],
+          answer: "If a place is usually warm/cold or wet/dry",
+          explain: "Climate maps show usual weather patterns.",
+        },
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "A climate map can show if a place is usually dry.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "True — warm, cold, wet, or dry.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which map helps you see if a place is usually hot or cold?",
+          choices: ["Climate map", "Only a legend", "A blank page", "A shoe map"],
+          answer: "Climate map",
+          explain: "Climate maps show usual weather.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Warm, cold, wet, and dry are ideas on a __________ map.",
+          choices: ["climate", "pencil", "lunch", "toy"],
+          answer: "climate",
+          explain: "That’s a climate map.",
+        },
+      ],
+    },
+    {
+      id: "climate-time",
+      variants: [
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Climate means weather over __________.",
+          choices: ["one day", "time", "one hour", "maps only"],
+          answer: "time",
+          explain: "Climate = weather over time.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Climate is weather studied over __________.",
+          choices: ["a long time", "one second", "one sneeze", "never"],
+          answer: "a long time",
+          explain: "Climate = weather over time.",
+        },
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "Climate is just today’s weather.",
+          choices: ["TRUE", "FALSE"],
+          answer: "FALSE",
+          explain: "Climate is weather over a long time.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Today’s rain is weather. Climate is weather over __________.",
+          choices: ["time", "one blink", "one song", "one jump"],
+          answer: "time",
+          explain: "Climate = weather over time.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Weather over a long time is called __________.",
+          choices: ["climate", "lunch", "recess", "glue"],
+          answer: "climate",
+          explain: "Climate = weather over time.",
+        },
+      ],
+    },
+    {
+      id: "many-maps",
+      variants: [
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "Only one kind of map is useful.",
+          choices: ["TRUE", "FALSE"],
+          answer: "FALSE",
+          explain: "We use many kinds of maps.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "How many kinds of maps can be useful?",
+          choices: ["Only one", "Many different kinds", "Zero", "Only funny maps"],
+          answer: "Many different kinds",
+          explain: "Different maps give different information.",
+        },
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "Different maps can show different information.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "True — each map has a job.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Why do we have many map types?",
+          choices: [
+            "Each map gives special information",
+            "Maps are only for decoration",
+            "There is only one map ever",
+            "Maps cannot help us",
+          ],
+          answer: "Each map gives special information",
+          explain: "Each map type has a purpose.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "We use __________ kinds of maps to learn about Earth.",
+          choices: ["many", "zero", "one only forever", "no"],
+          answer: "many",
+          explain: "Many map types help us learn.",
+        },
+      ],
+    },
+    {
+      id: "title",
+      variants: [
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "What does a map title tell you?",
+          choices: [
+            "How old the map is",
+            "What the map is about",
+            "Who lives there",
+            "The weather today",
+          ],
+          answer: "What the map is about",
+          explain: "The title tells what the map is about.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "The __________ is the name of the map.",
+          choices: ["title", "ocean", "pencil", "shoe"],
+          answer: "title",
+          explain: "Title = what the map is about.",
+        },
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "You should read the map title first.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "The title tells what the map is about.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "“California Parks” on a map is most likely the __________.",
+          choices: ["title", "climate", "population only", "wrong answer forever"],
+          answer: "title",
+          explain: "That’s the map’s title.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "The title tells what the map is __________.",
+          choices: ["about", "eating", "singing", "hiding"],
+          answer: "about",
+          explain: "Title = what the map is about.",
+        },
+      ],
+    },
+    {
+      id: "map-uses",
+      variants: [
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "What can a map help you find?",
+          choices: [
+            "Only oceans",
+            "Roads, cities, and parks",
+            "Only one country",
+            "Nothing",
+          ],
+          answer: "Roads, cities, and parks",
+          explain: "Maps can show roads, cities, and parks.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Maps are __________ of places.",
+          choices: ["models", "animals", "jokes", "clouds only"],
+          answer: "models",
+          explain: "Maps are models of places.",
+        },
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "Maps can help people find roads and cities.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "True — maps help us find places.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which can a map show?",
+          choices: [
+            "National parks",
+            "Only dreams",
+            "Only tomorrow’s lottery",
+            "Nothing useful",
+          ],
+          answer: "National parks",
+          explain: "Maps can show parks, roads, cities, and more.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "A map is usually __________ (not round like a globe).",
+          choices: ["flat", "fuzzy", "invisible", "liquid"],
+          answer: "flat",
+          explain: "Maps are flat models of places.",
+        },
+      ],
+    },
+    {
+      id: "cartographer-choice",
+      variants: [
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "A cartographer picks what to put on a map.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "Yes — a cartographer chooses what goes on the map.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Who decides what to include on a map?",
+          choices: [
+            "The cartographer",
+            "A random sock",
+            "Nobody ever",
+            "Only a fish",
+          ],
+          answer: "The cartographer",
+          explain: "The cartographer chooses what to include.",
+        },
+        {
+          type: "tf",
+          prompt: "True or False:",
+          text: "A cartographer has a purpose for the map.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "True — maps are made with a purpose.",
+        },
+        {
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "A cartographer is like a book author because both __________.",
+          choices: [
+            "Choose what to include",
+            "Only draw cats",
+            "Never make choices",
+            "Hide the title always",
+          ],
+          answer: "Choose what to include",
+          explain: "Both choose what matters for their work.",
+        },
+        {
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "A cartographer decides what __________ on a map.",
+          choices: ["matters", "melts", "sleeps", "hides forever"],
+          answer: "matters",
+          explain: "They decide what matters to show.",
+        },
+      ],
     },
   ];
+
+  function pickQuizQuestions() {
+    const picked = SS_QUESTION_BANKS.map((bank) => {
+      const variants = bank.variants || [];
+      const q = variants[Math.floor(Math.random() * variants.length)];
+      return { ...q, bankId: bank.id };
+    });
+    shuffleInPlace(picked);
+    return picked;
+  }
 
   let ssSession = null;
   let ssLearnIndex = 0;
@@ -1418,10 +2031,9 @@
   }
 
   function startSocialQuiz() {
-    const order = SS_QUESTIONS.map((_, i) => i);
-    shuffleInPlace(order);
+    const questions = pickQuizQuestions();
     ssSession = {
-      order,
+      questions,
       index: 0,
       correct: 0,
       answered: false,
@@ -1431,6 +2043,28 @@
     };
     showScreen("ss-quiz");
     renderSocialQuizIntro();
+  }
+
+  function ssQuestionsLeft() {
+    if (!ssSession?.questions?.length) return 0;
+    return Math.max(0, ssSession.questions.length - ssSession.index);
+  }
+
+  function updateSsProgressUi() {
+    if (!ssSession) return;
+    const total = ssSession.questions.length;
+    const left = ssQuestionsLeft();
+    const num = ssSession.index + 1;
+    if (ssSession.intro) {
+      $("ss-progress").textContent = `Quiz · ${total} questions`;
+      if ($("ss-left")) $("ss-left").textContent = `${total} left`;
+      return;
+    }
+    $("ss-progress").textContent = `Question ${num} of ${total}`;
+    if ($("ss-left")) {
+      $("ss-left").textContent = left === 1 ? "1 left" : `${left} left`;
+      $("ss-left").hidden = false;
+    }
   }
 
   function setQuizIntroMode(showIntro) {
@@ -1451,8 +2085,13 @@
   function renderSocialQuizIntro() {
     renderRobloxBank();
     setQuizIntroMode(true);
-    $("ss-progress").textContent = "Quiz goal";
     $("ss-score").textContent = "0";
+    updateSsProgressUi();
+    const total = ssSession?.questions?.length || 0;
+    const introBody = $("ss-quiz-intro-extra");
+    if (introBody) {
+      introBody.textContent = `This quiz has ${total} questions. They change each time you play!`;
+    }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -1464,9 +2103,8 @@
   }
 
   function currentSsQuestion() {
-    if (!ssSession) return null;
-    const qi = ssSession.order[ssSession.index];
-    return SS_QUESTIONS[qi];
+    if (!ssSession?.questions?.length) return null;
+    return ssSession.questions[ssSession.index] || null;
   }
 
   function renderSocialQuestion() {
@@ -1475,7 +2113,7 @@
     ssSession.answered = false;
     ssSession.attemptsOnCurrent = 0;
     $("ss-quiz-card")?.classList.remove("ss-revealed");
-    $("ss-progress").textContent = `Question ${ssSession.index + 1} of ${ssSession.order.length}`;
+    updateSsProgressUi();
     $("ss-score").textContent = String(ssSession.correct);
     $("ss-question-text").textContent = q.text;
     $("ss-prompt").textContent = `${q.prompt || ""} · 2 tries`;
@@ -1485,7 +2123,7 @@
     if (nextBtn) {
       nextBtn.hidden = true;
       nextBtn.textContent =
-        ssSession.index + 1 >= ssSession.order.length ? "See Results" : "Next";
+        ssSession.index + 1 >= ssSession.questions.length ? "See Results" : "Next";
     }
 
     const box = $("ss-choices");
@@ -1615,7 +2253,7 @@
 
   function advanceSocialQuiz() {
     if (!ssSession) return;
-    if (ssSession.index + 1 >= ssSession.order.length) {
+    if (ssSession.index + 1 >= ssSession.questions.length) {
       endSocialQuiz();
       return;
     }
@@ -1624,7 +2262,7 @@
   }
 
   function endSocialQuiz() {
-    const total = ssSession.order.length;
+    const total = ssSession.questions.length;
     const right = ssSession.correct;
     const pct = Math.round((right / total) * 100);
     const reward = maybeAwardRobloxPoints(pct, right, total);

@@ -941,6 +941,20 @@ select, input[type="text"] {
   text-shadow: 1px 1px 0 #1a1f36;
 }
 
+.ss-left-pill {
+  display: inline-block;
+  margin-top: 0.2rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 999px;
+  background: #ffe566;
+  border: 2px solid var(--ink);
+  color: var(--ink);
+  font-family: var(--font-cartoon);
+  font-weight: 700;
+  font-size: 0.9rem;
+  text-shadow: none;
+}
+
 .ss-lesson-card {
   background: #fffdf6;
   border: 4px solid var(--ink);

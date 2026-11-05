@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v32.css" />
+  <link rel="stylesheet" href="styles-v33.css" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -127,7 +127,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v51 · Goal screen starts instantly</p>
+        <p class="setup-note" id="app-version-note">App v52 · Random quiz + questions left</p>
 
         <label id="difficulty-wrap">
           Difficulty
@@ -338,6 +338,7 @@
         <button type="button" class="btn ghost small" id="btn-ss-quit">Quit</button>
         <div class="play-meta">
           <span id="ss-progress">Question 1</span>
+          <span id="ss-left" class="ss-left-pill">15 left</span>
         </div>
         <div class="play-score"><span id="ss-score">0</span> ★</div>
       </div>
@@ -351,6 +352,7 @@
           <p>If you do, you earn <strong>5 Roblox points</strong>.</p>
           <p>Dad will buy your points at the end of the week.</p>
           <p>You can earn the 5 points <strong>once per day</strong>.</p>
+          <p id="ss-quiz-intro-extra">Questions change each time you play!</p>
         </div>
         <div class="ss-lesson-remember">
           <span class="ss-remember-label">Bank now</span>
@@ -485,6 +487,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v51.js"></script>
+  <script src="app-v52.js"></script>
 </body>
 </html>
