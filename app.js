@@ -1366,10 +1366,11 @@
     if (!q || !ssSession) return;
     ssSession.answered = false;
     ssSession.attemptsOnCurrent = 0;
+    document.querySelector(".ss-quiz-card")?.classList.remove("ss-revealed");
     $("ss-progress").textContent = `Question ${ssSession.index + 1} of ${ssSession.order.length}`;
     $("ss-score").textContent = String(ssSession.correct);
     $("ss-question-text").textContent = q.text;
-    $("ss-prompt").textContent = q.prompt || "";
+    $("ss-prompt").textContent = `${q.prompt || ""} · 2 tries`;
     $("ss-feedback").textContent = "";
     $("ss-feedback").className = "feedback";
     const nextBtn = $("btn-ss-next");
@@ -1397,17 +1398,40 @@
     });
   }
 
-  function lockSocialChoices({ revealCorrect = false, wrongBtn = null } = {}) {
+  const SS_MAX_TRIES = 2;
+
+  function revealSocialAnswer(wrongBtn) {
+    const q = currentSsQuestion();
+    const card = $("ss-quiz-card") || document.querySelector(".ss-quiz-card");
+    card?.classList.add("ss-revealed");
+
+    let correctBtn = null;
     [...$("ss-choices").querySelectorAll(".ss-choice")].forEach((el) => {
       el.disabled = true;
-      if (revealCorrect && el.dataset.value === currentSsQuestion()?.answer) {
-        el.classList.add("correct");
-      }
-      if (wrongBtn && el === wrongBtn) {
-        el.classList.add("wrong");
-        el.classList.add("selected");
+      el.classList.remove("selected");
+      if (el.dataset.value === q.answer) {
+        el.classList.add("correct", "ss-answer-pop");
+        el.classList.remove("wrong", "faded");
+        // Make the right answer unmistakable
+        if (!el.querySelector(".ss-right-tag")) {
+          const tag = document.createElement("span");
+          tag.className = "ss-right-tag";
+          tag.textContent = "✓ RIGHT ANSWER";
+          el.prepend(tag);
+        }
+        correctBtn = el;
+      } else {
+        el.classList.add("faded");
+        if (el === wrongBtn || el.classList.contains("wrong")) {
+          el.classList.add("wrong");
+        }
       }
     });
+    if (wrongBtn) {
+      wrongBtn.classList.add("wrong");
+      wrongBtn.classList.remove("faded");
+    }
+    correctBtn?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
 
   async function answerSocial(choice, btn) {
@@ -1416,6 +1440,7 @@
     const q = currentSsQuestion();
     const ok = choice === q.answer;
     ssSession.attemptsOnCurrent += 1;
+    const triesLeft = SS_MAX_TRIES - ssSession.attemptsOnCurrent;
 
     await unlockAudio();
 
@@ -1423,38 +1448,47 @@
       ssSession.answered = true;
       [...$("ss-choices").querySelectorAll(".ss-choice")].forEach((el) => {
         el.disabled = true;
-        if (el.dataset.value === q.answer) el.classList.add("correct");
-        if (el === btn) el.classList.add("selected");
+        if (el.dataset.value === q.answer) {
+          el.classList.add("correct", "ss-answer-pop");
+          if (!el.querySelector(".ss-right-tag")) {
+            const tag = document.createElement("span");
+            tag.className = "ss-right-tag";
+            tag.textContent = "✓ RIGHT ANSWER";
+            el.prepend(tag);
+          }
+        } else {
+          el.classList.add("faded");
+        }
       });
       ssSession.correct += 1;
       $("ss-score").textContent = String(ssSession.correct);
       state.stars += 1;
       saveState();
-      $("ss-feedback").textContent =
+      $("ss-feedback").innerHTML =
         ssSession.attemptsOnCurrent === 1
-          ? `Correct! ${q.explain}`
-          : `You got it! ${q.explain}`;
-      $("ss-feedback").className = "feedback right";
+          ? `<strong>Yes!</strong> ${q.explain}`
+          : `<strong>You got it!</strong> ${q.explain}`;
+      $("ss-feedback").className = "feedback right ss-feedback-banner";
       await playCorrectSound();
       const nextBtn = $("btn-ss-next");
       if (nextBtn) nextBtn.hidden = false;
       return;
     }
 
-    // First miss: do NOT reveal the answer — let him try again
-    if (ssSession.attemptsOnCurrent === 1) {
+    // Attempt 1 of 2: do NOT reveal — try again
+    if (triesLeft > 0) {
       btn.disabled = true;
       btn.classList.add("wrong");
-      btn.classList.add("selected");
-      $("ss-feedback").textContent = "Not quite — try again!";
-      $("ss-feedback").className = "feedback wrong";
+      $("ss-feedback").innerHTML =
+        `<strong>Not quite.</strong> Try again! (${triesLeft} ${triesLeft === 1 ? "try" : "tries"} left)`;
+      $("ss-feedback").className = "feedback wrong ss-feedback-banner";
       await playWrongSound();
       return;
     }
 
-    // Second miss: reveal answer and move on
+    // After 2 misses: reveal the right answer clearly
     ssSession.answered = true;
-    lockSocialChoices({ revealCorrect: true, wrongBtn: btn });
+    revealSocialAnswer(btn);
     if (!ssSession.misses.some((m) => m.text === q.text)) {
       ssSession.misses.push({
         text: q.text,
@@ -1463,8 +1497,9 @@
         explain: q.explain,
       });
     }
-    $("ss-feedback").textContent = `Correct answer: ${q.answer}. ${q.explain}`;
-    $("ss-feedback").className = "feedback wrong";
+    $("ss-feedback").innerHTML =
+      `<strong>Right answer → ${q.answer}</strong><br>${q.explain}`;
+    $("ss-feedback").className = "feedback ss-feedback-reveal";
     await playWrongSound();
     const nextBtn = $("btn-ss-next");
     if (nextBtn) nextBtn.hidden = false;
