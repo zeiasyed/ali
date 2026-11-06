@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v36.css" />
+  <link rel="stylesheet" href="styles-v37.css" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -56,7 +56,8 @@
     .ss-card,
     .ss-review-item,
     .work-pad,
-    .md-range-wrap {
+    .md-range-wrap,
+    .roblox-hud {
       background: rgba(255, 248, 232, 0.96) !important;
     }
     /* Learning cards must stay fully opaque for reading */
@@ -87,6 +88,12 @@
   <div class="burst" aria-hidden="true"></div>
 
   <div id="app" class="app">
+    <div id="roblox-hud" class="roblox-hud" aria-label="Roblox points bank">
+      <span class="roblox-hud-ico" aria-hidden="true">🧱</span>
+      <span class="roblox-hud-label">Roblox</span>
+      <strong><span data-roblox-points>0</span></strong>
+    </div>
+
     <!-- HOME -->
     <section id="screen-home" class="screen active">
       <header class="hero-brand">
@@ -133,7 +140,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v57 · Bigger work pad</p>
+        <p class="setup-note" id="app-version-note">App v58 · Roblox hud</p>
 
         <div id="md-wrap" class="md-range-wrap" hidden>
           <p class="md-range-title">Custom range · multi-digit × single digit</p>
@@ -525,6 +532,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v57.js"></script>
+  <script src="app-v58.js"></script>
 </body>
 </html>

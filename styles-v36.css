@@ -136,6 +136,42 @@ body {
   min-height: 1.4em;
 }
 
+.roblox-hud {
+  position: fixed;
+  top: max(0.5rem, env(safe-area-inset-top, 0px));
+  right: max(0.5rem, env(safe-area-inset-right, 0px));
+  z-index: 80;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.38rem 0.7rem 0.38rem 0.55rem;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: var(--panel);
+  box-shadow: 2px 2px 0 var(--ink);
+  font-family: var(--font-cartoon, var(--font-body));
+  font-weight: 800;
+  font-size: 0.82rem;
+  color: var(--ink);
+  line-height: 1;
+  pointer-events: none;
+}
+
+.roblox-hud-ico {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.roblox-hud-label {
+  opacity: 0.85;
+}
+
+.roblox-hud strong {
+  font-size: 1.12rem;
+  font-weight: 900;
+  letter-spacing: 0.01em;
+}
+
 .stats-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
