@@ -15,6 +15,8 @@
   --font-display: "Bangers", "Fredoka", system-ui, sans-serif;
   --font-body: "Nunito", "Fredoka", system-ui, sans-serif;
   --font-cartoon: "Fredoka", "Nunito", system-ui, sans-serif;
+  /* Clear 1 vs 7 (and I/l) for math prompts + answers */
+  --font-nums: "Atkinson Hyperlegible", "Nunito", system-ui, sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -168,9 +170,11 @@ body {
 }
 
 .roblox-hud strong {
+  font-family: var(--font-nums);
   font-size: 1.85rem;
-  font-weight: 900;
-  letter-spacing: 0.01em;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 .stats-strip {
@@ -498,15 +502,17 @@ select, input[type="text"] {
 
 .problem {
   margin: 0 0 1.15rem;
-  font-family: var(--font-display);
+  font-family: var(--font-nums);
   font-size: clamp(3.2rem, 14vw, 6rem);
-  letter-spacing: 0.04em;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   line-height: 1.05;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 .problem.equation {
   font-size: clamp(2.4rem, 11vw, 4.6rem);
-  letter-spacing: 0.02em;
+  letter-spacing: 0.05em;
 }
 
 .problem.round-prompt {
@@ -538,10 +544,13 @@ select, input[type="text"] {
 
 #answer {
   text-align: center;
+  font-family: var(--font-nums);
   font-size: clamp(2.2rem, 8vw, 3.4rem);
-  font-weight: 900;
+  font-weight: 700;
+  letter-spacing: 0.06em;
   padding: 1.1rem 1rem;
   min-height: 5rem;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 #answer-form .btn.primary {
@@ -1464,7 +1473,10 @@ select, input[type="text"] {
 }
 
 .problem.md-prompt {
+  font-family: var(--font-nums) !important;
   font-size: clamp(1.85rem, 7.5vw, 2.85rem) !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.06em;
   margin-bottom: 0.4rem;
 }
 
@@ -1499,7 +1511,10 @@ body.md-work-mode .answer-row {
 }
 
 body.md-work-mode #answer {
+  font-family: var(--font-nums);
   font-size: clamp(1.2rem, 4.2vw, 1.65rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
   padding: 0.4rem 0.6rem;
   min-height: 2.55rem;
 }
