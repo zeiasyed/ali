@@ -39,7 +39,7 @@
     },
     2: {
       label: "Grade 2",
-      skills: ["add", "sub", "multiply", "round"],
+      skills: ["add", "sub", "multiply", "md-mult", "round"],
       defaultOp: "multiply",
       digitLevel: "dual",
       difficulty: "easy",
@@ -47,7 +47,7 @@
     },
     3: {
       label: "Grade 3",
-      skills: ["add", "sub", "multiply", "round"],
+      skills: ["add", "sub", "multiply", "md-mult", "round"],
       defaultOp: "multiply",
       digitLevel: "dual",
       difficulty: "medium",
@@ -55,7 +55,7 @@
     },
     4: {
       label: "Grade 4",
-      skills: ["add", "sub", "multiply", "round"],
+      skills: ["add", "sub", "multiply", "md-mult", "round"],
       defaultOp: "multiply",
       digitLevel: "dual",
       difficulty: "hard",
@@ -65,6 +65,7 @@
 
   const SKILL_LABELS = {
     multiply: "Multiplication",
+    "md-mult": "Practice · multi-digit ×",
     add: "Addition",
     sub: "Subtraction",
     round: "Rounding · nearest 10 / 100",
@@ -719,6 +720,62 @@
     return a * b;
   }
 
+  function clampInt(n, lo, hi, fallback) {
+    n = Number(n);
+    if (!Number.isFinite(n)) n = fallback;
+    return Math.max(lo, Math.min(hi, Math.round(n)));
+  }
+
+  function readMdRangeSettings() {
+    let bigMin = clampInt($("md-big-min")?.value, 10, 9999, state.settings.mdBigMin || 10);
+    let bigMax = clampInt($("md-big-max")?.value, 10, 9999, state.settings.mdBigMax || 99);
+    let smallMin = clampInt($("md-small-min")?.value, 1, 9, state.settings.mdSmallMin || 2);
+    let smallMax = clampInt($("md-small-max")?.value, 1, 9, state.settings.mdSmallMax || 9);
+    if (bigMax < bigMin) [bigMin, bigMax] = [bigMax, bigMin];
+    if (smallMax < smallMin) [smallMin, smallMax] = [smallMax, smallMin];
+    return { mdBigMin: bigMin, mdBigMax: bigMax, mdSmallMin: smallMin, mdSmallMax: smallMax };
+  }
+
+  function syncMdRangeInputs(settings = state.settings) {
+    if ($("md-big-min")) $("md-big-min").value = String(settings.mdBigMin || 10);
+    if ($("md-big-max")) $("md-big-max").value = String(settings.mdBigMax || 99);
+    if ($("md-small-min")) $("md-small-min").value = String(settings.mdSmallMin || 2);
+    if ($("md-small-max")) $("md-small-max").value = String(settings.mdSmallMax || 9);
+  }
+
+  function randomInRange(min, max) {
+    min = Number(min);
+    max = Number(max);
+    if (max < min) [min, max] = [max, min];
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+  }
+
+  function randomMdMultPair(range) {
+    const single = randomInRange(range.mdSmallMin, range.mdSmallMax);
+    const multi = randomInRange(range.mdBigMin, range.mdBigMax);
+    // Random order so kids see both 5×35 and 35×5
+    if (Math.random() < 0.5) {
+      return {
+        a: single,
+        b: multi,
+        key: factKey(single, multi, "multiply"),
+      };
+    }
+    return {
+      a: multi,
+      b: single,
+      key: factKey(single, multi, "multiply"),
+    };
+  }
+
+  function setWorkPadVisible(visible) {
+    const pad = $("work-pad");
+    if (!pad) return;
+    pad.hidden = !visible;
+    pad.style.display = visible ? "" : "none";
+    document.body.classList.toggle("md-work-mode", !!visible);
+  }
+
   const ROBLOX_REWARD_POINTS = 5;
   const ROBLOX_PASS_PCT = 90;
 
@@ -750,6 +807,10 @@
         problemType: "product",
         roundPlace: "10",
         roundDigits: "2",
+        mdBigMin: 10,
+        mdBigMax: 99,
+        mdSmallMin: 2,
+        mdSmallMax: 9,
       },
     };
   }
@@ -770,8 +831,8 @@
     });
   }
 
-  /** Award once per day when quiz score meets pass % */
-  function maybeAwardRobloxPoints(pct, right, total) {
+  /** Award once per day when score meets pass % (Social Studies or multi-digit practice) */
+  function maybeAwardRobloxPoints(pct, right, total, meta = {}) {
     if (pct < ROBLOX_PASS_PCT) {
       return { awarded: false, reason: `Need ${ROBLOX_PASS_PCT}% or higher for Roblox points.` };
     }
@@ -792,8 +853,8 @@
       pct,
       right,
       total,
-      week: SS_WEEK.week,
-      title: SS_WEEK.title,
+      week: meta.week ?? SS_WEEK.week,
+      title: meta.title || SS_WEEK.title,
       at: Date.now(),
     });
     state.robloxLog = state.robloxLog.slice(0, 40);
@@ -958,6 +1019,10 @@
       if (typeof merged.robloxPoints !== "number") merged.robloxPoints = 0;
       if (!Array.isArray(merged.robloxLog)) merged.robloxLog = [];
       if (typeof merged.robloxLastAwardDay !== "string") merged.robloxLastAwardDay = "";
+      if (typeof merged.settings.mdBigMin !== "number") merged.settings.mdBigMin = 10;
+      if (typeof merged.settings.mdBigMax !== "number") merged.settings.mdBigMax = 99;
+      if (typeof merged.settings.mdSmallMin !== "number") merged.settings.mdSmallMin = 2;
+      if (typeof merged.settings.mdSmallMax !== "number") merged.settings.mdSmallMax = 9;
       return merged;
     } catch {
       return defaultState();
@@ -2337,6 +2402,7 @@
     $("stat-level").textContent = String(levelFromStars(state.stars));
     renderRobloxBank();
     syncGradeUI(state.settings.grade || "2", { applyDefaults: false });
+    syncMdRangeInputs();
     if ($("difficulty")) $("difficulty").value = state.settings.difficulty;
     if ($("digit-level")) $("digit-level").value = state.settings.digitLevel || "single";
     if ($("round-preset")) {
@@ -2371,26 +2437,41 @@
   function syncOperationUI() {
     const op = $("operation")?.value || state.settings.operation || "multiply";
     const isMult = op === "multiply";
+    const isMdMult = op === "md-mult";
     const isRound = op === "round";
     const isAddSub = op === "add" || op === "sub";
 
-    // Rounding must not show multiplication table chips / difficulty
+    // Rounding / multi-digit practice hide table chips
     setSetupVisible($("difficulty-wrap"), isMult);
     setSetupVisible($("table-picker"), isMult);
     setSetupVisible($("digit-wrap"), isAddSub);
     setSetupVisible($("round-wrap"), isRound);
     setSetupVisible($("round-digits-wrap"), false);
-    setSetupVisible($("problem-type-wrap"), !isRound);
-    // In-order (13, 14, 15…) is for tables — rounding should stay random
+    setSetupVisible($("md-wrap"), isMdMult);
+    setSetupVisible($("problem-type-wrap"), !isRound && !isMdMult);
+    // In-order is for tables only
     const inOrderRow = $("in-order")?.closest("label");
-    setSetupVisible(inOrderRow, !isRound);
+    setSetupVisible(inOrderRow, isMult);
+    const timedRow = $("per-question-timer")?.closest("label");
+    setSetupVisible(timedRow, !isMdMult);
+    const modeWrap = $("mode")?.closest("label");
+    if (modeWrap) {
+      setSetupVisible(modeWrap, !isMdMult);
+    }
     if (isRound && $("in-order")) $("in-order").checked = false;
+    if (isMdMult) {
+      if ($("mode")) $("mode").value = "10";
+      if ($("in-order")) $("in-order").checked = false;
+      if ($("per-question-timer")) $("per-question-timer").checked = false;
+      syncMdRangeInputs();
+    }
 
     const tag = $("home-tagline");
     if (tag) {
       if (op === "add") tag.textContent = "Power up your addition!";
       else if (op === "sub") tag.textContent = "Power up your subtraction!";
       else if (op === "round") tag.textContent = "Power up your rounding!";
+      else if (op === "md-mult") tag.textContent = "Practice multi-digit × single digit!";
       else tag.textContent = "Power up your multiplication!";
     }
 
@@ -2400,11 +2481,14 @@
   function updateProblemTypeOptions(operation) {
     const select = $("problem-type");
     if (!select) return;
-    if (operation === "round") {
+    if (operation === "round" || operation === "md-mult") {
       select.innerHTML = "";
       const opt = document.createElement("option");
       opt.value = "product";
-      opt.textContent = "Round to the nearest 10 or 100";
+      opt.textContent =
+        operation === "md-mult"
+          ? "Multi-digit × single digit = ?"
+          : "Round to the nearest 10 or 100";
       select.appendChild(opt);
       select.value = "product";
       return;
@@ -2770,31 +2854,47 @@
     stopTimer();
     stopQuestionTimer();
     const operation = opts.operation || "multiply";
+    const isMdMult = operation === "md-mult";
     const max = DIFFICULTY[opts.difficulty] || 10;
     const digitLevel = opts.digitLevel || "single";
     const roundPlace = opts.roundPlace || "10";
     const roundDigits = opts.roundDigits || "3";
+    const mdRange = {
+      mdBigMin: clampInt(opts.mdBigMin, 10, 9999, 10),
+      mdBigMax: clampInt(opts.mdBigMax, 10, 9999, 99),
+      mdSmallMin: clampInt(opts.mdSmallMin, 1, 9, 2),
+      mdSmallMax: clampInt(opts.mdSmallMax, 1, 9, 9),
+    };
+    if (mdRange.mdBigMax < mdRange.mdBigMin) {
+      [mdRange.mdBigMin, mdRange.mdBigMax] = [mdRange.mdBigMax, mdRange.mdBigMin];
+    }
+    if (mdRange.mdSmallMax < mdRange.mdSmallMin) {
+      [mdRange.mdSmallMin, mdRange.mdSmallMax] = [mdRange.mdSmallMax, mdRange.mdSmallMin];
+    }
     let tables = (opts.tables || [])
       .map(Number)
       .filter((n) => n >= 1 && n <= max)
       .sort((x, y) => x - y);
     if (!tables.length) tables = rangeTables(max);
-    const problemType = operation === "round" ? "product" : opts.problemType || "product";
-    // Rounding always shuffles; sequential order is for times-table drill only
-    const shuffle = operation === "round" ? true : !!opts.shuffle;
-    const perQuestionTimer = !!opts.perQuestionTimer;
+    const problemType =
+      operation === "round" || isMdMult ? "product" : opts.problemType || "product";
+    // Multi-digit practice + rounding always shuffle
+    const shuffle = operation === "round" || isMdMult ? true : !!opts.shuffle;
+    const perQuestionTimer = isMdMult ? false : !!opts.perQuestionTimer;
+    const mode = isMdMult ? "10" : opts.mode;
     const grade = opts.grade && GRADE_PROFILES[opts.grade] ? opts.grade : getGradeId();
-    const queue = shuffle
-      ? null
-      : buildOrderedQueue(
-          operation,
-          max,
-          tables,
-          digitLevel,
-          roundPlace,
-          roundDigits,
-          grade
-        );
+    const queue =
+      shuffle || isMdMult
+        ? null
+        : buildOrderedQueue(
+            operation,
+            max,
+            tables,
+            digitLevel,
+            roundPlace,
+            roundDigits,
+            grade
+          );
 
     session = {
       grade,
@@ -2803,7 +2903,8 @@
       digitLevel,
       roundPlace,
       roundDigits,
-      mode: opts.mode,
+      mdRange,
+      mode,
       shuffle,
       perQuestionTimer,
       tables,
@@ -2812,7 +2913,7 @@
       queue,
       queueIndex: 0,
       asked: 0,
-      target: opts.mode === "10" || opts.mode === "20" ? Number(opts.mode) : null,
+      target: mode === "10" || mode === "20" ? Number(mode) : null,
       correct: 0,
       firstTryCorrect: 0,
       attemptsOnCurrent: 0,
@@ -2833,12 +2934,13 @@
       digitLevel,
       roundPlace,
       roundDigits,
-      mode: opts.mode,
-      shuffle: opts.shuffle,
+      mode,
+      shuffle: isMdMult ? true : opts.shuffle,
       voiceMode: !!opts.voiceMode,
       perQuestionTimer,
       tables,
       problemType,
+      ...mdRange,
     };
     saveState();
 
@@ -2847,11 +2949,14 @@
     $("feedback").textContent = "";
     $("feedback").className = "feedback";
     setVoiceStatus("");
+    setWorkPadVisible(isMdMult);
     updateHeroAvatar();
-    $("hero-cheer").textContent = CHEERS[Math.floor(Math.random() * CHEERS.length)];
+    $("hero-cheer").textContent = isMdMult
+      ? "Show your work, then type the answer!"
+      : CHEERS[Math.floor(Math.random() * CHEERS.length)];
 
     const timerEl = $("play-timer");
-    if (opts.mode === "timed" && !perQuestionTimer) {
+    if (mode === "timed" && !perQuestionTimer) {
       timerEl.hidden = false;
       timerEl.textContent = "60s";
       session.timerId = window.setInterval(() => {
@@ -2953,22 +3058,24 @@
       return;
     }
 
-    const picked = pickQuestion(
-      session.operation,
-      session.max,
-      session.shuffle,
-      session.tables,
-      session.digitLevel,
-      session.roundPlace,
-      session.roundDigits
-    );
-    const promptType = choosePromptType(
-      session.problemType,
-      picked.a,
-      picked.b,
-      session.operation
-    );
-    const formatted = formatProblem(picked.a, picked.b, promptType, session.operation);
+    const opForMath = session.operation === "md-mult" ? "multiply" : session.operation;
+    const picked =
+      session.operation === "md-mult"
+        ? randomMdMultPair(session.mdRange || state.settings)
+        : pickQuestion(
+            session.operation,
+            session.max,
+            session.shuffle,
+            session.tables,
+            session.digitLevel,
+            session.roundPlace,
+            session.roundDigits
+          );
+    const promptType =
+      session.operation === "md-mult"
+        ? "product"
+        : choosePromptType(session.problemType, picked.a, picked.b, session.operation);
+    const formatted = formatProblem(picked.a, picked.b, promptType, opForMath);
     session.current = {
       ...picked,
       a: Number(picked.a),
@@ -2976,7 +3083,10 @@
       promptType,
       expected: Number(formatted.expected),
       display: formatted.display,
-      hint: formatted.hint,
+      hint:
+        session.operation === "md-mult"
+          ? "Write your work below, then type the answer and hit POW!"
+          : formatted.hint,
     };
     session.attemptsOnCurrent = 0;
     session.accepting = true;
@@ -2987,9 +3097,12 @@
     problemEl.textContent = session.current.display;
     problemEl.classList.toggle("equation", session.operation !== "round");
     problemEl.classList.toggle("round-prompt", session.operation === "round");
+    problemEl.classList.toggle("md-prompt", session.operation === "md-mult");
     const hintEl = $("problem-hint");
     if (hintEl) {
-      if (session.operation === "round") {
+      if (session.operation === "md-mult") {
+        hintEl.textContent = "Write your work in the big box, then type the answer!";
+      } else if (session.operation === "round") {
         hintEl.textContent = session.current.hint || "Type or say the rounded number, then POW!";
       } else if (session.perQuestionTimer) {
         hintEl.textContent = `Beat the clock — ${QUESTION_SECS} seconds!`;
@@ -3010,11 +3123,20 @@
     startQuestionTimer();
 
     if (session.target != null) {
-      $("play-progress").textContent = `Q ${session.asked} / ${session.target}`;
+      const left = Math.max(0, session.target - session.asked + 1);
+      $("play-progress").textContent =
+        session.operation === "md-mult"
+          ? `Q ${session.asked} / ${session.target} · ${left} left`
+          : `Q ${session.asked} / ${session.target}`;
     } else if (session.mode === "timed") {
       $("play-progress").textContent = `Solved ${session.correct}`;
     } else {
       $("play-progress").textContent = `Q ${session.asked}`;
+    }
+
+    if ($("btn-mic")) {
+      $("btn-mic").hidden = session.operation === "md-mult";
+      $("btn-mic").style.display = session.operation === "md-mult" ? "none" : "";
     }
 
     focusAnswer();
@@ -3135,27 +3257,79 @@
     stopListening();
     stopTimer();
     stopQuestionTimer();
+    setWorkPadVisible(false);
     state.missionsCompleted += 1;
     unlockRewards();
+
+    const totalQ = Math.max(1, session.correct);
+    const firstTry = session.firstTryCorrect;
+    const accuracy = Math.round((firstTry / totalQ) * 100);
+
+    let reward = null;
+    if (
+      session.operation === "md-mult" &&
+      session.target &&
+      session.correct >= session.target
+    ) {
+      reward = maybeAwardRobloxPoints(accuracy, firstTry, totalQ, {
+        week: "math",
+        title: "Practice · multi-digit ×",
+      });
+    }
+
     saveState();
     setVoiceStatus("");
 
     $("results-title").textContent = title;
-    $("results-sub").textContent = `${CHILD} powered through another mission.`;
-
-    const accuracy =
-      session.correct + (session.asked ? 0 : 0) === 0 && session.correct === 0
-        ? 0
-        : Math.round((session.firstTryCorrect / Math.max(1, session.correct)) * 100);
+    $("results-sub").textContent =
+      session.operation === "md-mult"
+        ? `${CHILD} finished multi-digit × practice · ${accuracy}% first-try`
+        : `${CHILD} powered through another mission.`;
 
     $("results-grid").innerHTML = `
       <div class="stat-card"><strong>${session.sessionStars}</strong>stars earned</div>
       <div class="stat-card"><strong>${session.correct}</strong>solved</div>
       <div class="stat-card"><strong>${session.firstTryCorrect}</strong>first-try hits</div>
-      <div class="stat-card"><strong>${state.bestStreak}</strong>best streak</div>
+      <div class="stat-card"><strong>${accuracy}%</strong>first-try score</div>
+      ${
+        session.operation === "md-mult"
+          ? `<div class="stat-card"><strong data-roblox-points>${getRobloxPoints()}</strong>Roblox pts</div>`
+          : `<div class="stat-card"><strong>${state.bestStreak}</strong>best streak</div>`
+      }
     `;
 
-    void accuracy;
+    let rewardEl = $("math-reward-box");
+    if (!rewardEl) {
+      rewardEl = document.createElement("div");
+      rewardEl.id = "math-reward-box";
+      rewardEl.className = "ss-reward-box";
+      $("results-grid")?.insertAdjacentElement("afterend", rewardEl);
+    }
+    if (session.operation === "md-mult" && reward) {
+      rewardEl.hidden = false;
+      if (reward.awarded) {
+        rewardEl.className = "ss-reward-box won";
+        rewardEl.innerHTML = `
+          <p class="ss-reward-emoji">🧱</p>
+          <p class="ss-reward-title">You earned ${reward.points} Roblox points!</p>
+          <p>First-try score ${accuracy}% (need ${ROBLOX_PASS_PCT}%+). Bank: <strong>${reward.total}</strong></p>
+        `;
+      } else if (accuracy >= ROBLOX_PASS_PCT && reward.already) {
+        rewardEl.className = "ss-reward-box ok";
+        rewardEl.innerHTML = `<p class="ss-reward-title">Great score — ${accuracy}%!</p><p>${reward.reason}</p>`;
+      } else {
+        rewardEl.className = "ss-reward-box miss";
+        rewardEl.innerHTML = `
+          <p class="ss-reward-title">Roblox points: not yet</p>
+          <p>Get <strong>${ROBLOX_PASS_PCT}%</strong> first-try (9 of 10) to earn <strong>${ROBLOX_REWARD_POINTS}</strong> pts.</p>
+          <p>You got ${firstTry}/${totalQ} first-try (${accuracy}%).</p>
+        `;
+      }
+    } else if (rewardEl) {
+      rewardEl.hidden = true;
+      rewardEl.innerHTML = "";
+    }
+
     showScreen("results");
   }
 
@@ -3269,7 +3443,7 @@
           <span data-roblox-points>${getRobloxPoints()}</span> points to buy
         </p>
         <p style="margin:0 0 0.65rem;font-weight:700;color:var(--muted)">
-          Earn ${ROBLOX_REWARD_POINTS} points for a Social Studies quiz at ${ROBLOX_PASS_PCT}%+. Once per day. Buy the bank at week’s end, then clear.
+          Earn ${ROBLOX_REWARD_POINTS} pts for Social Studies or multi-digit × practice at ${ROBLOX_PASS_PCT}%+ (first-try for math). Once per day. Buy the bank at week’s end, then clear.
         </p>
         ${robloxLogHtml}
         <button type="button" class="btn secondary" id="btn-clear-roblox" style="margin-top:0.75rem;width:100%">
@@ -3375,10 +3549,13 @@
       alert("Pick at least one times table (like 2× or 7×).");
       return;
     }
+    const mdRange = operation === "md-mult" ? readMdRangeSettings() : {};
+    if (operation === "md-mult") {
+      syncMdRangeInputs({ ...state.settings, ...mdRange });
+    }
     const voiceOn = !!$("voice-mode")?.checked;
-    await unlockAudio();
-    await playStartSound();
-    if (voiceOn && speechSupported()) {
+    pokeAudio();
+    if (voiceOn && speechSupported() && operation !== "md-mult") {
       await ensureMicAccess();
     }
     startMission({
@@ -3387,10 +3564,11 @@
       difficulty: $("difficulty")?.value || "medium",
       digitLevel: $("digit-level")?.value || "single",
       ...readRoundSettings(),
-      mode: $("mode")?.value || "endless",
-      shuffle: readShuffleSetting(),
-      voiceMode: voiceOn,
-      perQuestionTimer: !!$("per-question-timer")?.checked,
+      ...mdRange,
+      mode: operation === "md-mult" ? "10" : $("mode")?.value || "endless",
+      shuffle: operation === "md-mult" ? true : readShuffleSetting(),
+      voiceMode: operation === "md-mult" ? false : voiceOn,
+      perQuestionTimer: operation === "md-mult" ? false : !!$("per-question-timer")?.checked,
       tables,
       problemType: $("problem-type")?.value || "product",
     });
@@ -3489,6 +3667,10 @@
       digitLevel: state.settings.digitLevel || "single",
       roundPlace: state.settings.roundPlace || "10",
       roundDigits: state.settings.roundDigits || "3",
+      mdBigMin: state.settings.mdBigMin,
+      mdBigMax: state.settings.mdBigMax,
+      mdSmallMin: state.settings.mdSmallMin,
+      mdSmallMax: state.settings.mdSmallMax,
       mode: state.settings.mode,
       shuffle: state.settings.shuffle,
       voiceMode: !!state.settings.voiceMode,

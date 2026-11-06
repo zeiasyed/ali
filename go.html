@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v33.css?v=53go" />
+  <link rel="stylesheet" href="styles-v34.css" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -54,12 +54,17 @@
     .badge-card,
     .streak-bar,
     .ss-card,
-    .ss-review-item {
+    .ss-review-item,
+    .work-pad,
+    .md-range-wrap {
       background: rgba(255, 248, 232, 0.96) !important;
     }
     /* Learning cards must stay fully opaque for reading */
     .ss-lesson-card {
       background: #fffdf6 !important;
+    }
+    .work-pad-surface {
+      background: #fff !important;
     }
     .hero-brand h1 {
       color: #fff !important;
@@ -122,12 +127,36 @@
           Skill
           <select id="operation" name="operation">
             <option value="multiply" selected>Multiplication</option>
+            <option value="md-mult">Practice · multi-digit ×</option>
             <option value="add">Addition</option>
             <option value="sub">Subtraction</option>
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v53 · open via /go.html</p>
+        <p class="setup-note" id="app-version-note">App v54 · open via /go.html</p>
+
+        <div id="md-wrap" class="md-range-wrap" hidden>
+          <p class="md-range-title">Custom range · multi-digit × single digit</p>
+          <p class="setup-note">10 questions · big work space for pencil · 90%+ first-try = 5 Roblox pts</p>
+          <div class="md-range-grid">
+            <label>
+              Big number min
+              <input id="md-big-min" name="mdBigMin" type="number" inputmode="numeric" min="10" max="9999" value="10" />
+            </label>
+            <label>
+              Big number max
+              <input id="md-big-max" name="mdBigMax" type="number" inputmode="numeric" min="10" max="9999" value="99" />
+            </label>
+            <label>
+              Single digit min
+              <input id="md-small-min" name="mdSmallMin" type="number" inputmode="numeric" min="1" max="9" value="2" />
+            </label>
+            <label>
+              Single digit max
+              <input id="md-small-max" name="mdSmallMax" type="number" inputmode="numeric" min="1" max="9" value="9" />
+            </label>
+          </div>
+        </div>
 
         <label id="difficulty-wrap">
           Difficulty
@@ -407,6 +436,10 @@
       <div class="problem-card" id="problem-card">
         <p class="problem equation" id="problem-text">3 × 4 = ?</p>
         <p class="problem-hint" id="problem-hint">Say it or type it — then hit POW!</p>
+        <div id="work-pad" class="work-pad" hidden>
+          <p class="work-pad-label">Show your work (pencil / finger)</p>
+          <div class="work-pad-surface" aria-label="Handwriting workspace"></div>
+        </div>
         <form id="answer-form" autocomplete="off">
           <label class="sr-only" for="answer">Your answer</label>
           <div class="answer-row">
@@ -417,7 +450,7 @@
               inputmode="numeric"
               pattern="[0-9]*"
               enterkeyhint="done"
-              maxlength="6"
+              maxlength="8"
               placeholder="Type here"
               autocomplete="off"
               autocapitalize="off"
@@ -487,6 +520,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v53.js?v=53go"></script>
+  <script src="app-v54.js"></script>
 </body>
 </html>

@@ -1316,3 +1316,91 @@ select, input[type="text"] {
   color: #1f8a4c;
   font-weight: 800;
 }
+
+/* Multi-digit × practice */
+.md-range-wrap {
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 0.85rem 1rem 1rem;
+  margin: 0.35rem 0 0.75rem;
+  background: var(--panel);
+}
+
+.md-range-title {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-cartoon, var(--font-body));
+  font-weight: 800;
+  font-size: 1.05rem;
+}
+
+.md-range-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.65rem;
+}
+
+.md-range-grid input {
+  width: 100%;
+  font-family: var(--font-body);
+  font-weight: 800;
+  font-size: 1.1rem;
+  padding: 0.65rem 0.75rem;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+}
+
+.work-pad {
+  margin: 0.35rem 0 1rem;
+  padding: 0.65rem;
+  border: 3px dashed var(--ink);
+  border-radius: 16px;
+  background: #fffdf6;
+}
+
+.work-pad-label {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-cartoon, var(--font-body));
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--muted);
+  text-align: left;
+}
+
+.work-pad-surface {
+  min-height: min(42dvh, 340px);
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  background:
+    repeating-linear-gradient(
+      to bottom,
+      #fff 0,
+      #fff 27px,
+      #d7e7ff 28px
+    );
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.04);
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.problem.md-prompt {
+  font-size: clamp(2.2rem, 10vw, 3.6rem) !important;
+}
+
+body.md-work-mode .character-stage {
+  display: none;
+}
+
+body.md-work-mode #problem-card {
+  padding-top: 1.1rem;
+}
+
+@media (max-width: 520px) {
+  .md-range-grid {
+    grid-template-columns: 1fr;
+  }
+  .work-pad-surface {
+    min-height: min(48dvh, 380px);
+  }
+}
