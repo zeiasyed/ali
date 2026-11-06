@@ -768,12 +768,128 @@
     };
   }
 
+  const workPad = {
+    ready: false,
+    drawing: false,
+    lastX: 0,
+    lastY: 0,
+    ctx: null,
+  };
+
+  function resizeWorkPad() {
+    const canvas = $("work-pad-canvas");
+    const wrap = canvas?.parentElement;
+    if (!canvas || !wrap) return;
+    const rect = wrap.getBoundingClientRect();
+    const cssW = Math.max(1, Math.floor(rect.width));
+    const cssH = Math.max(1, Math.floor(rect.height));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(cssW * dpr);
+    canvas.height = Math.floor(cssH * dpr);
+    canvas.style.width = `${cssW}px`;
+    canvas.style.height = `${cssH}px`;
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#1a1f36";
+    ctx.fillStyle = "#1a1f36";
+    ctx.lineWidth = 4.5;
+    workPad.ctx = ctx;
+  }
+
+  function clearWorkPad() {
+    const canvas = $("work-pad-canvas");
+    if (!canvas) return;
+    if (!workPad.ctx) resizeWorkPad();
+    if (!workPad.ctx) return;
+    const rect = canvas.getBoundingClientRect();
+    workPad.ctx.clearRect(0, 0, rect.width || canvas.width, rect.height || canvas.height);
+  }
+
+  function setupWorkPad() {
+    const canvas = $("work-pad-canvas");
+    if (!canvas || workPad.ready) return;
+    workPad.ready = true;
+
+    const pos = (e) => {
+      const r = canvas.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    };
+
+    canvas.addEventListener(
+      "pointerdown",
+      (e) => {
+        if (e.pointerType === "mouse" && e.button !== 0) return;
+        e.preventDefault();
+        canvas.setPointerCapture(e.pointerId);
+        workPad.drawing = true;
+        const p = pos(e);
+        workPad.lastX = p.x;
+        workPad.lastY = p.y;
+        const ctx = workPad.ctx;
+        if (!ctx) return;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, ctx.lineWidth / 2, 0, Math.PI * 2);
+        ctx.fill();
+      },
+      { passive: false }
+    );
+
+    canvas.addEventListener(
+      "pointermove",
+      (e) => {
+        if (!workPad.drawing) return;
+        e.preventDefault();
+        const p = pos(e);
+        const ctx = workPad.ctx;
+        if (!ctx) return;
+        ctx.beginPath();
+        ctx.moveTo(workPad.lastX, workPad.lastY);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        workPad.lastX = p.x;
+        workPad.lastY = p.y;
+      },
+      { passive: false }
+    );
+
+    const endDraw = (e) => {
+      if (!workPad.drawing) return;
+      workPad.drawing = false;
+      try {
+        canvas.releasePointerCapture(e.pointerId);
+      } catch (_) {
+        /* ignore */
+      }
+    };
+    canvas.addEventListener("pointerup", endDraw);
+    canvas.addEventListener("pointercancel", endDraw);
+    canvas.addEventListener("lostpointercapture", () => {
+      workPad.drawing = false;
+    });
+
+    $("btn-clear-pad")?.addEventListener("click", () => clearWorkPad());
+    window.addEventListener("resize", () => {
+      if ($("work-pad") && !$("work-pad").hidden) resizeWorkPad();
+    });
+  }
+
   function setWorkPadVisible(visible) {
     const pad = $("work-pad");
     if (!pad) return;
     pad.hidden = !visible;
     pad.style.display = visible ? "" : "none";
     document.body.classList.toggle("md-work-mode", !!visible);
+    if (visible) {
+      setupWorkPad();
+      requestAnimationFrame(() => {
+        resizeWorkPad();
+        clearWorkPad();
+      });
+    } else {
+      workPad.drawing = false;
+    }
   }
 
   const ROBLOX_REWARD_POINTS = 5;
@@ -3139,7 +3255,12 @@
       $("btn-mic").style.display = session.operation === "md-mult" ? "none" : "";
     }
 
-    focusAnswer();
+    if (session.operation === "md-mult") {
+      clearWorkPad();
+      focusAnswer();
+    } else {
+      focusAnswer();
+    }
   }
 
   function onWrong() {

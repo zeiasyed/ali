@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v34.css" />
+  <link rel="stylesheet" href="styles-v35.css" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -133,7 +133,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v54 · open via /go.html</p>
+        <p class="setup-note" id="app-version-note">App v55 · open via /go.html</p>
 
         <div id="md-wrap" class="md-range-wrap" hidden>
           <p class="md-range-title">Custom range · multi-digit × single digit</p>
@@ -437,8 +437,13 @@
         <p class="problem equation" id="problem-text">3 × 4 = ?</p>
         <p class="problem-hint" id="problem-hint">Say it or type it — then hit POW!</p>
         <div id="work-pad" class="work-pad" hidden>
-          <p class="work-pad-label">Show your work (pencil / finger)</p>
-          <div class="work-pad-surface" aria-label="Handwriting workspace"></div>
+          <div class="work-pad-head">
+            <p class="work-pad-label">Show your work (pencil / finger)</p>
+            <button type="button" id="btn-clear-pad" class="btn-clear-pad">Clear</button>
+          </div>
+          <div class="work-pad-surface">
+            <canvas id="work-pad-canvas" aria-label="Handwriting workspace"></canvas>
+          </div>
         </div>
         <form id="answer-form" autocomplete="off">
           <label class="sr-only" for="answer">Your answer</label>
@@ -520,6 +525,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v54.js"></script>
+  <script src="app-v55.js"></script>
 </body>
 </html>
