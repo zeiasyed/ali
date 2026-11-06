@@ -1,5 +1,9 @@
 (() => {
   const STORAGE_KEY = "ali-ayaan-hero-times-v1";
+  /** Separate key so Roblox bank survives main-state resets / partial wipes */
+  const ROBLOX_BANK_KEY = "ali-ayaan-roblox-bank-v1";
+  /** One-time restore if bank was wiped (cleared intentionally skips this) */
+  const ROBLOX_FLOOR_FLAG = "ali-ayaan-roblox-floor-10-2026-11-05";
   const CHILD = "Ali Ayaan";
   const MASTERY_STREAK = 5;
   const QUESTION_SECS = 5;
@@ -940,6 +944,74 @@
     return Number(state.robloxPoints) || 0;
   }
 
+  function readRobloxBankStore() {
+    try {
+      const raw = localStorage.getItem(ROBLOX_BANK_KEY);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return {
+        points: Number(parsed.points) || 0,
+        highWater: Number(parsed.highWater) || 0,
+        log: Array.isArray(parsed.log) ? parsed.log : [],
+        lastAwardDay: typeof parsed.lastAwardDay === "string" ? parsed.lastAwardDay : "",
+      };
+    } catch {
+      return null;
+    }
+  }
+
+  function writeRobloxBankStore() {
+    const points = getRobloxPoints();
+    const prev = readRobloxBankStore();
+    const highWater = Math.max(points, prev?.highWater || 0);
+    try {
+      localStorage.setItem(
+        ROBLOX_BANK_KEY,
+        JSON.stringify({
+          points,
+          highWater,
+          log: Array.isArray(state.robloxLog) ? state.robloxLog : [],
+          lastAwardDay: state.robloxLastAwardDay || "",
+          updatedAt: Date.now(),
+        })
+      );
+    } catch {
+      /* ignore quota / private mode */
+    }
+  }
+
+  /** Keep the higher bank if main state and dedicated store disagree */
+  function mergeRobloxFromStores(target) {
+    const bank = readRobloxBankStore();
+    const fromState = Number(target.robloxPoints) || 0;
+    const fromBank = bank ? Number(bank.points) || 0 : 0;
+    const highWater = bank ? Number(bank.highWater) || 0 : 0;
+    const best = Math.max(fromState, fromBank, highWater);
+    target.robloxPoints = best;
+    if (!Array.isArray(target.robloxLog) || !target.robloxLog.length) {
+      target.robloxLog = bank?.log?.length ? bank.log : target.robloxLog || [];
+    }
+    if (!target.robloxLastAwardDay && bank?.lastAwardDay) {
+      target.robloxLastAwardDay = bank.lastAwardDay;
+    }
+    return target;
+  }
+
+  /** Restore wiped bank to 10 once (skip if parent intentionally cleared) */
+  function ensureRobloxFloor() {
+    try {
+      if (localStorage.getItem(ROBLOX_FLOOR_FLAG)) return;
+      if (getRobloxPoints() < 10) {
+        state.robloxPoints = 10;
+      }
+      localStorage.setItem(ROBLOX_FLOOR_FLAG, "1");
+      writeRobloxBankStore();
+      saveState();
+    } catch {
+      /* ignore */
+    }
+  }
+
   function renderRobloxBank() {
     const pts = getRobloxPoints();
     document.querySelectorAll("[data-roblox-points]").forEach((el) => {
@@ -991,6 +1063,21 @@
     state.robloxPoints = 0;
     state.robloxLog = [];
     state.robloxLastAwardDay = "";
+    try {
+      localStorage.setItem(ROBLOX_FLOOR_FLAG, "cleared");
+      localStorage.setItem(
+        ROBLOX_BANK_KEY,
+        JSON.stringify({
+          points: 0,
+          highWater: 0,
+          log: [],
+          lastAwardDay: "",
+          updatedAt: Date.now(),
+        })
+      );
+    } catch {
+      /* ignore */
+    }
     saveState();
     renderRobloxBank();
     renderParent();
@@ -1139,14 +1226,22 @@
       if (typeof merged.settings.mdBigMax !== "number") merged.settings.mdBigMax = 99;
       if (typeof merged.settings.mdSmallMin !== "number") merged.settings.mdSmallMin = 2;
       if (typeof merged.settings.mdSmallMax !== "number") merged.settings.mdSmallMax = 9;
+      mergeRobloxFromStores(merged);
       return merged;
     } catch {
-      return defaultState();
+      const fresh = defaultState();
+      mergeRobloxFromStores(fresh);
+      return fresh;
     }
   }
 
   function saveState() {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch {
+      /* ignore */
+    }
+    writeRobloxBankStore();
   }
 
   function factKey(a, b, operation = "multiply") {
@@ -3803,7 +3898,13 @@
 
   function resetProgress() {
     if (!confirm("Reset all progress for Ali Ayaan?")) return;
-    state = defaultState();
+    const keepRoblox = {
+      robloxPoints: getRobloxPoints(),
+      robloxLog: Array.isArray(state.robloxLog) ? state.robloxLog : [],
+      robloxLastAwardDay: state.robloxLastAwardDay || "",
+    };
+    state = { ...defaultState(), ...keepRoblox };
+    mergeRobloxFromStores(state);
     saveState();
     renderParent();
     renderHome();
@@ -3885,5 +3986,7 @@
     }, 300);
   });
 
+  ensureRobloxFloor();
+  writeRobloxBankStore();
   renderHome();
 })();
