@@ -1,10 +1,11 @@
 (() => {
   const STORAGE_KEY = "ali-ayaan-hero-times-v1";
-  /** Separate key so Roblox bank survives main-state resets / partial wipes */
+  /** Dedicated keys so Roblox bank survives main-state resets / version reloads */
   const ROBLOX_BANK_KEY = "ali-ayaan-roblox-bank-v1";
-  /** One-time restore if bank was wiped (cleared intentionally skips this) */
-  const ROBLOX_FLOOR_FLAG = "ali-ayaan-roblox-floor-30-2026-11-06";
-  const ROBLOX_FLOOR_POINTS = 30;
+  const ROBLOX_BANK_BACKUP_KEY = "ali-ayaan-roblox-bank-backup-v1";
+  /** Parent clear sets this to "cleared"; otherwise floor is always enforced on load */
+  const ROBLOX_FLOOR_FLAG = "ali-ayaan-roblox-floor-45-2026-11-06";
+  const ROBLOX_FLOOR_POINTS = 45;
   const CHILD = "Ali Ayaan";
   const MASTERY_STREAK = 5;
   const QUESTION_SECS = 5;
@@ -1199,10 +1200,17 @@
     return Number(state.robloxPoints) || 0;
   }
 
-  function readRobloxBankStore() {
+  function robloxFloorCleared() {
     try {
-      const raw = localStorage.getItem(ROBLOX_BANK_KEY);
-      if (!raw) return null;
+      return localStorage.getItem(ROBLOX_FLOOR_FLAG) === "cleared";
+    } catch {
+      return false;
+    }
+  }
+
+  function parseRobloxBankRaw(raw) {
+    if (!raw) return null;
+    try {
       const parsed = JSON.parse(raw);
       return {
         points: Number(parsed.points) || 0,
@@ -1215,33 +1223,54 @@
     }
   }
 
-  function writeRobloxBankStore() {
-    const points = getRobloxPoints();
-    const prev = readRobloxBankStore();
-    const highWater = Math.max(points, prev?.highWater || 0);
+  function readRobloxBankStore() {
     try {
-      localStorage.setItem(
-        ROBLOX_BANK_KEY,
-        JSON.stringify({
-          points,
-          highWater,
-          log: Array.isArray(state.robloxLog) ? state.robloxLog : [],
-          lastAwardDay: state.robloxLastAwardDay || "",
-          updatedAt: Date.now(),
-        })
-      );
+      const primary = parseRobloxBankRaw(localStorage.getItem(ROBLOX_BANK_KEY));
+      const backup = parseRobloxBankRaw(localStorage.getItem(ROBLOX_BANK_BACKUP_KEY));
+      if (!primary && !backup) return null;
+      if (!primary) return backup;
+      if (!backup) return primary;
+      const points = Math.max(primary.points, backup.points);
+      const highWater = Math.max(primary.highWater, backup.highWater, points);
+      const log = primary.log?.length ? primary.log : backup.log || [];
+      const lastAwardDay = primary.lastAwardDay || backup.lastAwardDay || "";
+      return { points, highWater, log, lastAwardDay };
+    } catch {
+      return null;
+    }
+  }
+
+  function writeRobloxBankStore() {
+    const prev = readRobloxBankStore();
+    const points = getRobloxPoints();
+    const highWater = Math.max(
+      points,
+      prev?.highWater || 0,
+      robloxFloorCleared() ? 0 : ROBLOX_FLOOR_POINTS
+    );
+    const payload = JSON.stringify({
+      points,
+      highWater,
+      log: Array.isArray(state.robloxLog) ? state.robloxLog : [],
+      lastAwardDay: state.robloxLastAwardDay || "",
+      updatedAt: Date.now(),
+    });
+    try {
+      localStorage.setItem(ROBLOX_BANK_KEY, payload);
+      localStorage.setItem(ROBLOX_BANK_BACKUP_KEY, payload);
     } catch {
       /* ignore quota / private mode */
     }
   }
 
-  /** Keep the higher bank if main state and dedicated store disagree */
+  /** Keep the highest known bank across main state + both dedicated stores + floor */
   function mergeRobloxFromStores(target) {
     const bank = readRobloxBankStore();
     const fromState = Number(target.robloxPoints) || 0;
     const fromBank = bank ? Number(bank.points) || 0 : 0;
     const highWater = bank ? Number(bank.highWater) || 0 : 0;
-    const best = Math.max(fromState, fromBank, highWater);
+    const floor = robloxFloorCleared() ? 0 : ROBLOX_FLOOR_POINTS;
+    const best = Math.max(fromState, fromBank, highWater, floor);
     target.robloxPoints = best;
     if (!Array.isArray(target.robloxLog) || !target.robloxLog.length) {
       target.robloxLog = bank?.log?.length ? bank.log : target.robloxLog || [];
@@ -1252,11 +1281,11 @@
     return target;
   }
 
-  /** Restore wiped bank to 10 once (skip if parent intentionally cleared) */
+  /** On every load: restore max(saved, high-water, floor 45) unless parent cleared */
   function ensureRobloxFloor() {
     try {
-      if (localStorage.getItem(ROBLOX_FLOOR_FLAG) === "cleared") return;
-      if (localStorage.getItem(ROBLOX_FLOOR_FLAG) === "1") return;
+      if (robloxFloorCleared()) return;
+      mergeRobloxFromStores(state);
       if (getRobloxPoints() < ROBLOX_FLOOR_POINTS) {
         state.robloxPoints = ROBLOX_FLOOR_POINTS;
       }
@@ -1315,16 +1344,15 @@
     state.robloxLastAwardDay = "";
     try {
       localStorage.setItem(ROBLOX_FLOOR_FLAG, "cleared");
-      localStorage.setItem(
-        ROBLOX_BANK_KEY,
-        JSON.stringify({
-          points: 0,
-          highWater: 0,
-          log: [],
-          lastAwardDay: "",
-          updatedAt: Date.now(),
-        })
-      );
+      const cleared = JSON.stringify({
+        points: 0,
+        highWater: 0,
+        log: [],
+        lastAwardDay: "",
+        updatedAt: Date.now(),
+      });
+      localStorage.setItem(ROBLOX_BANK_KEY, cleared);
+      localStorage.setItem(ROBLOX_BANK_BACKUP_KEY, cleared);
     } catch {
       /* ignore */
     }
