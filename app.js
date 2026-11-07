@@ -24,7 +24,7 @@
       defaultOp: "add",
       digitLevel: "single",
       difficulty: "easy",
-      roundPreset: "10:2",
+      roundPreset: "mix:2",
     },
     k: {
       label: "Kindergarten",
@@ -32,7 +32,7 @@
       defaultOp: "add",
       digitLevel: "single",
       difficulty: "easy",
-      roundPreset: "10:2",
+      roundPreset: "mix:2",
     },
     1: {
       label: "Grade 1",
@@ -40,7 +40,7 @@
       defaultOp: "add",
       digitLevel: "single",
       difficulty: "easy",
-      roundPreset: "10:2",
+      roundPreset: "mix:2",
     },
     2: {
       label: "Grade 2",
@@ -48,7 +48,7 @@
       defaultOp: "multiply",
       digitLevel: "dual",
       difficulty: "easy",
-      roundPreset: "10:2",
+      roundPreset: "mix:2",
     },
     3: {
       label: "Grade 3",
@@ -56,7 +56,7 @@
       defaultOp: "multiply",
       digitLevel: "dual",
       difficulty: "medium",
-      roundPreset: "10:3",
+      roundPreset: "mix:3",
     },
     4: {
       label: "Grade 4",
@@ -64,7 +64,7 @@
       defaultOp: "multiply",
       digitLevel: "dual",
       difficulty: "hard",
-      roundPreset: "100:3",
+      roundPreset: "mix:mix",
     },
   };
 
@@ -1170,8 +1170,8 @@
         perQuestionTimer: false,
         tables: rangeTables(5),
         problemType: "product",
-        roundPlace: "10",
-        roundDigits: "2",
+        roundPlace: "mix",
+        roundDigits: "3",
         mdBigMin: 10,
         mdBigMax: 99,
         mdSmallMin: 2,
@@ -3326,7 +3326,7 @@
     const isPad = isPadPractice(operation);
     const max = DIFFICULTY[opts.difficulty] || 10;
     const digitLevel = opts.digitLevel || "single";
-    const roundPlace = opts.roundPlace || "10";
+    const roundPlace = opts.roundPlace || (operation === "round" ? "mix" : "10");
     const roundDigits = opts.roundDigits || "3";
     const mdRange = {
       mdBigMin: clampInt(opts.mdBigMin, 10, 9999, 10),

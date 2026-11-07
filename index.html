@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v45.css?v=67" />
+  <link rel="stylesheet" href="styles-v46.css?v=68" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -141,7 +141,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v67 · No daily Roblox cap</p>
+        <p class="setup-note" id="app-version-note">App v68 · Mix rounding 10/100</p>
 
         <div id="md-wrap" class="md-range-wrap" hidden>
           <p class="md-range-title">Custom range · multi-digit × single digit</p>
@@ -211,16 +211,19 @@
           <label>
             Rounding practice
             <select id="round-preset" name="roundPreset">
-              <option value="10:2">Nearest 10 · 2 digits (10–99)</option>
-              <option value="10:3" selected>Nearest 10 · 3 digits (100–999)</option>
-              <option value="10:4">Nearest 10 · 4 digits (1000–9999)</option>
-              <option value="100:2">Nearest 100 · 2 digits (50–99)</option>
-              <option value="100:3">Nearest 100 · 3 digits (100–999)</option>
-              <option value="100:4">Nearest 100 · 4 digits (1000–9999)</option>
-              <option value="mix:mix">Mix 10s &amp; 100s · all digit sizes</option>
+              <option value="mix:2">Mix nearest 10 &amp; 100 · 2 digits</option>
+              <option value="mix:3" selected>Mix nearest 10 &amp; 100 · 3 digits</option>
+              <option value="mix:4">Mix nearest 10 &amp; 100 · 4 digits</option>
+              <option value="mix:mix">Mix nearest 10 &amp; 100 · all digit sizes</option>
+              <option value="10:2">Only nearest 10 · 2 digits</option>
+              <option value="10:3">Only nearest 10 · 3 digits</option>
+              <option value="10:4">Only nearest 10 · 4 digits</option>
+              <option value="100:2">Only nearest 100 · 2 digits</option>
+              <option value="100:3">Only nearest 100 · 3 digits</option>
+              <option value="100:4">Only nearest 100 · 4 digits</option>
             </select>
           </label>
-          <p class="setup-note">10 questions · 90%+ first-try = 5 Roblox pts each round</p>
+          <p class="setup-note">Switches between nearest 10 and 100 · 10 questions · 90%+ first-try = 5 Roblox pts</p>
         </div>
         <!-- Kept for older saved settings / fallback -->
         <select id="round-place" hidden aria-hidden="true">
@@ -582,6 +585,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v67.js?v=67"></script>
+  <script src="app-v68.js?v=68"></script>
 </body>
 </html>
