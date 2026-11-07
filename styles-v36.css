@@ -1713,6 +1713,46 @@ body.md-work-mode #answer-form .btn.primary {
   font-weight: 800;
 }
 
+.ld-vsub {
+  display: inline-block;
+  margin: 0.35rem 0 0.25rem;
+  padding: 0.35rem 0.55rem 0.4rem;
+  border: 2px solid rgba(26, 31, 54, 0.18);
+  border-radius: 10px;
+  background: #fff;
+  font-family: var(--font-nums);
+  font-weight: 700;
+  font-size: 1.2rem;
+  letter-spacing: 0.08em;
+  line-height: 1.15;
+  white-space: pre;
+  text-align: right;
+}
+
+.ld-vsub-row {
+  position: relative;
+}
+
+.ld-vsub-minus {
+  padding-left: 1.1em;
+}
+
+.ld-vsub-op {
+  position: absolute;
+  left: 0;
+  letter-spacing: 0;
+}
+
+.ld-vsub-line {
+  height: 0;
+  margin: 0.12rem 0 0.15rem;
+  border-bottom: 3px solid var(--ink);
+}
+
+.ld-vsub-diff {
+  color: #1f8a4c;
+}
+
 .ld-rem-wrap {
   display: inline-flex;
   align-items: stretch;

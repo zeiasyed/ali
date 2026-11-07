@@ -873,7 +873,9 @@
         ask: `How many ${divisor}s fit in ${working}?`,
         fit: `${qDigit}`,
         multiply: `${qDigit} × ${divisor} = ${product}`,
-        subtract: `${working} − ${product} = ${nextRem}`,
+        subTop: working,
+        subBot: product,
+        subDiff: nextRem,
       };
       if (i < digits.length) {
         const brought = digits[i];
@@ -903,6 +905,19 @@
     };
   }
 
+  function verticalSubtractHtml(top, bot, diff) {
+    const width = Math.max(String(top).length, String(bot).length, String(diff).length);
+    const pad = (n) => String(n).padStart(width, " ");
+    return `
+      <div class="ld-vsub" aria-label="${top} minus ${bot} equals ${diff}">
+        <div class="ld-vsub-row">${pad(top)}</div>
+        <div class="ld-vsub-row ld-vsub-minus"><span class="ld-vsub-op">−</span>${pad(bot)}</div>
+        <div class="ld-vsub-line" aria-hidden="true"></div>
+        <div class="ld-vsub-row ld-vsub-diff">${pad(diff)}</div>
+      </div>
+    `;
+  }
+
   function renderWorkedSolution(dividend, divisor) {
     const work = buildLongDivisionWork(dividend, divisor);
     const stepsHtml = work.steps
@@ -912,7 +927,7 @@
         <p class="ld-step-n">Step ${idx + 1}</p>
         <p><strong>${s.ask}</strong> → <span class="ld-fit">${s.fit}</span></p>
         <p>${s.multiply}</p>
-        <p>${s.subtract}</p>
+        ${verticalSubtractHtml(s.subTop, s.subBot, s.subDiff)}
         ${s.bring ? `<p class="ld-bring">${s.bring}</p>` : ""}
         ${s.left ? `<p class="ld-left">${s.left}</p>` : ""}
       </li>`
