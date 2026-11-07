@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v40.css" />
+  <link rel="stylesheet" href="styles-v41.css" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -141,7 +141,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v61 · open via /go.html</p>
+        <p class="setup-note" id="app-version-note">App v62 · open via /go.html</p>
 
         <div id="md-wrap" class="md-range-wrap" hidden>
           <p class="md-range-title">Custom range · multi-digit × single digit</p>
@@ -167,8 +167,8 @@
         </div>
 
         <div id="long-div-wrap" class="md-range-wrap" hidden>
-          <p class="md-range-title">Custom range · long division (exact answers)</p>
-          <p class="setup-note">10 questions · write in the box · miss 2× ? show work &amp; answer · 90%+ first-try = 5 Roblox pts</p>
+          <p class="md-range-title">Custom range · long division (with remainders)</p>
+          <p class="setup-note">10 questions · quotient + R · miss 2× ? show work &amp; answer · 90%+ first-try = 5 Roblox pts</p>
           <div class="md-range-grid">
             <label>
               Dividend min
@@ -498,6 +498,23 @@
               autocapitalize="off"
               spellcheck="false"
             />
+            <span id="ld-rem-wrap" class="ld-rem-wrap" hidden>
+              <span class="ld-r-mark" aria-hidden="true">R</span>
+              <label class="sr-only" for="answer-rem">Remainder</label>
+              <input
+                id="answer-rem"
+                name="answerRem"
+                type="text"
+                inputmode="numeric"
+                pattern="[0-9]*"
+                enterkeyhint="done"
+                maxlength="2"
+                placeholder="0"
+                autocomplete="off"
+                autocapitalize="off"
+                spellcheck="false"
+              />
+            </span>
             <button type="submit" class="btn primary" id="btn-pow">POW!</button>
           </div>
           <button type="button" class="btn say-it" id="btn-mic" aria-label="Microphone">
@@ -562,6 +579,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v61.js"></script>
+  <script src="app-v62.js"></script>
 </body>
 </html>

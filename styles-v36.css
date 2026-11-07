@@ -1707,3 +1707,73 @@ body.md-work-mode #answer-form .btn.primary {
   font-weight: 800;
   color: var(--muted);
 }
+
+.ld-left {
+  color: #1f8a4c;
+  font-weight: 800;
+}
+
+.ld-rem-wrap {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.ld-r-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-cartoon, var(--font-body));
+  font-weight: 800;
+  font-size: 1.15rem;
+  padding: 0 0.15rem;
+  color: var(--ink);
+}
+
+.ld-r-none {
+  font-size: 0.75em;
+  color: var(--muted);
+  font-weight: 800;
+}
+
+#answer-rem {
+  width: 3.2rem;
+  text-align: center;
+  font-family: var(--font-nums);
+  font-size: clamp(1.2rem, 4.2vw, 1.65rem);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 0.4rem 0.35rem;
+  min-height: 2.55rem;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  background: #fff;
+}
+
+body.ld-answer-mode .answer-row {
+  grid-template-columns: 1fr auto auto;
+}
+
+body.ld-answer-mode #answer.ld-quot-input {
+  min-width: 0;
+}
+
+@media (max-width: 520px) {
+  body.ld-answer-mode .answer-row {
+    grid-template-columns: 1fr auto;
+    grid-template-areas:
+      "quot rem"
+      "pow pow";
+  }
+  body.ld-answer-mode #answer {
+    grid-area: quot;
+  }
+  body.ld-answer-mode .ld-rem-wrap {
+    grid-area: rem;
+  }
+  body.ld-answer-mode #btn-pow {
+    grid-area: pow;
+    width: 100%;
+  }
+}

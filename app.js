@@ -794,26 +794,45 @@
     if ($("ld-by-max")) $("ld-by-max").value = String(settings.ldByMax || 9);
   }
 
-  /** Exact (no remainder) long division: dividend ÷ divisor = quotient */
+  /** Long division with remainders allowed (remainder may be 0). */
   function randomLongDivPair(range) {
     const divisor = randomInRange(range.ldByMin, range.ldByMax);
-    let qMin = Math.ceil(range.ldDivMin / divisor);
-    let qMax = Math.floor(range.ldDivMax / divisor);
-    if (qMin < 1) qMin = 1;
-    if (qMax < qMin) {
-      qMin = 2;
-      qMax = 12;
+    const lo = Math.max(range.ldDivMin, divisor);
+    const hi = Math.max(lo, range.ldDivMax);
+    let dividend = randomInRange(lo, hi);
+    // ~1 in 3 exact so kids practice both with and without leftover
+    if (Math.random() < 0.33) {
+      const qMin = Math.max(1, Math.ceil(lo / divisor));
+      const qMax = Math.max(qMin, Math.floor(hi / divisor));
+      dividend = divisor * randomInRange(qMin, qMax);
     }
-    const quotient = randomInRange(qMin, qMax);
-    const dividend = divisor * quotient;
+    const quotient = Math.floor(dividend / divisor);
+    const remainder = dividend % divisor;
     return {
       a: dividend,
       b: divisor,
       dividend,
       divisor,
       expected: quotient,
+      remainder,
       key: `d:${dividend}/${divisor}`,
     };
+  }
+
+  function setLongDivAnswerUI(visible) {
+    const wrap = $("ld-rem-wrap");
+    const rem = $("answer-rem");
+    const ans = $("answer");
+    if (wrap) wrap.hidden = !visible;
+    if (ans) {
+      ans.placeholder = visible ? "Quotient" : "Type here";
+      ans.classList.toggle("ld-quot-input", !!visible);
+    }
+    if (rem) {
+      rem.value = "";
+      rem.hidden = !visible;
+    }
+    document.body.classList.toggle("ld-answer-mode", !!visible);
   }
 
   function longDivisionDisplayHtml(dividend, divisor) {
@@ -832,9 +851,10 @@
     `;
   }
 
-  /** Step-by-step long division for a 1-digit divisor (exact). */
+  /** Step-by-step long division for a 1-digit divisor (remainder OK). */
   function buildLongDivisionWork(dividend, divisor) {
     const quotient = Math.floor(dividend / divisor);
+    const remainder = dividend % divisor;
     const digits = String(dividend).split("").map(Number);
     const steps = [];
     let i = 0;
@@ -862,6 +882,11 @@
         step.bring = `Bring down ${brought} → ${working}`;
         steps.push(step);
       } else {
+        if (nextRem > 0) {
+          step.left = `Left over (remainder) = ${nextRem}`;
+        } else {
+          step.left = "Nothing left over — remainder = 0";
+        }
         steps.push(step);
         break;
       }
@@ -869,8 +894,12 @@
 
     return {
       quotient,
+      remainder,
       steps,
-      check: `${quotient} × ${divisor} = ${dividend}`,
+      check:
+        remainder > 0
+          ? `${quotient} × ${divisor} + ${remainder} = ${dividend}`
+          : `${quotient} × ${divisor} = ${dividend}`,
     };
   }
 
@@ -885,9 +914,14 @@
         <p>${s.multiply}</p>
         <p>${s.subtract}</p>
         ${s.bring ? `<p class="ld-bring">${s.bring}</p>` : ""}
+        ${s.left ? `<p class="ld-left">${s.left}</p>` : ""}
       </li>`
       )
       .join("");
+    const answerHtml =
+      work.remainder > 0
+        ? `Answer = <strong>${work.quotient}</strong> <span class="ld-r-mark">R</span> <strong>${work.remainder}</strong>`
+        : `Answer = <strong>${work.quotient}</strong> <span class="ld-r-none">R 0</span>`;
     return `
       <p class="ld-worked-title">Here’s the work</p>
       <div class="ld-mini-problem" aria-hidden="true">
@@ -904,7 +938,7 @@
         </span>
       </div>
       <ol class="ld-steps">${stepsHtml}</ol>
-      <p class="ld-answer-big">Answer = <strong>${work.quotient}</strong></p>
+      <p class="ld-answer-big">${answerHtml}</p>
       <p class="ld-check">Check: ${work.check} ✓</p>
     `;
   }
@@ -2896,7 +2930,7 @@
         operation === "md-mult"
           ? "Multi-digit × single digit = ?"
           : operation === "long-div"
-            ? "Long division · type the quotient"
+            ? "Long division · quotient + remainder"
             : "Round to the nearest 10 or 100";
       select.appendChild(opt);
       select.value = "product";
@@ -3377,6 +3411,7 @@
     setVoiceStatus("");
     resetHelpWork();
     setWorkPadVisible(isPad);
+    setLongDivAnswerUI(isLongDiv);
     document.body.classList.toggle("ld-work-mode", isLongDiv);
     updateHeroAvatar();
     $("hero-cheer").textContent = isPad
@@ -3512,10 +3547,12 @@
     let expected;
     let display;
     let hint;
+    let remainder = 0;
     if (isLongDiv) {
       expected = Number(picked.expected);
+      remainder = Number(picked.remainder) || 0;
       display = `${picked.dividend} ÷ ${picked.divisor} = ?`;
-      hint = "Write the long division in the box, then type the quotient!";
+      hint = "Write the long division, then type quotient and R!";
     } else {
       const formatted = formatProblem(picked.a, picked.b, promptType, opForMath);
       expected = Number(formatted.expected);
@@ -3531,6 +3568,7 @@
       b: Number(picked.b),
       promptType,
       expected,
+      remainder,
       display,
       hint,
     };
@@ -3556,7 +3594,7 @@
     const hintEl = $("problem-hint");
     if (hintEl) {
       if (isLongDiv) {
-        hintEl.textContent = "Write in the big box, then type the answer on top!";
+        hintEl.textContent = "Write in the box · type quotient and remainder (R 0 if none)!";
       } else if (isMdMult) {
         hintEl.textContent = "Write your work in the big box, then type the answer!";
       } else if (session.operation === "round") {
@@ -3570,10 +3608,12 @@
       }
     }
     $("answer").value = "";
+    if ($("answer-rem")) $("answer-rem").value = "";
     $("feedback").textContent = "";
     $("feedback").className = "feedback";
     $("problem-card").classList.remove("shake", "pop");
     resetHelpWork();
+    setLongDivAnswerUI(isLongDiv);
     setPowLabel("POW!");
     stopListening();
     setVoiceStatus("");
@@ -3759,6 +3799,7 @@
     saveState();
     setVoiceStatus("");
     document.body.classList.remove("ld-work-mode");
+    setLongDivAnswerUI(false);
     resetHelpWork();
 
     $("results-title").textContent = title;
@@ -4005,7 +4046,7 @@
     $("btn-clear-roblox")?.addEventListener("click", clearRobloxBank);
   }
 
-  function submitAnswer(guess) {
+  function submitAnswer(guess, remGuess) {
     if (!session || session.ended || !session.current) return;
     if (session.waitingNext) return;
     if (session.accepting === false) return;
@@ -4016,10 +4057,19 @@
     const expected = Number(session.current.expected);
     session.attemptsOnCurrent += 1;
 
-    if (guess === expected) onCorrect();
+    let ok = guess === expected;
+    if (session.operation === "long-div") {
+      const remExpected = Number(session.current.remainder) || 0;
+      const rem = Number(remGuess);
+      const remOk = Number.isFinite(rem) && rem === remExpected;
+      ok = ok && remOk;
+    }
+
+    if (ok) onCorrect();
     else {
       onWrong();
       $("answer").value = "";
+      if ($("answer-rem")) $("answer-rem").value = "";
     }
   }
 
@@ -4118,13 +4168,32 @@
 
     const raw = String($("answer").value || "").replace(/[^\d]/g, "");
     if (!raw) {
-      $("feedback").textContent = "Say or type a number, then hit POW!";
+      $("feedback").textContent =
+        session.operation === "long-div"
+          ? "Type the quotient (and R), then hit POW!"
+          : "Say or type a number, then hit POW!";
       $("feedback").className = "feedback wrong";
       return;
     }
 
+    let remGuess = 0;
+    if (session.operation === "long-div") {
+      const remRaw = String($("answer-rem")?.value || "").trim();
+      if (remRaw === "") {
+        remGuess = 0;
+      } else {
+        const cleaned = remRaw.replace(/[^\d]/g, "");
+        if (!cleaned) {
+          $("feedback").textContent = "Type a remainder number (or 0), then POW!";
+          $("feedback").className = "feedback wrong";
+          return;
+        }
+        remGuess = Number(cleaned);
+      }
+    }
+
     await unlockAudio();
-    submitAnswer(Number(raw));
+    submitAnswer(Number(raw), remGuess);
   });
 
   $("btn-mic")?.addEventListener("click", async () => {
