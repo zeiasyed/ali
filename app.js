@@ -82,9 +82,16 @@
     return op === "md-mult" || op === "long-div";
   }
 
-  /** Skills that can earn Roblox on a completed fixed round (90%+ first-try) */
+  /** Every math skill earns Roblox on a completed fixed round (90%+ first-try) */
   function isRobloxSkill(op) {
-    return isPadPractice(op) || op === "round" || op === "multiply";
+    return (
+      op === "add" ||
+      op === "sub" ||
+      op === "multiply" ||
+      op === "md-mult" ||
+      op === "long-div" ||
+      op === "round"
+    );
   }
 
   /** Pad + rounding lock to a fixed 10-question mission */
@@ -97,6 +104,8 @@
     if (op === "md-mult") return "Practice · multi-digit ×";
     if (op === "round") return "Rounding practice";
     if (op === "multiply") return "Multiplication practice";
+    if (op === "add") return "Addition practice";
+    if (op === "sub") return "Subtraction practice";
     return "Math practice";
   }
 
@@ -1497,9 +1506,10 @@
       if (!gradeSkills.includes(merged.settings.operation)) {
         merged.settings.operation = GRADE_PROFILES[merged.settings.grade].defaultOp;
       }
-      // Multiplication defaults to a fixed 10-question round (not endless)
+      // Standard skills default to a fixed 10-question round (not endless)
       if (
-        merged.settings.operation === "multiply" &&
+        isRobloxSkill(merged.settings.operation) &&
+        !locksFixedTenMission(merged.settings.operation) &&
         (merged.settings.mode === "endless" || !merged.settings.mode)
       ) {
         merged.settings.mode = "10";
@@ -2915,8 +2925,10 @@
     if ($("round-digits")) $("round-digits").value = state.settings.roundDigits || "3";
     if ($("mode")) {
       let mode = state.settings.mode || "10";
+      const op = state.settings.operation || $("operation")?.value || "multiply";
       if (
-        (state.settings.operation === "multiply" || $("operation")?.value === "multiply") &&
+        isRobloxSkill(op) &&
+        !locksFixedTenMission(op) &&
         (mode === "endless" || mode === "timed" || !mode)
       ) {
         mode = "10";
@@ -2964,7 +2976,8 @@
     setSetupVisible($("long-div-wrap"), isLongDiv);
     const lockedTen = locksFixedTenMission(op);
     setSetupVisible($("problem-type-wrap"), !isRound && !isPad);
-    setSetupVisible($("mult-roblox-note"), isMult);
+    // Show Roblox note whenever mission mode is visible (add / sub / multiply)
+    setSetupVisible($("mult-roblox-note"), !lockedTen && (isMult || isAddSub));
     // In-order is for tables only
     const inOrderRow = $("in-order")?.closest("label");
     setSetupVisible(inOrderRow, isMult);
@@ -2981,8 +2994,8 @@
       if ($("per-question-timer")) $("per-question-timer").checked = false;
       if (isMdMult) syncMdRangeInputs();
       if (isLongDiv) syncLongDivRangeInputs();
-    } else if (isMult && $("mode")) {
-      // Nudge multiplication toward the Roblox-eligible 10-question round
+    } else if ((isMult || isAddSub) && $("mode")) {
+      // Nudge toward the Roblox-eligible 10-question round
       if ($("mode").value === "endless" || $("mode").value === "timed") {
         $("mode").value = "10";
       }
@@ -3886,15 +3899,9 @@
 
     $("results-title").textContent = title;
     $("results-sub").textContent =
-      session.operation === "md-mult"
-        ? `${CHILD} finished multi-digit × practice · ${accuracy}% first-try`
-        : session.operation === "long-div"
-          ? `${CHILD} finished long division practice · ${accuracy}% first-try`
-          : session.operation === "round"
-            ? `${CHILD} finished rounding practice · ${accuracy}% first-try`
-            : session.operation === "multiply" && session.target
-              ? `${CHILD} finished multiplication · ${accuracy}% first-try`
-              : `${CHILD} powered through another mission.`;
+      session.target && isRobloxSkill(session.operation)
+        ? `${CHILD} finished ${robloxSkillTitle(session.operation).toLowerCase()} · ${accuracy}% first-try`
+        : `${CHILD} powered through another mission.`;
 
     $("results-grid").innerHTML = `
       <div class="stat-card"><strong>${session.sessionStars}</strong>stars earned</div>
@@ -4191,7 +4198,7 @@
       ...readRoundSettings(),
       ...mdRange,
       ...ldRange,
-      mode: lockedTen ? "10" : $("mode")?.value || "endless",
+      mode: lockedTen ? "10" : $("mode")?.value || "10",
       shuffle: padOp || operation === "round" ? true : readShuffleSetting(),
       voiceMode: padOp ? false : voiceOn,
       perQuestionTimer: lockedTen ? false : !!$("per-question-timer")?.checked,
