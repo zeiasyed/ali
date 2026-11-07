@@ -1171,7 +1171,7 @@
         operation: "multiply",
         difficulty: "easy",
         digitLevel: "dual",
-        mode: "endless",
+        mode: "10",
         shuffle: false,
         voiceMode: true,
         perQuestionTimer: false,
@@ -1496,6 +1496,13 @@
       const gradeSkills = GRADE_PROFILES[merged.settings.grade].skills;
       if (!gradeSkills.includes(merged.settings.operation)) {
         merged.settings.operation = GRADE_PROFILES[merged.settings.grade].defaultOp;
+      }
+      // Multiplication defaults to a fixed 10-question round (not endless)
+      if (
+        merged.settings.operation === "multiply" &&
+        (merged.settings.mode === "endless" || !merged.settings.mode)
+      ) {
+        merged.settings.mode = "10";
       }
       if (typeof merged.robloxPoints !== "number") merged.robloxPoints = 0;
       if (!Array.isArray(merged.robloxLog)) merged.robloxLog = [];
@@ -2906,7 +2913,17 @@
     }
     if ($("round-place")) $("round-place").value = state.settings.roundPlace || "10";
     if ($("round-digits")) $("round-digits").value = state.settings.roundDigits || "3";
-    if ($("mode")) $("mode").value = state.settings.mode;
+    if ($("mode")) {
+      let mode = state.settings.mode || "10";
+      if (
+        (state.settings.operation === "multiply" || $("operation")?.value === "multiply") &&
+        (mode === "endless" || mode === "timed" || !mode)
+      ) {
+        mode = "10";
+        state.settings.mode = "10";
+      }
+      $("mode").value = mode;
+    }
     if ($("problem-type")) $("problem-type").value = state.settings.problemType || "product";
     if ($("in-order")) $("in-order").checked = !state.settings.shuffle;
     if ($("per-question-timer")) {
@@ -2917,6 +2934,7 @@
     }
     if ($("shuffle")) $("shuffle").checked = !!state.settings.shuffle;
     if ($("voice-mode")) $("voice-mode").checked = !!state.settings.voiceMode;
+    syncOperationUI();
     updateHeroAvatar();
   }
 
