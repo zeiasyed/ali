@@ -3,7 +3,8 @@
   /** Separate key so Roblox bank survives main-state resets / partial wipes */
   const ROBLOX_BANK_KEY = "ali-ayaan-roblox-bank-v1";
   /** One-time restore if bank was wiped (cleared intentionally skips this) */
-  const ROBLOX_FLOOR_FLAG = "ali-ayaan-roblox-floor-10-2026-11-05";
+  const ROBLOX_FLOOR_FLAG = "ali-ayaan-roblox-floor-20-2026-11-06";
+  const ROBLOX_FLOOR_POINTS = 20;
   const CHILD = "Ali Ayaan";
   const MASTERY_STREAK = 5;
   const QUESTION_SECS = 5;
@@ -1248,13 +1249,15 @@
   /** Restore wiped bank to 10 once (skip if parent intentionally cleared) */
   function ensureRobloxFloor() {
     try {
-      if (localStorage.getItem(ROBLOX_FLOOR_FLAG)) return;
-      if (getRobloxPoints() < 10) {
-        state.robloxPoints = 10;
+      if (localStorage.getItem(ROBLOX_FLOOR_FLAG) === "cleared") return;
+      if (localStorage.getItem(ROBLOX_FLOOR_FLAG) === "1") return;
+      if (getRobloxPoints() < ROBLOX_FLOOR_POINTS) {
+        state.robloxPoints = ROBLOX_FLOOR_POINTS;
       }
       localStorage.setItem(ROBLOX_FLOOR_FLAG, "1");
       writeRobloxBankStore();
       saveState();
+      renderRobloxBank();
     } catch {
       /* ignore */
     }
