@@ -3,8 +3,8 @@
   /** Separate key so Roblox bank survives main-state resets / partial wipes */
   const ROBLOX_BANK_KEY = "ali-ayaan-roblox-bank-v1";
   /** One-time restore if bank was wiped (cleared intentionally skips this) */
-  const ROBLOX_FLOOR_FLAG = "ali-ayaan-roblox-floor-20-2026-11-06";
-  const ROBLOX_FLOOR_POINTS = 20;
+  const ROBLOX_FLOOR_FLAG = "ali-ayaan-roblox-floor-30-2026-11-06";
+  const ROBLOX_FLOOR_POINTS = 30;
   const CHILD = "Ali Ayaan";
   const MASTERY_STREAK = 5;
   const QUESTION_SECS = 5;
@@ -1270,19 +1270,12 @@
     });
   }
 
-  /** Award once per day when score meets pass % (Social Studies or multi-digit practice) */
+  /** Award whenever score meets pass % (no daily limit) */
   function maybeAwardRobloxPoints(pct, right, total, meta = {}) {
     if (pct < ROBLOX_PASS_PCT) {
       return { awarded: false, reason: `Need ${ROBLOX_PASS_PCT}% or higher for Roblox points.` };
     }
     const day = todayKey();
-    if (state.robloxLastAwardDay === day) {
-      return {
-        awarded: false,
-        already: true,
-        reason: "Already earned today’s Roblox points. Come back tomorrow!",
-      };
-    }
     state.robloxPoints = getRobloxPoints() + ROBLOX_REWARD_POINTS;
     state.robloxLastAwardDay = day;
     if (!Array.isArray(state.robloxLog)) state.robloxLog = [];
