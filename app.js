@@ -43,7 +43,7 @@
     },
     2: {
       label: "Grade 2",
-      skills: ["add", "sub", "multiply", "md-mult", "round"],
+      skills: ["add", "sub", "multiply", "md-mult", "long-div", "round"],
       defaultOp: "multiply",
       digitLevel: "dual",
       difficulty: "easy",
@@ -51,7 +51,7 @@
     },
     3: {
       label: "Grade 3",
-      skills: ["add", "sub", "multiply", "md-mult", "round"],
+      skills: ["add", "sub", "multiply", "md-mult", "long-div", "round"],
       defaultOp: "multiply",
       digitLevel: "dual",
       difficulty: "medium",
@@ -59,7 +59,7 @@
     },
     4: {
       label: "Grade 4",
-      skills: ["add", "sub", "multiply", "md-mult", "round"],
+      skills: ["add", "sub", "multiply", "md-mult", "long-div", "round"],
       defaultOp: "multiply",
       digitLevel: "dual",
       difficulty: "hard",
@@ -70,10 +70,15 @@
   const SKILL_LABELS = {
     multiply: "Multiplication",
     "md-mult": "Practice · multi-digit ×",
+    "long-div": "Practice · long division",
     add: "Addition",
     sub: "Subtraction",
     round: "Rounding · nearest 10 / 100",
   };
+
+  function isPadPractice(op) {
+    return op === "md-mult" || op === "long-div";
+  }
 
   const HEROES = [
     // Marvel first
@@ -772,6 +777,181 @@
     };
   }
 
+  function readLongDivRangeSettings() {
+    let divMin = clampInt($("ld-div-min")?.value, 10, 9999, state.settings.ldDivMin || 10);
+    let divMax = clampInt($("ld-div-max")?.value, 10, 9999, state.settings.ldDivMax || 99);
+    let byMin = clampInt($("ld-by-min")?.value, 2, 9, state.settings.ldByMin || 2);
+    let byMax = clampInt($("ld-by-max")?.value, 2, 9, state.settings.ldByMax || 9);
+    if (divMax < divMin) [divMin, divMax] = [divMax, divMin];
+    if (byMax < byMin) [byMin, byMax] = [byMax, byMin];
+    return { ldDivMin: divMin, ldDivMax: divMax, ldByMin: byMin, ldByMax: byMax };
+  }
+
+  function syncLongDivRangeInputs(settings = state.settings) {
+    if ($("ld-div-min")) $("ld-div-min").value = String(settings.ldDivMin || 10);
+    if ($("ld-div-max")) $("ld-div-max").value = String(settings.ldDivMax || 99);
+    if ($("ld-by-min")) $("ld-by-min").value = String(settings.ldByMin || 2);
+    if ($("ld-by-max")) $("ld-by-max").value = String(settings.ldByMax || 9);
+  }
+
+  /** Exact (no remainder) long division: dividend ÷ divisor = quotient */
+  function randomLongDivPair(range) {
+    const divisor = randomInRange(range.ldByMin, range.ldByMax);
+    let qMin = Math.ceil(range.ldDivMin / divisor);
+    let qMax = Math.floor(range.ldDivMax / divisor);
+    if (qMin < 1) qMin = 1;
+    if (qMax < qMin) {
+      qMin = 2;
+      qMax = 12;
+    }
+    const quotient = randomInRange(qMin, qMax);
+    const dividend = divisor * quotient;
+    return {
+      a: dividend,
+      b: divisor,
+      dividend,
+      divisor,
+      expected: quotient,
+      key: `d:${dividend}/${divisor}`,
+    };
+  }
+
+  function longDivisionDisplayHtml(dividend, divisor) {
+    return `
+      <span class="ld-figure" aria-label="${dividend} divided by ${divisor}">
+        <span class="ld-top">
+          <span class="ld-gutter" aria-hidden="true"></span>
+          <span class="ld-quot-slot">?</span>
+        </span>
+        <span class="ld-mid">
+          <span class="ld-divisor">${divisor}</span>
+          <span class="ld-rparen" aria-hidden="true">)</span>
+          <span class="ld-dividend">${dividend}</span>
+        </span>
+      </span>
+    `;
+  }
+
+  /** Step-by-step long division for a 1-digit divisor (exact). */
+  function buildLongDivisionWork(dividend, divisor) {
+    const quotient = Math.floor(dividend / divisor);
+    const digits = String(dividend).split("").map(Number);
+    const steps = [];
+    let i = 0;
+    let working = 0;
+
+    while (i < digits.length && working < divisor) {
+      working = working * 10 + digits[i];
+      i += 1;
+    }
+
+    while (true) {
+      const qDigit = Math.floor(working / divisor);
+      const product = qDigit * divisor;
+      const nextRem = working - product;
+      const step = {
+        ask: `How many ${divisor}s fit in ${working}?`,
+        fit: `${qDigit}`,
+        multiply: `${qDigit} × ${divisor} = ${product}`,
+        subtract: `${working} − ${product} = ${nextRem}`,
+      };
+      if (i < digits.length) {
+        const brought = digits[i];
+        i += 1;
+        working = nextRem * 10 + brought;
+        step.bring = `Bring down ${brought} → ${working}`;
+        steps.push(step);
+      } else {
+        steps.push(step);
+        break;
+      }
+    }
+
+    return {
+      quotient,
+      steps,
+      check: `${quotient} × ${divisor} = ${dividend}`,
+    };
+  }
+
+  function renderWorkedSolution(dividend, divisor) {
+    const work = buildLongDivisionWork(dividend, divisor);
+    const stepsHtml = work.steps
+      .map(
+        (s, idx) => `
+      <li class="ld-step">
+        <p class="ld-step-n">Step ${idx + 1}</p>
+        <p><strong>${s.ask}</strong> → <span class="ld-fit">${s.fit}</span></p>
+        <p>${s.multiply}</p>
+        <p>${s.subtract}</p>
+        ${s.bring ? `<p class="ld-bring">${s.bring}</p>` : ""}
+      </li>`
+      )
+      .join("");
+    return `
+      <p class="ld-worked-title">Here’s the work</p>
+      <div class="ld-mini-problem" aria-hidden="true">
+        <span class="ld-figure small">
+          <span class="ld-top">
+            <span class="ld-gutter"></span>
+            <span class="ld-quot-slot filled">${work.quotient}</span>
+          </span>
+          <span class="ld-mid">
+            <span class="ld-divisor">${divisor}</span>
+            <span class="ld-rparen">)</span>
+            <span class="ld-dividend">${dividend}</span>
+          </span>
+        </span>
+      </div>
+      <ol class="ld-steps">${stepsHtml}</ol>
+      <p class="ld-answer-big">Answer = <strong>${work.quotient}</strong></p>
+      <p class="ld-check">Check: ${work.check} ✓</p>
+    `;
+  }
+
+  function resetHelpWork() {
+    const help = $("help-work");
+    const btn = $("btn-show-work");
+    const panel = $("worked-solution");
+    if (help) help.hidden = true;
+    if (btn) {
+      btn.hidden = true;
+      btn.disabled = false;
+    }
+    if (panel) {
+      panel.hidden = true;
+      panel.innerHTML = "";
+    }
+  }
+
+  function offerShowWork() {
+    const help = $("help-work");
+    const btn = $("btn-show-work");
+    if (help) help.hidden = false;
+    if (btn) btn.hidden = false;
+  }
+
+  function revealLongDivisionWork() {
+    if (!session?.current) return;
+    const dividend = session.current.dividend ?? session.current.a;
+    const divisor = session.current.divisor ?? session.current.b;
+    const panel = $("worked-solution");
+    const help = $("help-work");
+    const btn = $("btn-show-work");
+    if (help) help.hidden = false;
+    if (panel) {
+      panel.hidden = false;
+      panel.innerHTML = renderWorkedSolution(dividend, divisor);
+      panel.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
+    if (btn) btn.hidden = true;
+    session.workShown = true;
+    $("feedback").textContent = "Study the work, then type the answer!";
+    $("feedback").className = "feedback";
+    $("hero-cheer").textContent = "Now you can finish it!";
+    focusAnswer();
+  }
+
   const workPad = {
     ready: false,
     drawing: false,
@@ -885,6 +1065,9 @@
     pad.hidden = !visible;
     pad.style.display = visible ? "" : "none";
     document.body.classList.toggle("md-work-mode", !!visible);
+    if (!visible) {
+      document.body.classList.remove("ld-work-mode");
+    }
     if (visible) {
       setupWorkPad();
       requestAnimationFrame(() => {
@@ -931,6 +1114,10 @@
         mdBigMax: 99,
         mdSmallMin: 2,
         mdSmallMax: 9,
+        ldDivMin: 10,
+        ldDivMax: 99,
+        ldByMin: 2,
+        ldByMax: 9,
       },
     };
   }
@@ -1226,6 +1413,10 @@
       if (typeof merged.settings.mdBigMax !== "number") merged.settings.mdBigMax = 99;
       if (typeof merged.settings.mdSmallMin !== "number") merged.settings.mdSmallMin = 2;
       if (typeof merged.settings.mdSmallMax !== "number") merged.settings.mdSmallMax = 9;
+      if (typeof merged.settings.ldDivMin !== "number") merged.settings.ldDivMin = 10;
+      if (typeof merged.settings.ldDivMax !== "number") merged.settings.ldDivMax = 99;
+      if (typeof merged.settings.ldByMin !== "number") merged.settings.ldByMin = 2;
+      if (typeof merged.settings.ldByMax !== "number") merged.settings.ldByMax = 9;
       mergeRobloxFromStores(merged);
       return merged;
     } catch {
@@ -2649,32 +2840,36 @@
     const op = $("operation")?.value || state.settings.operation || "multiply";
     const isMult = op === "multiply";
     const isMdMult = op === "md-mult";
+    const isLongDiv = op === "long-div";
+    const isPad = isPadPractice(op);
     const isRound = op === "round";
     const isAddSub = op === "add" || op === "sub";
 
-    // Rounding / multi-digit practice hide table chips
+    // Rounding / pad practice hide table chips
     setSetupVisible($("difficulty-wrap"), isMult);
     setSetupVisible($("table-picker"), isMult);
     setSetupVisible($("digit-wrap"), isAddSub);
     setSetupVisible($("round-wrap"), isRound);
     setSetupVisible($("round-digits-wrap"), false);
     setSetupVisible($("md-wrap"), isMdMult);
-    setSetupVisible($("problem-type-wrap"), !isRound && !isMdMult);
+    setSetupVisible($("long-div-wrap"), isLongDiv);
+    setSetupVisible($("problem-type-wrap"), !isRound && !isPad);
     // In-order is for tables only
     const inOrderRow = $("in-order")?.closest("label");
     setSetupVisible(inOrderRow, isMult);
     const timedRow = $("per-question-timer")?.closest("label");
-    setSetupVisible(timedRow, !isMdMult);
+    setSetupVisible(timedRow, !isPad);
     const modeWrap = $("mode")?.closest("label");
     if (modeWrap) {
-      setSetupVisible(modeWrap, !isMdMult);
+      setSetupVisible(modeWrap, !isPad);
     }
     if (isRound && $("in-order")) $("in-order").checked = false;
-    if (isMdMult) {
+    if (isPad) {
       if ($("mode")) $("mode").value = "10";
       if ($("in-order")) $("in-order").checked = false;
       if ($("per-question-timer")) $("per-question-timer").checked = false;
-      syncMdRangeInputs();
+      if (isMdMult) syncMdRangeInputs();
+      if (isLongDiv) syncLongDivRangeInputs();
     }
 
     const tag = $("home-tagline");
@@ -2683,6 +2878,7 @@
       else if (op === "sub") tag.textContent = "Power up your subtraction!";
       else if (op === "round") tag.textContent = "Power up your rounding!";
       else if (op === "md-mult") tag.textContent = "Practice multi-digit × single digit!";
+      else if (op === "long-div") tag.textContent = "Practice long division!";
       else tag.textContent = "Power up your multiplication!";
     }
 
@@ -2692,14 +2888,16 @@
   function updateProblemTypeOptions(operation) {
     const select = $("problem-type");
     if (!select) return;
-    if (operation === "round" || operation === "md-mult") {
+    if (operation === "round" || isPadPractice(operation)) {
       select.innerHTML = "";
       const opt = document.createElement("option");
       opt.value = "product";
       opt.textContent =
         operation === "md-mult"
           ? "Multi-digit × single digit = ?"
-          : "Round to the nearest 10 or 100";
+          : operation === "long-div"
+            ? "Long division · type the quotient"
+            : "Round to the nearest 10 or 100";
       select.appendChild(opt);
       select.value = "product";
       return;
@@ -3066,6 +3264,8 @@
     stopQuestionTimer();
     const operation = opts.operation || "multiply";
     const isMdMult = operation === "md-mult";
+    const isLongDiv = operation === "long-div";
+    const isPad = isPadPractice(operation);
     const max = DIFFICULTY[opts.difficulty] || 10;
     const digitLevel = opts.digitLevel || "single";
     const roundPlace = opts.roundPlace || "10";
@@ -3082,20 +3282,32 @@
     if (mdRange.mdSmallMax < mdRange.mdSmallMin) {
       [mdRange.mdSmallMin, mdRange.mdSmallMax] = [mdRange.mdSmallMax, mdRange.mdSmallMin];
     }
+    const ldRange = {
+      ldDivMin: clampInt(opts.ldDivMin, 10, 9999, 10),
+      ldDivMax: clampInt(opts.ldDivMax, 10, 9999, 99),
+      ldByMin: clampInt(opts.ldByMin, 2, 9, 2),
+      ldByMax: clampInt(opts.ldByMax, 2, 9, 9),
+    };
+    if (ldRange.ldDivMax < ldRange.ldDivMin) {
+      [ldRange.ldDivMin, ldRange.ldDivMax] = [ldRange.ldDivMax, ldRange.ldDivMin];
+    }
+    if (ldRange.ldByMax < ldRange.ldByMin) {
+      [ldRange.ldByMin, ldRange.ldByMax] = [ldRange.ldByMax, ldRange.ldByMin];
+    }
     let tables = (opts.tables || [])
       .map(Number)
       .filter((n) => n >= 1 && n <= max)
       .sort((x, y) => x - y);
     if (!tables.length) tables = rangeTables(max);
     const problemType =
-      operation === "round" || isMdMult ? "product" : opts.problemType || "product";
-    // Multi-digit practice + rounding always shuffle
-    const shuffle = operation === "round" || isMdMult ? true : !!opts.shuffle;
-    const perQuestionTimer = isMdMult ? false : !!opts.perQuestionTimer;
-    const mode = isMdMult ? "10" : opts.mode;
+      operation === "round" || isPad ? "product" : opts.problemType || "product";
+    // Pad practice + rounding always shuffle
+    const shuffle = operation === "round" || isPad ? true : !!opts.shuffle;
+    const perQuestionTimer = isPad ? false : !!opts.perQuestionTimer;
+    const mode = isPad ? "10" : opts.mode;
     const grade = opts.grade && GRADE_PROFILES[opts.grade] ? opts.grade : getGradeId();
     const queue =
-      shuffle || isMdMult
+      shuffle || isPad
         ? null
         : buildOrderedQueue(
             operation,
@@ -3115,6 +3327,7 @@
       roundPlace,
       roundDigits,
       mdRange,
+      ldRange,
       mode,
       shuffle,
       perQuestionTimer,
@@ -3132,6 +3345,7 @@
       current: null,
       ended: false,
       waitingNext: false,
+      workShown: false,
       timerId: null,
       questionTimerId: null,
       questionTimeLeft: QUESTION_SECS,
@@ -3146,12 +3360,13 @@
       roundPlace,
       roundDigits,
       mode,
-      shuffle: isMdMult ? true : opts.shuffle,
+      shuffle: isPad ? true : opts.shuffle,
       voiceMode: !!opts.voiceMode,
       perQuestionTimer,
       tables,
       problemType,
       ...mdRange,
+      ...ldRange,
     };
     saveState();
 
@@ -3160,10 +3375,14 @@
     $("feedback").textContent = "";
     $("feedback").className = "feedback";
     setVoiceStatus("");
-    setWorkPadVisible(isMdMult);
+    resetHelpWork();
+    setWorkPadVisible(isPad);
+    document.body.classList.toggle("ld-work-mode", isLongDiv);
     updateHeroAvatar();
-    $("hero-cheer").textContent = isMdMult
-      ? "Show your work, then type the answer!"
+    $("hero-cheer").textContent = isPad
+      ? isLongDiv
+        ? "Write the long division, then type the answer!"
+        : "Show your work, then type the answer!"
       : CHEERS[Math.floor(Math.random() * CHEERS.length)];
 
     const timerEl = $("play-timer");
@@ -3269,10 +3488,14 @@
       return;
     }
 
-    const opForMath = session.operation === "md-mult" ? "multiply" : session.operation;
-    const picked =
-      session.operation === "md-mult"
-        ? randomMdMultPair(session.mdRange || state.settings)
+    const isMdMult = session.operation === "md-mult";
+    const isLongDiv = session.operation === "long-div";
+    const isPad = isPadPractice(session.operation);
+    const opForMath = isMdMult ? "multiply" : session.operation;
+    const picked = isMdMult
+      ? randomMdMultPair(session.mdRange || state.settings)
+      : isLongDiv
+        ? randomLongDivPair(session.ldRange || state.settings)
         : pickQuestion(
             session.operation,
             session.max,
@@ -3282,36 +3505,59 @@
             session.roundPlace,
             session.roundDigits
           );
-    const promptType =
-      session.operation === "md-mult"
-        ? "product"
-        : choosePromptType(session.problemType, picked.a, picked.b, session.operation);
-    const formatted = formatProblem(picked.a, picked.b, promptType, opForMath);
+    const promptType = isPad
+      ? "product"
+      : choosePromptType(session.problemType, picked.a, picked.b, session.operation);
+
+    let expected;
+    let display;
+    let hint;
+    if (isLongDiv) {
+      expected = Number(picked.expected);
+      display = `${picked.dividend} ÷ ${picked.divisor} = ?`;
+      hint = "Write the long division in the box, then type the quotient!";
+    } else {
+      const formatted = formatProblem(picked.a, picked.b, promptType, opForMath);
+      expected = Number(formatted.expected);
+      display = formatted.display;
+      hint = isMdMult
+        ? "Write your work below, then type the answer and hit POW!"
+        : formatted.hint;
+    }
+
     session.current = {
       ...picked,
       a: Number(picked.a),
       b: Number(picked.b),
       promptType,
-      expected: Number(formatted.expected),
-      display: formatted.display,
-      hint:
-        session.operation === "md-mult"
-          ? "Write your work below, then type the answer and hit POW!"
-          : formatted.hint,
+      expected,
+      display,
+      hint,
     };
     session.attemptsOnCurrent = 0;
     session.accepting = true;
     session.waitingNext = false;
+    session.workShown = false;
     session.asked += 1;
 
     const problemEl = $("problem-text");
-    problemEl.textContent = session.current.display;
-    problemEl.classList.toggle("equation", session.operation !== "round");
+    if (isLongDiv) {
+      problemEl.innerHTML = longDivisionDisplayHtml(
+        session.current.dividend ?? session.current.a,
+        session.current.divisor ?? session.current.b
+      );
+    } else {
+      problemEl.textContent = session.current.display;
+    }
+    problemEl.classList.toggle("equation", session.operation !== "round" && !isLongDiv);
     problemEl.classList.toggle("round-prompt", session.operation === "round");
-    problemEl.classList.toggle("md-prompt", session.operation === "md-mult");
+    problemEl.classList.toggle("md-prompt", isMdMult);
+    problemEl.classList.toggle("ld-prompt", isLongDiv);
     const hintEl = $("problem-hint");
     if (hintEl) {
-      if (session.operation === "md-mult") {
+      if (isLongDiv) {
+        hintEl.textContent = "Write in the big box, then type the answer on top!";
+      } else if (isMdMult) {
         hintEl.textContent = "Write your work in the big box, then type the answer!";
       } else if (session.operation === "round") {
         hintEl.textContent = session.current.hint || "Type or say the rounded number, then POW!";
@@ -3327,6 +3573,7 @@
     $("feedback").textContent = "";
     $("feedback").className = "feedback";
     $("problem-card").classList.remove("shake", "pop");
+    resetHelpWork();
     setPowLabel("POW!");
     stopListening();
     setVoiceStatus("");
@@ -3335,10 +3582,9 @@
 
     if (session.target != null) {
       const left = Math.max(0, session.target - session.asked + 1);
-      $("play-progress").textContent =
-        session.operation === "md-mult"
-          ? `Q ${session.asked} / ${session.target} · ${left} left`
-          : `Q ${session.asked} / ${session.target}`;
+      $("play-progress").textContent = isPad
+        ? `Q ${session.asked} / ${session.target} · ${left} left`
+        : `Q ${session.asked} / ${session.target}`;
     } else if (session.mode === "timed") {
       $("play-progress").textContent = `Solved ${session.correct}`;
     } else {
@@ -3346,11 +3592,11 @@
     }
 
     if ($("btn-mic")) {
-      $("btn-mic").hidden = session.operation === "md-mult";
-      $("btn-mic").style.display = session.operation === "md-mult" ? "none" : "";
+      $("btn-mic").hidden = isPad;
+      $("btn-mic").style.display = isPad ? "none" : "";
     }
 
-    if (session.operation === "md-mult") {
+    if (isPad) {
       clearWorkPad();
       focusAnswer();
     } else {
@@ -3366,9 +3612,21 @@
     card.classList.remove("shake");
     void card.offsetWidth;
     card.classList.add("shake");
-    $("feedback").textContent = "Not yet — try again!";
+
+    const canOfferHelp =
+      session.operation === "long-div" &&
+      session.attemptsOnCurrent >= 2 &&
+      !session.workShown;
+
+    if (canOfferHelp) {
+      $("feedback").textContent = "Not yet — try again, or show the work & answer.";
+      $("hero-cheer").textContent = "It’s okay — peek at the steps!";
+      offerShowWork();
+    } else {
+      $("feedback").textContent = "Not yet — try again!";
+      $("hero-cheer").textContent = "Shake it off. Try once more!";
+    }
     $("feedback").className = "feedback wrong";
-    $("hero-cheer").textContent = "Shake it off. Try once more!";
 
     state.streak = 0;
     $("live-streak").textContent = "0";
@@ -3430,7 +3688,9 @@
     $("hero-cheer").textContent = fact.mastered
       ? session.operation === "round"
         ? `${session.current.a} → ${session.current.expected} mastered!`
-        : `${session.current.a}${opSymbol(session.operation)}${session.current.b} mastered!`
+        : session.operation === "long-div"
+          ? `${session.current.a} ÷ ${session.current.b} mastered!`
+          : `${session.current.a}${opSymbol(session.operation)}${session.current.b} mastered!`
       : CHEERS[Math.floor(Math.random() * CHEERS.length)];
 
     const card = $("problem-card");
@@ -3482,25 +3742,32 @@
     const accuracy = Math.round((firstTry / totalQ) * 100);
 
     let reward = null;
-    if (
-      session.operation === "md-mult" &&
+    const padDone =
+      isPadPractice(session.operation) &&
       session.target &&
-      session.correct >= session.target
-    ) {
+      session.correct >= session.target;
+    if (padDone) {
       reward = maybeAwardRobloxPoints(accuracy, firstTry, totalQ, {
         week: "math",
-        title: "Practice · multi-digit ×",
+        title:
+          session.operation === "long-div"
+            ? "Practice · long division"
+            : "Practice · multi-digit ×",
       });
     }
 
     saveState();
     setVoiceStatus("");
+    document.body.classList.remove("ld-work-mode");
+    resetHelpWork();
 
     $("results-title").textContent = title;
     $("results-sub").textContent =
       session.operation === "md-mult"
         ? `${CHILD} finished multi-digit × practice · ${accuracy}% first-try`
-        : `${CHILD} powered through another mission.`;
+        : session.operation === "long-div"
+          ? `${CHILD} finished long division practice · ${accuracy}% first-try`
+          : `${CHILD} powered through another mission.`;
 
     $("results-grid").innerHTML = `
       <div class="stat-card"><strong>${session.sessionStars}</strong>stars earned</div>
@@ -3508,7 +3775,7 @@
       <div class="stat-card"><strong>${session.firstTryCorrect}</strong>first-try hits</div>
       <div class="stat-card"><strong>${accuracy}%</strong>first-try score</div>
       ${
-        session.operation === "md-mult"
+        isPadPractice(session.operation)
           ? `<div class="stat-card"><strong data-roblox-points>${getRobloxPoints()}</strong>Roblox pts</div>`
           : `<div class="stat-card"><strong>${state.bestStreak}</strong>best streak</div>`
       }
@@ -3521,7 +3788,7 @@
       rewardEl.className = "ss-reward-box";
       $("results-grid")?.insertAdjacentElement("afterend", rewardEl);
     }
-    if (session.operation === "md-mult" && reward) {
+    if (isPadPractice(session.operation) && reward) {
       rewardEl.hidden = false;
       if (reward.awarded) {
         rewardEl.className = "ss-reward-box won";
@@ -3769,9 +4036,14 @@
     if (operation === "md-mult") {
       syncMdRangeInputs({ ...state.settings, ...mdRange });
     }
+    const ldRange = operation === "long-div" ? readLongDivRangeSettings() : {};
+    if (operation === "long-div") {
+      syncLongDivRangeInputs({ ...state.settings, ...ldRange });
+    }
     const voiceOn = !!$("voice-mode")?.checked;
+    const padOp = isPadPractice(operation);
     pokeAudio();
-    if (voiceOn && speechSupported() && operation !== "md-mult") {
+    if (voiceOn && speechSupported() && !padOp) {
       await ensureMicAccess();
     }
     startMission({
@@ -3781,10 +4053,11 @@
       digitLevel: $("digit-level")?.value || "single",
       ...readRoundSettings(),
       ...mdRange,
-      mode: operation === "md-mult" ? "10" : $("mode")?.value || "endless",
-      shuffle: operation === "md-mult" ? true : readShuffleSetting(),
-      voiceMode: operation === "md-mult" ? false : voiceOn,
-      perQuestionTimer: operation === "md-mult" ? false : !!$("per-question-timer")?.checked,
+      ...ldRange,
+      mode: padOp ? "10" : $("mode")?.value || "endless",
+      shuffle: padOp ? true : readShuffleSetting(),
+      voiceMode: padOp ? false : voiceOn,
+      perQuestionTimer: padOp ? false : !!$("per-question-timer")?.checked,
       tables,
       problemType: $("problem-type")?.value || "product",
     });
@@ -3865,6 +4138,11 @@
     await startListeningWithPermission();
   });
 
+  $("btn-show-work")?.addEventListener("click", () => {
+    if (!session || session.ended || session.operation !== "long-div") return;
+    revealLongDivisionWork();
+  });
+
   $("btn-quit").addEventListener("click", () => {
     if (!session || session.ended) {
       showScreen("home");
@@ -3887,6 +4165,10 @@
       mdBigMax: state.settings.mdBigMax,
       mdSmallMin: state.settings.mdSmallMin,
       mdSmallMax: state.settings.mdSmallMax,
+      ldDivMin: state.settings.ldDivMin,
+      ldDivMax: state.settings.ldDivMax,
+      ldByMin: state.settings.ldByMin,
+      ldByMax: state.settings.ldByMax,
       mode: state.settings.mode,
       shuffle: state.settings.shuffle,
       voiceMode: !!state.settings.voiceMode,

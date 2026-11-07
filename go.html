@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v39.css" />
+  <link rel="stylesheet" href="styles-v40.css" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -135,12 +135,13 @@
           <select id="operation" name="operation">
             <option value="multiply" selected>Multiplication</option>
             <option value="md-mult">Practice · multi-digit ×</option>
+            <option value="long-div">Practice · long division</option>
             <option value="add">Addition</option>
             <option value="sub">Subtraction</option>
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v60 · open via /go.html</p>
+        <p class="setup-note" id="app-version-note">App v61 · open via /go.html</p>
 
         <div id="md-wrap" class="md-range-wrap" hidden>
           <p class="md-range-title">Custom range · multi-digit × single digit</p>
@@ -161,6 +162,29 @@
             <label>
               Single digit max
               <input id="md-small-max" name="mdSmallMax" type="number" inputmode="numeric" min="1" max="9" value="9" />
+            </label>
+          </div>
+        </div>
+
+        <div id="long-div-wrap" class="md-range-wrap" hidden>
+          <p class="md-range-title">Custom range · long division (exact answers)</p>
+          <p class="setup-note">10 questions · write in the box · miss 2× ? show work &amp; answer · 90%+ first-try = 5 Roblox pts</p>
+          <div class="md-range-grid">
+            <label>
+              Dividend min
+              <input id="ld-div-min" name="ldDivMin" type="number" inputmode="numeric" min="10" max="9999" value="10" />
+            </label>
+            <label>
+              Dividend max
+              <input id="ld-div-max" name="ldDivMax" type="number" inputmode="numeric" min="10" max="9999" value="99" />
+            </label>
+            <label>
+              Divisor min
+              <input id="ld-by-min" name="ldByMin" type="number" inputmode="numeric" min="2" max="9" value="2" />
+            </label>
+            <label>
+              Divisor max
+              <input id="ld-by-max" name="ldByMax" type="number" inputmode="numeric" min="2" max="9" value="9" />
             </label>
           </div>
         </div>
@@ -452,6 +476,12 @@
             <canvas id="work-pad-canvas" aria-label="Handwriting workspace"></canvas>
           </div>
         </div>
+        <div id="help-work" class="help-work" hidden>
+          <button type="button" id="btn-show-work" class="btn secondary btn-show-work" hidden>
+            Show the work &amp; answer
+          </button>
+          <div id="worked-solution" class="worked-solution" hidden></div>
+        </div>
         <form id="answer-form" autocomplete="off">
           <label class="sr-only" for="answer">Your answer</label>
           <div class="answer-row">
@@ -532,6 +562,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v60.js"></script>
+  <script src="app-v61.js"></script>
 </body>
 </html>

@@ -1534,3 +1534,176 @@ body.md-work-mode #answer-form .btn.primary {
     min-height: min(64dvh, 580px);
   }
 }
+
+/* Long division prompt */
+.problem.ld-prompt {
+  display: flex;
+  justify-content: center;
+  margin: 0 0 0.45rem;
+  font-size: inherit;
+  letter-spacing: 0;
+}
+
+.ld-figure {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: stretch;
+  font-family: var(--font-nums);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+}
+
+.ld-figure.small {
+  transform: scale(0.92);
+  transform-origin: left top;
+}
+
+.ld-top,
+.ld-mid {
+  display: grid;
+  grid-template-columns: 2.2rem 0.55rem 1fr;
+  align-items: end;
+  column-gap: 0.1rem;
+}
+
+.ld-top {
+  margin-bottom: 0.12rem;
+}
+
+.ld-gutter {
+  grid-column: 1 / 3;
+}
+
+.ld-quot-slot {
+  grid-column: 3;
+  min-height: 1.15em;
+  padding: 0.1rem 0.35rem 0.15rem;
+  border-bottom: 4px solid var(--ink);
+  font-size: clamp(2rem, 9vw, 3.1rem);
+  letter-spacing: 0.12em;
+  text-align: left;
+  color: var(--muted);
+}
+
+.ld-quot-slot.filled {
+  color: #1f8a4c;
+}
+
+.ld-divisor {
+  grid-column: 1;
+  font-size: clamp(2rem, 9vw, 3.1rem);
+  letter-spacing: 0.04em;
+  text-align: right;
+  padding-right: 0.1rem;
+}
+
+.ld-rparen {
+  grid-column: 2;
+  font-size: clamp(2.1rem, 9.5vw, 3.3rem);
+  line-height: 0.85;
+  font-weight: 700;
+}
+
+.ld-dividend {
+  grid-column: 3;
+  font-size: clamp(2rem, 9vw, 3.1rem);
+  letter-spacing: 0.12em;
+  padding: 0.1rem 0.35rem 0.05rem;
+  border-top: 4px solid var(--ink);
+  text-align: left;
+}
+
+.help-work {
+  margin: 0.35rem 0 0.65rem;
+  text-align: left;
+}
+
+.btn-show-work {
+  width: 100%;
+  font-family: var(--font-cartoon, var(--font-body));
+  font-weight: 800;
+  font-size: 1rem;
+  min-height: 2.8rem;
+}
+
+.worked-solution {
+  margin-top: 0.55rem;
+  padding: 0.75rem 0.85rem;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  background: #eef9f1;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.ld-worked-title {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-cartoon, var(--font-body));
+  font-weight: 800;
+  font-size: 1.15rem;
+}
+
+.ld-mini-problem {
+  margin: 0 0 0.65rem;
+}
+
+.ld-steps {
+  margin: 0 0 0.75rem;
+  padding-left: 1.2rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.ld-step {
+  font-weight: 700;
+  font-size: 0.98rem;
+}
+
+.ld-step p {
+  margin: 0.15rem 0;
+}
+
+.ld-step-n {
+  color: var(--blue);
+  font-family: var(--font-cartoon, var(--font-body));
+  font-weight: 800;
+  margin-bottom: 0.2rem !important;
+}
+
+.ld-fit {
+  display: inline-block;
+  min-width: 1.4em;
+  padding: 0.05rem 0.35rem;
+  border-radius: 8px;
+  background: #ffe8a3;
+  border: 2px solid var(--ink);
+  font-family: var(--font-nums);
+  font-weight: 700;
+  text-align: center;
+}
+
+.ld-bring {
+  color: var(--blue);
+}
+
+.ld-answer-big {
+  margin: 0.35rem 0 0.25rem;
+  font-family: var(--font-cartoon, var(--font-body));
+  font-weight: 800;
+  font-size: clamp(1.35rem, 5vw, 1.85rem);
+  text-align: center;
+}
+
+.ld-answer-big strong {
+  font-family: var(--font-nums);
+  font-size: 1.35em;
+  color: #1f8a4c;
+  letter-spacing: 0.06em;
+}
+
+.ld-check {
+  margin: 0;
+  text-align: center;
+  font-weight: 800;
+  color: var(--muted);
+}
