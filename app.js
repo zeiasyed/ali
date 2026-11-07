@@ -80,6 +80,18 @@
     return op === "md-mult" || op === "long-div";
   }
 
+  /** Skills that run a 10-Q mission with 90% first-try Roblox reward */
+  function isRobloxSkill(op) {
+    return isPadPractice(op) || op === "round";
+  }
+
+  function robloxSkillTitle(op) {
+    if (op === "long-div") return "Practice · long division";
+    if (op === "md-mult") return "Practice · multi-digit ×";
+    if (op === "round") return "Rounding practice";
+    return "Math practice";
+  }
+
   const HEROES = [
     // Marvel first
     { id: "spiderman", icon: "🕷️", name: "Spider-Man", need: 0, universe: "Marvel" },
@@ -2902,18 +2914,19 @@
     setSetupVisible($("round-digits-wrap"), false);
     setSetupVisible($("md-wrap"), isMdMult);
     setSetupVisible($("long-div-wrap"), isLongDiv);
+    const robloxSkill = isRobloxSkill(op);
     setSetupVisible($("problem-type-wrap"), !isRound && !isPad);
     // In-order is for tables only
     const inOrderRow = $("in-order")?.closest("label");
     setSetupVisible(inOrderRow, isMult);
     const timedRow = $("per-question-timer")?.closest("label");
-    setSetupVisible(timedRow, !isPad);
+    setSetupVisible(timedRow, !robloxSkill);
     const modeWrap = $("mode")?.closest("label");
     if (modeWrap) {
-      setSetupVisible(modeWrap, !isPad);
+      setSetupVisible(modeWrap, !robloxSkill);
     }
     if (isRound && $("in-order")) $("in-order").checked = false;
-    if (isPad) {
+    if (robloxSkill) {
       if ($("mode")) $("mode").value = "10";
       if ($("in-order")) $("in-order").checked = false;
       if ($("per-question-timer")) $("per-question-timer").checked = false;
@@ -3348,12 +3361,13 @@
       .filter((n) => n >= 1 && n <= max)
       .sort((x, y) => x - y);
     if (!tables.length) tables = rangeTables(max);
+    const robloxSkill = isRobloxSkill(operation);
     const problemType =
       operation === "round" || isPad ? "product" : opts.problemType || "product";
     // Pad practice + rounding always shuffle
     const shuffle = operation === "round" || isPad ? true : !!opts.shuffle;
-    const perQuestionTimer = isPad ? false : !!opts.perQuestionTimer;
-    const mode = isPad ? "10" : opts.mode;
+    const perQuestionTimer = robloxSkill ? false : !!opts.perQuestionTimer;
+    const mode = robloxSkill ? "10" : opts.mode;
     const grade = opts.grade && GRADE_PROFILES[opts.grade] ? opts.grade : getGradeId();
     const queue =
       shuffle || isPad
@@ -3409,7 +3423,7 @@
       roundPlace,
       roundDigits,
       mode,
-      shuffle: isPad ? true : opts.shuffle,
+      shuffle: isPad || operation === "round" ? true : opts.shuffle,
       voiceMode: !!opts.voiceMode,
       perQuestionTimer,
       tables,
@@ -3433,7 +3447,9 @@
       ? isLongDiv
         ? "Write the long division, then type the answer!"
         : "Show your work, then type the answer!"
-      : CHEERS[Math.floor(Math.random() * CHEERS.length)];
+      : operation === "round"
+        ? "Round it — 90% first-try earns Roblox pts!"
+        : CHEERS[Math.floor(Math.random() * CHEERS.length)];
 
     const timerEl = $("play-timer");
     if (mode === "timed" && !perQuestionTimer) {
@@ -3797,17 +3813,14 @@
     const accuracy = Math.round((firstTry / totalQ) * 100);
 
     let reward = null;
-    const padDone =
-      isPadPractice(session.operation) &&
+    const robloxDone =
+      isRobloxSkill(session.operation) &&
       session.target &&
       session.correct >= session.target;
-    if (padDone) {
+    if (robloxDone) {
       reward = maybeAwardRobloxPoints(accuracy, firstTry, totalQ, {
         week: "math",
-        title:
-          session.operation === "long-div"
-            ? "Practice · long division"
-            : "Practice · multi-digit ×",
+        title: robloxSkillTitle(session.operation),
       });
     }
 
@@ -3823,7 +3836,9 @@
         ? `${CHILD} finished multi-digit × practice · ${accuracy}% first-try`
         : session.operation === "long-div"
           ? `${CHILD} finished long division practice · ${accuracy}% first-try`
-          : `${CHILD} powered through another mission.`;
+          : session.operation === "round"
+            ? `${CHILD} finished rounding practice · ${accuracy}% first-try`
+            : `${CHILD} powered through another mission.`;
 
     $("results-grid").innerHTML = `
       <div class="stat-card"><strong>${session.sessionStars}</strong>stars earned</div>
@@ -3831,7 +3846,7 @@
       <div class="stat-card"><strong>${session.firstTryCorrect}</strong>first-try hits</div>
       <div class="stat-card"><strong>${accuracy}%</strong>first-try score</div>
       ${
-        isPadPractice(session.operation)
+        isRobloxSkill(session.operation)
           ? `<div class="stat-card"><strong data-roblox-points>${getRobloxPoints()}</strong>Roblox pts</div>`
           : `<div class="stat-card"><strong>${state.bestStreak}</strong>best streak</div>`
       }
@@ -3844,7 +3859,7 @@
       rewardEl.className = "ss-reward-box";
       $("results-grid")?.insertAdjacentElement("afterend", rewardEl);
     }
-    if (isPadPractice(session.operation) && reward) {
+    if (isRobloxSkill(session.operation) && reward) {
       rewardEl.hidden = false;
       if (reward.awarded) {
         rewardEl.className = "ss-reward-box won";
@@ -4107,6 +4122,7 @@
     }
     const voiceOn = !!$("voice-mode")?.checked;
     const padOp = isPadPractice(operation);
+    const robloxOp = isRobloxSkill(operation);
     pokeAudio();
     if (voiceOn && speechSupported() && !padOp) {
       await ensureMicAccess();
@@ -4119,10 +4135,10 @@
       ...readRoundSettings(),
       ...mdRange,
       ...ldRange,
-      mode: padOp ? "10" : $("mode")?.value || "endless",
-      shuffle: padOp ? true : readShuffleSetting(),
+      mode: robloxOp ? "10" : $("mode")?.value || "endless",
+      shuffle: padOp || operation === "round" ? true : readShuffleSetting(),
       voiceMode: padOp ? false : voiceOn,
-      perQuestionTimer: padOp ? false : !!$("per-question-timer")?.checked,
+      perQuestionTimer: robloxOp ? false : !!$("per-question-timer")?.checked,
       tables,
       problemType: $("problem-type")?.value || "product",
     });
