@@ -81,8 +81,13 @@
     return op === "md-mult" || op === "long-div";
   }
 
-  /** Skills that run a 10-Q mission with 90% first-try Roblox reward */
+  /** Skills that can earn Roblox on a completed fixed round (90%+ first-try) */
   function isRobloxSkill(op) {
+    return isPadPractice(op) || op === "round" || op === "multiply";
+  }
+
+  /** Pad + rounding lock to a fixed 10-question mission */
+  function locksFixedTenMission(op) {
     return isPadPractice(op) || op === "round";
   }
 
@@ -90,6 +95,7 @@
     if (op === "long-div") return "Practice · long division";
     if (op === "md-mult") return "Practice · multi-digit ×";
     if (op === "round") return "Rounding practice";
+    if (op === "multiply") return "Multiplication practice";
     return "Math practice";
   }
 
@@ -2910,24 +2916,30 @@
     setSetupVisible($("round-digits-wrap"), false);
     setSetupVisible($("md-wrap"), isMdMult);
     setSetupVisible($("long-div-wrap"), isLongDiv);
-    const robloxSkill = isRobloxSkill(op);
+    const lockedTen = locksFixedTenMission(op);
     setSetupVisible($("problem-type-wrap"), !isRound && !isPad);
+    setSetupVisible($("mult-roblox-note"), isMult);
     // In-order is for tables only
     const inOrderRow = $("in-order")?.closest("label");
     setSetupVisible(inOrderRow, isMult);
     const timedRow = $("per-question-timer")?.closest("label");
-    setSetupVisible(timedRow, !robloxSkill);
+    setSetupVisible(timedRow, !lockedTen);
     const modeWrap = $("mode")?.closest("label");
     if (modeWrap) {
-      setSetupVisible(modeWrap, !robloxSkill);
+      setSetupVisible(modeWrap, !lockedTen);
     }
     if (isRound && $("in-order")) $("in-order").checked = false;
-    if (robloxSkill) {
+    if (lockedTen) {
       if ($("mode")) $("mode").value = "10";
       if ($("in-order")) $("in-order").checked = false;
       if ($("per-question-timer")) $("per-question-timer").checked = false;
       if (isMdMult) syncMdRangeInputs();
       if (isLongDiv) syncLongDivRangeInputs();
+    } else if (isMult && $("mode")) {
+      // Nudge multiplication toward the Roblox-eligible 10-question round
+      if ($("mode").value === "endless" || $("mode").value === "timed") {
+        $("mode").value = "10";
+      }
     }
 
     const tag = $("home-tagline");
@@ -3357,13 +3369,13 @@
       .filter((n) => n >= 1 && n <= max)
       .sort((x, y) => x - y);
     if (!tables.length) tables = rangeTables(max);
-    const robloxSkill = isRobloxSkill(operation);
+    const lockedTen = locksFixedTenMission(operation);
     const problemType =
       operation === "round" || isPad ? "product" : opts.problemType || "product";
     // Pad practice + rounding always shuffle
     const shuffle = operation === "round" || isPad ? true : !!opts.shuffle;
-    const perQuestionTimer = robloxSkill ? false : !!opts.perQuestionTimer;
-    const mode = robloxSkill ? "10" : opts.mode;
+    const perQuestionTimer = lockedTen ? false : !!opts.perQuestionTimer;
+    const mode = lockedTen ? "10" : opts.mode;
     const grade = opts.grade && GRADE_PROFILES[opts.grade] ? opts.grade : getGradeId();
     const queue =
       shuffle || isPad
@@ -3834,7 +3846,9 @@
           ? `${CHILD} finished long division practice · ${accuracy}% first-try`
           : session.operation === "round"
             ? `${CHILD} finished rounding practice · ${accuracy}% first-try`
-            : `${CHILD} powered through another mission.`;
+            : session.operation === "multiply" && session.target
+              ? `${CHILD} finished multiplication · ${accuracy}% first-try`
+              : `${CHILD} powered through another mission.`;
 
     $("results-grid").innerHTML = `
       <div class="stat-card"><strong>${session.sessionStars}</strong>stars earned</div>
@@ -4118,7 +4132,7 @@
     }
     const voiceOn = !!$("voice-mode")?.checked;
     const padOp = isPadPractice(operation);
-    const robloxOp = isRobloxSkill(operation);
+    const lockedTen = locksFixedTenMission(operation);
     pokeAudio();
     if (voiceOn && speechSupported() && !padOp) {
       await ensureMicAccess();
@@ -4131,10 +4145,10 @@
       ...readRoundSettings(),
       ...mdRange,
       ...ldRange,
-      mode: robloxOp ? "10" : $("mode")?.value || "endless",
+      mode: lockedTen ? "10" : $("mode")?.value || "endless",
       shuffle: padOp || operation === "round" ? true : readShuffleSetting(),
       voiceMode: padOp ? false : voiceOn,
-      perQuestionTimer: robloxOp ? false : !!$("per-question-timer")?.checked,
+      perQuestionTimer: lockedTen ? false : !!$("per-question-timer")?.checked,
       tables,
       problemType: $("problem-type")?.value || "product",
     });

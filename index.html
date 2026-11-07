@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v46.css?v=68" />
+  <link rel="stylesheet" href="styles-v47.css?v=69" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -141,7 +141,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v68 · Mix rounding 10/100</p>
+        <p class="setup-note" id="app-version-note">App v69 · Mult Roblox</p>
 
         <div id="md-wrap" class="md-range-wrap" hidden>
           <p class="md-range-title">Custom range · multi-digit × single digit</p>
@@ -268,11 +268,14 @@
           Mission mode
           <select id="mode" name="mode">
             <option value="endless">Endless practice</option>
-            <option value="10">Fixed round · 10 questions</option>
+            <option value="10" selected>Fixed round · 10 questions</option>
             <option value="20">Fixed round · 20 questions</option>
             <option value="timed">Timed challenge · 60 seconds</option>
           </select>
         </label>
+        <p id="mult-roblox-note" class="setup-note" hidden>
+          Fixed round 10 (or 20) · 90%+ first-try = 5 Roblox pts
+        </p>
 
         <label id="problem-type-wrap">
           Problem type
@@ -585,6 +588,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v68.js?v=68"></script>
+  <script src="app-v69.js?v=69"></script>
 </body>
 </html>
