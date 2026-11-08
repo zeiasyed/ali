@@ -542,7 +542,18 @@ select, input[type="text"] {
   align-items: stretch;
 }
 
-#answer {
+.answer-pen-hint {
+  margin: 0 0 0.45rem;
+  font-family: var(--font-cartoon, var(--font-body));
+  font-weight: 800;
+  font-size: 0.88rem;
+  color: var(--muted);
+  text-align: center;
+}
+
+#answer,
+#answer-rem,
+.answer-scribble {
   text-align: center;
   font-family: var(--font-nums);
   font-size: clamp(2.2rem, 8vw, 3.4rem);
@@ -551,6 +562,10 @@ select, input[type="text"] {
   padding: 1.1rem 1rem;
   min-height: 5rem;
   font-variant-numeric: lining-nums tabular-nums;
+  /* Room for Apple Pencil Scribble handwriting */
+  -webkit-user-select: text;
+  user-select: text;
+  touch-action: manipulation;
 }
 
 #answer-form .btn.primary {

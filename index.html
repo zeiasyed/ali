@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v50.css?v=72" />
+  <link rel="stylesheet" href="styles-v51.css?v=73" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -141,7 +141,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v72 · Roblox all skills</p>
+        <p class="setup-note" id="app-version-note">App v73 · Pencil + keyboard</p>
 
         <div id="md-wrap" class="md-range-wrap" hidden>
           <p class="md-range-title">Custom range · multi-digit × single digit</p>
@@ -493,19 +493,23 @@
         </div>
         <form id="answer-form" autocomplete="off">
           <label class="sr-only" for="answer">Your answer</label>
+          <p class="answer-pen-hint" id="answer-pen-hint">
+            Keyboard: tap box &amp; type · Pencil: write digits in the box
+          </p>
           <div class="answer-row">
             <input
               id="answer"
               name="answer"
               type="text"
-              inputmode="numeric"
-              pattern="[0-9]*"
+              inputmode="text"
               enterkeyhint="done"
-              maxlength="8"
-              placeholder="Type here"
+              maxlength="12"
+              placeholder="Type or write"
               autocomplete="off"
               autocapitalize="off"
+              autocorrect="off"
               spellcheck="false"
+              class="answer-scribble"
             />
             <span id="ld-rem-wrap" class="ld-rem-wrap" hidden>
               <span class="ld-r-mark" aria-hidden="true">R</span>
@@ -514,14 +518,15 @@
                 id="answer-rem"
                 name="answerRem"
                 type="text"
-                inputmode="numeric"
-                pattern="[0-9]*"
+                inputmode="text"
                 enterkeyhint="done"
                 maxlength="2"
-                placeholder="0"
+                placeholder="R"
                 autocomplete="off"
                 autocapitalize="off"
+                autocorrect="off"
                 spellcheck="false"
+                class="answer-scribble"
               />
             </span>
             <button type="submit" class="btn primary" id="btn-pow">POW!</button>
@@ -588,6 +593,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v72.js?v=72"></script>
+  <script src="app-v73.js?v=73"></script>
 </body>
 </html>

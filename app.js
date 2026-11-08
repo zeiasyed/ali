@@ -721,14 +721,26 @@
     if (btn) btn.textContent = text;
   }
 
-  function focusAnswer() {
+  function focusAnswer(opts = {}) {
     const input = $("answer");
     if (!input) return;
-    // Slight delay helps iPad/Safari apply focus after UI updates
+    const soft = !!opts.soft;
+    // Soft focus: leave field ready for Apple Pencil Scribble without forcing the keyboard.
+    // Hard focus: open keyboard for typing (tap still works anytime).
     window.setTimeout(() => {
-      input.focus({ preventScroll: false });
+      if (soft) {
+        try {
+          input.blur();
+        } catch {
+          /* ignore */
+        }
+        return;
+      }
+      input.focus({ preventScroll: true });
       try {
-        input.select();
+        // Don't select-all — that fights Pencil Scribble mid-write
+        const len = String(input.value || "").length;
+        input.setSelectionRange(len, len);
       } catch {
         /* ignore */
       }
@@ -1079,6 +1091,14 @@
       return { x: e.clientX - r.left, y: e.clientY - r.top };
     };
 
+    const penWidth = (e) => {
+      if (e.pointerType === "pen") {
+        const pressure = Number.isFinite(e.pressure) && e.pressure > 0 ? e.pressure : 0.5;
+        return 2.2 + pressure * 5.5;
+      }
+      return 4.5;
+    };
+
     canvas.addEventListener(
       "pointerdown",
       (e) => {
@@ -1091,6 +1111,7 @@
         workPad.lastY = p.y;
         const ctx = workPad.ctx;
         if (!ctx) return;
+        ctx.lineWidth = penWidth(e);
         ctx.beginPath();
         ctx.arc(p.x, p.y, ctx.lineWidth / 2, 0, Math.PI * 2);
         ctx.fill();
@@ -1106,6 +1127,7 @@
         const p = pos(e);
         const ctx = workPad.ctx;
         if (!ctx) return;
+        ctx.lineWidth = penWidth(e);
         ctx.beginPath();
         ctx.moveTo(workPad.lastX, workPad.lastY);
         ctx.lineTo(p.x, p.y);
@@ -3736,7 +3758,8 @@
 
     if (isPad) {
       clearWorkPad();
-      focusAnswer();
+      // Soft: Pencil Scribble / tap-to-type both work; don't force keyboard over the pad
+      focusAnswer({ soft: true });
     } else {
       focusAnswer();
     }
@@ -3784,7 +3807,7 @@
     maybeAutoListen();
     // Wrong answer still on same question — restart the 5s clock if timed
     if (session.perQuestionTimer) startQuestionTimer();
-    focusAnswer();
+    focusAnswer({ soft: isPadPractice(session.operation) });
   }
 
   function onCorrect() {
