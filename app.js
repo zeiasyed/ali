@@ -4,8 +4,8 @@
   const ROBLOX_BANK_KEY = "ali-ayaan-roblox-bank-v1";
   const ROBLOX_BANK_BACKUP_KEY = "ali-ayaan-roblox-bank-backup-v1";
   /** Parent clear sets this to "cleared"; otherwise floor is always enforced on load */
-  const ROBLOX_FLOOR_FLAG = "ali-ayaan-roblox-floor-45-2026-11-06";
-  const ROBLOX_FLOOR_POINTS = 45;
+  const ROBLOX_FLOOR_FLAG = "ali-ayaan-roblox-floor-105-2026-11-08";
+  const ROBLOX_FLOOR_POINTS = 105;
   const CHILD = "Ali Ayaan";
   const MASTERY_STREAK = 5;
   const QUESTION_SECS = 5;
