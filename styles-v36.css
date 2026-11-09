@@ -551,6 +551,33 @@ select, input[type="text"] {
   text-align: center;
 }
 
+.answer-tools {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.55rem;
+}
+
+.answer-tools:has(#btn-mic[hidden]),
+.answer-tools:has(#btn-mic[style*="display: none"]) {
+  grid-template-columns: 1fr;
+}
+
+.answer-tools .btn.say-it {
+  width: 100%;
+  margin: 0;
+}
+
+#btn-keyboard.keyboard-on {
+  background: #ffe8a3;
+  color: var(--ink);
+}
+
+@media (max-width: 420px) {
+  .answer-tools {
+    grid-template-columns: 1fr;
+  }
+}
+
 #answer,
 #answer-rem,
 .answer-scribble {

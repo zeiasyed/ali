@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v51.css?v=73" />
+  <link rel="stylesheet" href="styles-v52.css?v=74" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -141,7 +141,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v73 · open via /go.html</p>
+        <p class="setup-note" id="app-version-note">App v74 · open via /go.html</p>
 
         <div id="md-wrap" class="md-range-wrap" hidden>
           <p class="md-range-title">Custom range · multi-digit × single digit</p>
@@ -494,17 +494,17 @@
         <form id="answer-form" autocomplete="off">
           <label class="sr-only" for="answer">Your answer</label>
           <p class="answer-pen-hint" id="answer-pen-hint">
-            Keyboard: tap box &amp; type · Pencil: write digits in the box
+            Pencil: write in the box · Keyboard: tap Keyboard below
           </p>
           <div class="answer-row">
             <input
               id="answer"
               name="answer"
               type="text"
-              inputmode="text"
+              inputmode="none"
               enterkeyhint="done"
               maxlength="12"
-              placeholder="Type or write"
+              placeholder="Write with Pencil"
               autocomplete="off"
               autocapitalize="off"
               autocorrect="off"
@@ -518,7 +518,7 @@
                 id="answer-rem"
                 name="answerRem"
                 type="text"
-                inputmode="text"
+                inputmode="none"
                 enterkeyhint="done"
                 maxlength="2"
                 placeholder="R"
@@ -531,9 +531,14 @@
             </span>
             <button type="submit" class="btn primary" id="btn-pow">POW!</button>
           </div>
-          <button type="button" class="btn say-it" id="btn-mic" aria-label="Microphone">
-            Tap Mic
-          </button>
+          <div class="answer-tools">
+            <button type="button" class="btn say-it" id="btn-keyboard" aria-label="Show keyboard">
+              Keyboard
+            </button>
+            <button type="button" class="btn say-it" id="btn-mic" aria-label="Microphone">
+              Tap Mic
+            </button>
+          </div>
         </form>
         <p id="voice-status" class="voice-status" aria-live="polite"></p>
         <p id="feedback" class="feedback" role="status" aria-live="polite"></p>
@@ -593,6 +598,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v73.js?v=73"></script>
+  <script src="app-v74.js?v=74"></script>
 </body>
 </html>

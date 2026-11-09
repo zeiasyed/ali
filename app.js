@@ -721,29 +721,45 @@
     if (btn) btn.textContent = text;
   }
 
-  function focusAnswer(opts = {}) {
+  let answerKeyboardWanted = false;
+
+  function setAnswerInputMode(wantKeyboard) {
+    answerKeyboardWanted = !!wantKeyboard;
+    const mode = wantKeyboard ? "text" : "none";
+    const ans = $("answer");
+    const rem = $("answer-rem");
+    if (ans) ans.setAttribute("inputmode", mode);
+    if (rem) rem.setAttribute("inputmode", mode);
+    const btn = $("btn-keyboard");
+    if (btn) btn.classList.toggle("keyboard-on", wantKeyboard);
+  }
+
+  /** Pencil mode: no soft keyboard until Keyboard button is pressed */
+  function focusAnswer() {
+    setAnswerInputMode(false);
+    window.setTimeout(() => {
+      try {
+        $("answer")?.blur();
+        $("answer-rem")?.blur();
+      } catch {
+        /* ignore */
+      }
+    }, 40);
+  }
+
+  function openAnswerKeyboard() {
     const input = $("answer");
     if (!input) return;
-    const soft = !!opts.soft;
-    // Soft focus: leave field ready for Apple Pencil Scribble without forcing the keyboard.
-    // Hard focus: open keyboard for typing (tap still works anytime).
+    setAnswerInputMode(true);
     window.setTimeout(() => {
-      if (soft) {
-        try {
-          input.blur();
-        } catch {
-          /* ignore */
-        }
-        return;
-      }
       input.focus({ preventScroll: true });
       try {
-        // Don't select-all — that fights Pencil Scribble mid-write
         const len = String(input.value || "").length;
         input.setSelectionRange(len, len);
       } catch {
         /* ignore */
       }
+      input.scrollIntoView({ block: "center", behavior: "smooth" });
     }, 50);
   }
 
@@ -3756,13 +3772,8 @@
       $("btn-mic").style.display = isPad ? "none" : "";
     }
 
-    if (isPad) {
-      clearWorkPad();
-      // Soft: Pencil Scribble / tap-to-type both work; don't force keyboard over the pad
-      focusAnswer({ soft: true });
-    } else {
-      focusAnswer();
-    }
+    if (isPad) clearWorkPad();
+    focusAnswer();
   }
 
   function onWrong() {
@@ -3807,7 +3818,7 @@
     maybeAutoListen();
     // Wrong answer still on same question — restart the 5s clock if timed
     if (session.perQuestionTimer) startQuestionTimer();
-    focusAnswer({ soft: isPadPractice(session.operation) });
+    focusAnswer();
   }
 
   function onCorrect() {
@@ -4313,6 +4324,18 @@
     submitAnswer(Number(raw), remGuess);
   });
 
+  $("btn-keyboard")?.addEventListener("click", () => {
+    if (session?.waitingNext) return;
+    if (answerKeyboardWanted && document.activeElement === $("answer")) {
+      // Toggle off — back to Pencil-only
+      focusAnswer();
+      setVoiceStatus("Keyboard hidden — write with Pencil or tap Keyboard");
+      return;
+    }
+    openAnswerKeyboard();
+    setVoiceStatus("Keyboard on — type your answer");
+  });
+
   $("btn-mic")?.addEventListener("click", async () => {
     if (session?.waitingNext) return;
     await unlockAudio();
@@ -4447,10 +4470,11 @@
     startSocialLearn();
   });
 
-  // iPad: keep input usable
+  // Only scroll the answer into view when the Keyboard button opened it
   $("answer").addEventListener("focus", () => {
+    if (!answerKeyboardWanted) return;
     window.setTimeout(() => {
-      $("answer").scrollIntoView({ block: "center", behavior: "smooth" });
+      $("answer")?.scrollIntoView({ block: "center", behavior: "smooth" });
     }, 300);
   });
 
