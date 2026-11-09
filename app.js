@@ -763,6 +763,62 @@
     }, 50);
   }
 
+  /** Map Scribble/handwriting lookalikes to digits (S→5, O→0, etc.) */
+  function digitizeHandwriting(raw) {
+    const map = {
+      O: "0",
+      o: "0",
+      D: "0",
+      Q: "0",
+      I: "1",
+      i: "1",
+      l: "1",
+      L: "1",
+      "|": "1",
+      "!": "1",
+      Z: "2",
+      z: "2",
+      E: "3",
+      A: "4",
+      h: "4",
+      S: "5",
+      s: "5",
+      $: "5",
+      G: "6",
+      b: "6",
+      T: "7",
+      "?": "7",
+      B: "8",
+      "&": "8",
+      g: "9",
+      q: "9",
+      p: "9",
+    };
+    return String(raw || "")
+      .split("")
+      .map((ch) => {
+        if (/\d/.test(ch)) return ch;
+        return map[ch] || "";
+      })
+      .join("");
+  }
+
+  function normalizeAnswerField(el) {
+    if (!el) return "";
+    const digits = digitizeHandwriting(el.value);
+    if (el.value !== digits) {
+      const start = el.selectionStart;
+      el.value = digits;
+      try {
+        const pos = Math.min(digits.length, start ?? digits.length);
+        el.setSelectionRange(pos, pos);
+      } catch {
+        /* ignore */
+      }
+    }
+    return digits;
+  }
+
   function rangeTables(max) {
     return Array.from({ length: max }, (_, i) => i + 1);
   }
@@ -4294,7 +4350,7 @@
 
     if (session.accepting === false) return;
 
-    const raw = String($("answer").value || "").replace(/[^\d]/g, "");
+    const raw = normalizeAnswerField($("answer"));
     if (!raw) {
       $("feedback").textContent =
         session.operation === "long-div"
@@ -4306,16 +4362,14 @@
 
     let remGuess = 0;
     if (session.operation === "long-div") {
-      const remRaw = String($("answer-rem")?.value || "").trim();
-      if (remRaw === "") {
+      const cleaned = normalizeAnswerField($("answer-rem"));
+      if (cleaned === "" && String($("answer-rem")?.value || "").trim() === "") {
         remGuess = 0;
+      } else if (cleaned === "") {
+        $("feedback").textContent = "Type a remainder number (or 0), then POW!";
+        $("feedback").className = "feedback wrong";
+        return;
       } else {
-        const cleaned = remRaw.replace(/[^\d]/g, "");
-        if (!cleaned) {
-          $("feedback").textContent = "Type a remainder number (or 0), then POW!";
-          $("feedback").className = "feedback wrong";
-          return;
-        }
         remGuess = Number(cleaned);
       }
     }
@@ -4323,6 +4377,16 @@
     await unlockAudio();
     submitAnswer(Number(raw), remGuess);
   });
+
+  const bindDigitNormalize = (el) => {
+    if (!el) return;
+    const run = () => normalizeAnswerField(el);
+    el.addEventListener("input", run);
+    el.addEventListener("blur", run);
+    el.addEventListener("change", run);
+  };
+  bindDigitNormalize($("answer"));
+  bindDigitNormalize($("answer-rem"));
 
   $("btn-keyboard")?.addEventListener("click", () => {
     if (session?.waitingNext) return;
