@@ -1726,10 +1726,387 @@
     if (name === "map") renderMap();
     if (name === "badges") renderBadges();
     if (name === "parent") renderParent();
-    if (name === "social") {
+    if (name === "social" || name === "english") {
       renderRobloxBank();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+  }
+
+  // ---------------------------------------------------------------------------
+  // English · Pre-K alphabet + easy words
+  // ---------------------------------------------------------------------------
+  const ENG_TARGET = 10;
+  const ENG_MAX_TRIES = 2;
+  const ENG_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  const ENG_LETTER_WORDS = [
+    { letter: "A", word: "Apple", emoji: "🍎" },
+    { letter: "B", word: "Ball", emoji: "⚽" },
+    { letter: "C", word: "Cat", emoji: "🐱" },
+    { letter: "D", word: "Dog", emoji: "🐶" },
+    { letter: "E", word: "Egg", emoji: "🥚" },
+    { letter: "F", word: "Fish", emoji: "🐟" },
+    { letter: "G", word: "Goat", emoji: "🐐" },
+    { letter: "H", word: "Hat", emoji: "🎩" },
+    { letter: "I", word: "Ice", emoji: "🧊" },
+    { letter: "J", word: "Jam", emoji: "🍓" },
+    { letter: "K", word: "Kite", emoji: "🪁" },
+    { letter: "L", word: "Leaf", emoji: "🍃" },
+    { letter: "M", word: "Moon", emoji: "🌙" },
+    { letter: "N", word: "Nest", emoji: "🪺" },
+    { letter: "O", word: "Owl", emoji: "🦉" },
+    { letter: "P", word: "Pig", emoji: "🐷" },
+    { letter: "Q", word: "Queen", emoji: "👑" },
+    { letter: "R", word: "Rain", emoji: "🌧️" },
+    { letter: "S", word: "Sun", emoji: "☀️" },
+    { letter: "T", word: "Tree", emoji: "🌳" },
+    { letter: "U", word: "Umbrella", emoji: "☂️" },
+    { letter: "V", word: "Van", emoji: "🚐" },
+    { letter: "W", word: "Whale", emoji: "🐋" },
+    { letter: "X", word: "Box", emoji: "📦" },
+    { letter: "Y", word: "Yo-yo", emoji: "🪀" },
+    { letter: "Z", word: "Zebra", emoji: "🦓" },
+  ];
+  const ENG_EASY_WORDS = [
+    { word: "cat", emoji: "🐱" },
+    { word: "dog", emoji: "🐶" },
+    { word: "sun", emoji: "☀️" },
+    { word: "moon", emoji: "🌙" },
+    { word: "bee", emoji: "🐝" },
+    { word: "bug", emoji: "🐛" },
+    { word: "hat", emoji: "🎩" },
+    { word: "cup", emoji: "☕" },
+    { word: "bus", emoji: "🚌" },
+    { word: "car", emoji: "🚗" },
+    { word: "red", emoji: "🔴" },
+    { word: "blue", emoji: "🔵" },
+    { word: "pig", emoji: "🐷" },
+    { word: "cow", emoji: "🐄" },
+    { word: "fox", emoji: "🦊" },
+    { word: "hen", emoji: "🐔" },
+    { word: "map", emoji: "🗺️" },
+    { word: "pen", emoji: "🖊️" },
+    { word: "book", emoji: "📖" },
+    { word: "star", emoji: "⭐" },
+    { word: "fish", emoji: "🐟" },
+    { word: "bird", emoji: "🐦" },
+    { word: "tree", emoji: "🌳" },
+    { word: "ball", emoji: "⚽" },
+  ];
+
+  let engSession = null;
+  let engLastMode = "alphabet";
+
+  function engPickChoices(correct, pool, count = 4) {
+    const others = pool.filter((x) => x !== correct);
+    shuffleInPlace(others);
+    const picks = [correct, ...others.slice(0, count - 1)];
+    return shuffleInPlace(picks);
+  }
+
+  function buildAlphabetQuestions(n = ENG_TARGET) {
+    const pool = shuffleInPlace([...ENG_LETTER_WORDS]);
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      const item = pool[i % pool.length];
+      const kind = i % 2 === 0 ? "match" : "starts";
+      out.push({
+        kind,
+        letter: item.letter,
+        word: item.word,
+        emoji: item.emoji,
+        choices: engPickChoices(item.letter, ENG_ALPHABET, 4),
+      });
+    }
+    return shuffleInPlace(out);
+  }
+
+  function buildWordQuestions(n = ENG_TARGET) {
+    const pool = shuffleInPlace([...ENG_EASY_WORDS]);
+    return pool.slice(0, Math.min(n, pool.length)).map((item) => ({
+      kind: "write",
+      word: item.word,
+      emoji: item.emoji,
+    }));
+  }
+
+  function startEngPractice(mode) {
+    engLastMode = mode;
+    const questions =
+      mode === "words" ? buildWordQuestions(ENG_TARGET) : buildAlphabetQuestions(ENG_TARGET);
+    engSession = {
+      mode,
+      questions,
+      index: 0,
+      correct: 0,
+      firstTryCorrect: 0,
+      attemptsOnCurrent: 0,
+      answered: false,
+    };
+    showScreen("eng-play");
+    renderEngQuestion();
+  }
+
+  function engCurrent() {
+    return engSession?.questions?.[engSession.index] || null;
+  }
+
+  function renderEngQuestion() {
+    if (!engSession) return;
+    const q = engCurrent();
+    if (!q) return;
+
+    engSession.answered = false;
+    engSession.attemptsOnCurrent = 0;
+
+    const progress = $("eng-progress");
+    const stars = $("eng-stars");
+    const tag = $("eng-mode-tag");
+    const prompt = $("eng-prompt");
+    const hint = $("eng-hint");
+    const choices = $("eng-choices");
+    const form = $("eng-word-form");
+    const feedback = $("eng-feedback");
+    const nextBtn = $("btn-eng-next");
+    const input = $("eng-word-input");
+
+    if (progress) progress.textContent = `${engSession.index + 1} / ${engSession.questions.length}`;
+    if (stars) stars.textContent = String(engSession.correct);
+    if (feedback) {
+      feedback.textContent = "";
+      feedback.className = "feedback";
+    }
+    if (nextBtn) nextBtn.hidden = true;
+
+    if (engSession.mode === "words") {
+      if (tag) tag.textContent = "Easy Words";
+      if (prompt) {
+        prompt.className = "eng-prompt eng-prompt-word";
+        prompt.innerHTML = `<span class="eng-emoji" aria-hidden="true">${q.emoji}</span><span class="eng-copy-word">${q.word}</span>`;
+      }
+      if (hint) hint.textContent = "Type the word you see!";
+      if (choices) {
+        choices.hidden = true;
+        choices.innerHTML = "";
+      }
+      if (form) form.hidden = false;
+      if (input) {
+        input.disabled = false;
+        input.value = "";
+        window.setTimeout(() => input.focus(), 80);
+      }
+      return;
+    }
+
+    if (tag) tag.textContent = "Alphabet";
+    if (choices) choices.hidden = false;
+    if (form) form.hidden = true;
+    if (prompt) prompt.className = "eng-prompt";
+
+    if (q.kind === "starts") {
+      if (prompt) {
+        prompt.innerHTML = `<span class="eng-emoji" aria-hidden="true">${q.emoji}</span>${q.word}`;
+      }
+      if (hint) hint.textContent = `${q.word} starts with which letter?`;
+    } else {
+      if (prompt) prompt.textContent = q.letter;
+      if (hint) hint.textContent = "Tap the matching letter!";
+    }
+
+    if (choices) {
+      choices.innerHTML = q.choices
+        .map(
+          (letter) =>
+            `<button type="button" class="eng-choice" data-letter="${letter}">${letter}</button>`
+        )
+        .join("");
+      choices.querySelectorAll(".eng-choice").forEach((btn) => {
+        btn.addEventListener("click", () => submitEngLetter(btn.getAttribute("data-letter"), btn));
+      });
+    }
+  }
+
+  function lockEngChoices(correctLetter, pickedBtn) {
+    const choices = $("eng-choices");
+    if (!choices) return;
+    choices.querySelectorAll(".eng-choice").forEach((btn) => {
+      btn.disabled = true;
+      const letter = btn.getAttribute("data-letter");
+      if (letter === correctLetter) btn.classList.add("correct");
+      if (btn === pickedBtn && letter !== correctLetter) btn.classList.add("wrong");
+    });
+  }
+
+  async function submitEngLetter(letter, btn) {
+    if (!engSession || engSession.answered || engSession.mode !== "alphabet") return;
+    const q = engCurrent();
+    if (!q) return;
+
+    engSession.attemptsOnCurrent += 1;
+    const feedback = $("eng-feedback");
+    const nextBtn = $("btn-eng-next");
+    const ok = letter === q.letter;
+
+    if (ok) {
+      engSession.answered = true;
+      if (engSession.attemptsOnCurrent === 1) engSession.firstTryCorrect += 1;
+      engSession.correct += 1;
+      if ($("eng-stars")) $("eng-stars").textContent = String(engSession.correct);
+      lockEngChoices(q.letter, btn);
+      if (feedback) {
+        feedback.textContent = engSession.attemptsOnCurrent === 1 ? "Yes! ★" : "Got it!";
+        feedback.className = "feedback right";
+      }
+      await playCorrectSound();
+      window.setTimeout(() => advanceEngQuestion(), 650);
+      return;
+    }
+
+    if (engSession.attemptsOnCurrent >= ENG_MAX_TRIES) {
+      engSession.answered = true;
+      lockEngChoices(q.letter, btn);
+      if (feedback) {
+        feedback.textContent = `It's ${q.letter}!`;
+        feedback.className = "feedback wrong";
+      }
+      if (nextBtn) nextBtn.hidden = false;
+      await playWrongSound();
+      return;
+    }
+
+    if (btn) {
+      btn.classList.add("wrong");
+      btn.disabled = true;
+    }
+    if (feedback) {
+      feedback.textContent = "Try again!";
+      feedback.className = "feedback wrong";
+    }
+    await playWrongSound();
+  }
+
+  async function submitEngWord(event) {
+    if (event) event.preventDefault();
+    if (!engSession || engSession.answered || engSession.mode !== "words") return;
+    const q = engCurrent();
+    const input = $("eng-word-input");
+    if (!q || !input) return;
+
+    const typed = String(input.value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z]/g, "");
+    if (!typed) {
+      input.focus();
+      return;
+    }
+
+    engSession.attemptsOnCurrent += 1;
+    const feedback = $("eng-feedback");
+    const nextBtn = $("btn-eng-next");
+    const ok = typed === q.word;
+
+    if (ok) {
+      engSession.answered = true;
+      if (engSession.attemptsOnCurrent === 1) engSession.firstTryCorrect += 1;
+      engSession.correct += 1;
+      if ($("eng-stars")) $("eng-stars").textContent = String(engSession.correct);
+      input.disabled = true;
+      if (feedback) {
+        feedback.textContent = engSession.attemptsOnCurrent === 1 ? "Nice writing! ★" : "Got it!";
+        feedback.className = "feedback right";
+      }
+      await playCorrectSound();
+      window.setTimeout(() => advanceEngQuestion(), 700);
+      return;
+    }
+
+    if (engSession.attemptsOnCurrent >= ENG_MAX_TRIES) {
+      engSession.answered = true;
+      input.disabled = true;
+      input.value = q.word;
+      if (feedback) {
+        feedback.textContent = `It's “${q.word}”`;
+        feedback.className = "feedback wrong";
+      }
+      if (nextBtn) nextBtn.hidden = false;
+      await playWrongSound();
+      return;
+    }
+
+    if (feedback) {
+      feedback.textContent = "Almost — try again!";
+      feedback.className = "feedback wrong";
+    }
+    input.select();
+    await playWrongSound();
+  }
+
+  function advanceEngQuestion() {
+    if (!engSession) return;
+    if (engSession.index + 1 >= engSession.questions.length) {
+      endEngPractice();
+      return;
+    }
+    engSession.index += 1;
+    renderEngQuestion();
+  }
+
+  function endEngPractice() {
+    if (!engSession) return;
+    const total = engSession.questions.length;
+    const right = engSession.correct;
+    const firstTry = engSession.firstTryCorrect;
+    const pct = Math.round((firstTry / total) * 100);
+    const title =
+      engSession.mode === "words" ? "English · Easy Words" : "English · Alphabet";
+    const reward = maybeAwardRobloxPoints(pct, firstTry, total, {
+      week: "EN",
+      title,
+    });
+
+    const resultsTitle = $("eng-results-title");
+    const resultsSub = $("eng-results-sub");
+    const grid = $("eng-results-grid");
+    const rewardBox = $("eng-reward-box");
+
+    if (resultsTitle) {
+      resultsTitle.textContent =
+        pct >= ROBLOX_PASS_PCT ? "Word Hero!" : pct >= 70 ? "Great Practice!" : "Keep Going!";
+    }
+    if (resultsSub) {
+      resultsSub.textContent = `${title} · ${right}/${total} correct · ${firstTry}/${total} first-try (${pct}%)`;
+    }
+    if (grid) {
+      grid.innerHTML = `
+        <div class="stat-card"><span>${right}</span> correct</div>
+        <div class="stat-card"><span>${firstTry}</span> first-try</div>
+        <div class="stat-card"><span>${pct}%</span> first-try</div>
+        <div class="stat-card"><span data-roblox-points>${getRobloxPoints()}</span> Roblox pts</div>
+      `;
+    }
+    if (rewardBox) {
+      if (reward.awarded) {
+        rewardBox.hidden = false;
+        rewardBox.className = "ss-reward-box won";
+        rewardBox.innerHTML = `
+          <p class="ss-reward-emoji">🧱</p>
+          <p class="ss-reward-title">You earned ${reward.points} Roblox points!</p>
+          <p>First-try ${pct}% (need ${ROBLOX_PASS_PCT}%+). Bank: <strong>${reward.total}</strong></p>
+        `;
+      } else {
+        rewardBox.hidden = false;
+        rewardBox.className = "ss-reward-box miss";
+        rewardBox.innerHTML = `
+          <p class="ss-reward-title">Roblox points: not yet</p>
+          <p>Get <strong>${ROBLOX_PASS_PCT}%</strong> first-try (9 of 10) to earn <strong>${ROBLOX_REWARD_POINTS}</strong> pts.</p>
+          <p>You got ${pct}% first-try. Try again!</p>
+          <p>Bank: <strong data-roblox-points>${getRobloxPoints()}</strong></p>
+        `;
+      }
+    }
+
+    showScreen("eng-results");
+    engSession = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -4190,7 +4567,7 @@
           <span data-roblox-points>${getRobloxPoints()}</span> points to buy
         </p>
         <p style="margin:0 0 0.65rem;font-weight:700;color:var(--muted)">
-          Earn ${ROBLOX_REWARD_POINTS} pts for Social Studies or multi-digit × practice at ${ROBLOX_PASS_PCT}%+ (first-try for math). Once per day. Buy the bank at week’s end, then clear.
+          Earn ${ROBLOX_REWARD_POINTS} pts for English, Social Studies, or math practice at ${ROBLOX_PASS_PCT}%+ (first-try). Buy the bank at week’s end, then clear.
         </p>
         ${robloxLogHtml}
         <button type="button" class="btn secondary" id="btn-clear-roblox" style="margin-top:0.75rem;width:100%">
@@ -4520,6 +4897,38 @@
       .then(() => playStartSound())
       .catch(() => {});
   }
+
+  $("btn-eng-alphabet")?.addEventListener("click", () => {
+    pokeAudio();
+    startEngPractice("alphabet");
+  });
+
+  $("btn-eng-words")?.addEventListener("click", () => {
+    pokeAudio();
+    startEngPractice("words");
+  });
+
+  $("btn-eng-quit")?.addEventListener("click", () => {
+    if (!engSession) {
+      showScreen("english");
+      return;
+    }
+    if (confirm("Quit English practice?")) {
+      engSession = null;
+      showScreen("english");
+    }
+  });
+
+  $("eng-word-form")?.addEventListener("submit", (e) => {
+    submitEngWord(e);
+  });
+
+  $("btn-eng-next")?.addEventListener("click", () => advanceEngQuestion());
+
+  $("btn-eng-again")?.addEventListener("click", () => {
+    pokeAudio();
+    startEngPractice(engLastMode || "alphabet");
+  });
 
   $("btn-ss-learn")?.addEventListener("click", () => {
     pokeAudio();

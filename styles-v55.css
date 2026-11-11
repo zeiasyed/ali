@@ -1867,3 +1867,198 @@ body.ld-answer-mode #answer.ld-quot-input {
     width: 100%;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   English · Pre-K alphabet + easy words
+   --------------------------------------------------------------------------- */
+.eng-practice-cards {
+  display: grid;
+  gap: 0.85rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.eng-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    "emoji title"
+    "emoji sub";
+  column-gap: 0.85rem;
+  row-gap: 0.15rem;
+  align-items: center;
+  text-align: left;
+  width: 100%;
+  padding: 1rem 1.1rem;
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  background: linear-gradient(145deg, #fff8e8 0%, #ffe7c2 100%);
+  box-shadow: 3px 3px 0 var(--ink);
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+
+.eng-card:nth-child(2) {
+  background: linear-gradient(145deg, #e8f6ff 0%, #cfe9ff 100%);
+}
+
+.eng-card:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.eng-card-emoji {
+  grid-area: emoji;
+  font-size: 2.4rem;
+  line-height: 1;
+}
+
+.eng-card-title {
+  grid-area: title;
+  font-family: var(--font-cartoon, var(--font-body));
+  font-weight: 800;
+  font-size: 1.35rem;
+}
+
+.eng-card-sub {
+  grid-area: sub;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+.eng-play-card {
+  background: rgba(255, 255, 255, 0.94);
+  border: 3px solid var(--ink);
+  border-radius: 22px;
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 1.1rem 1rem 1.25rem;
+  text-align: center;
+}
+
+.eng-mode-tag {
+  margin: 0 0 0.35rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  font-size: 0.78rem;
+  color: var(--muted);
+}
+
+.eng-prompt {
+  margin: 0.2rem 0 0.35rem;
+  font-family: var(--font-cartoon, var(--font-body));
+  font-weight: 800;
+  font-size: clamp(3.2rem, 18vw, 5.5rem);
+  line-height: 1.05;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.eng-prompt.eng-prompt-word {
+  font-size: clamp(2rem, 10vw, 3.2rem);
+}
+
+.eng-prompt .eng-emoji {
+  display: block;
+  font-size: clamp(2.6rem, 14vw, 4rem);
+  margin-bottom: 0.2rem;
+}
+
+.eng-prompt .eng-copy-word {
+  display: block;
+  letter-spacing: 0.12em;
+  text-transform: lowercase;
+}
+
+.eng-hint {
+  margin: 0 0 1rem;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--muted);
+}
+
+.eng-choices {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin: 0.25rem 0 0.75rem;
+}
+
+.eng-choice {
+  min-height: 4.4rem;
+  border: 3px solid var(--ink);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 3px 3px 0 var(--ink);
+  font-family: var(--font-cartoon, var(--font-body));
+  font-size: clamp(1.8rem, 8vw, 2.6rem);
+  font-weight: 800;
+  color: var(--ink);
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.15s ease;
+}
+
+.eng-choice:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.eng-choice:disabled {
+  cursor: default;
+  opacity: 0.95;
+}
+
+.eng-choice.correct {
+  background: #c8f5d4;
+}
+
+.eng-choice.wrong {
+  background: #ffd0d0;
+}
+
+.eng-word-form {
+  margin: 0.35rem 0 0.5rem;
+}
+
+.eng-word-form .answer-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.55rem;
+  align-items: stretch;
+}
+
+#eng-word-input {
+  width: 100%;
+  min-height: 3rem;
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  padding: 0.45rem 0.7rem;
+  font-family: var(--font-cartoon, var(--font-body));
+  font-size: clamp(1.35rem, 5vw, 1.75rem);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: lowercase;
+  background: #fff;
+  color: var(--ink);
+}
+
+#eng-word-input:disabled {
+  opacity: 0.85;
+}
+
+#btn-eng-next {
+  margin-top: 0.65rem;
+  width: 100%;
+}
+
+@media (max-width: 520px) {
+  .eng-choices {
+    gap: 0.55rem;
+  }
+  .eng-choice {
+    min-height: 3.8rem;
+  }
+}

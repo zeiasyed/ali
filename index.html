@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v55.css?v=77" />
+  <link rel="stylesheet" href="styles-v56.css?v=78" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -310,11 +310,98 @@
       </form>
 
       <nav class="home-nav">
+        <button type="button" class="btn primary" data-go="english">English</button>
         <button type="button" class="btn primary" data-go="social">Social Studies</button>
         <button type="button" class="btn secondary" data-go="map">Hero Map</button>
         <button type="button" class="btn secondary" data-go="badges">Heroes</button>
         <button type="button" class="btn ghost" data-go="parent">Parent</button>
       </nav>
+    </section>
+
+    <!-- ENGLISH · PRE-K -->
+    <section id="screen-english" class="screen">
+      <header class="hero-brand compact">
+        <p class="eyebrow">English</p>
+        <h1 class="ss-title">Letters &amp; Words</h1>
+        <p class="tagline">Pre-K practice · alphabet + easy writing words</p>
+      </header>
+
+      <div class="ss-roblox-bank">
+        <span class="ss-roblox-label">Roblox points bank</span>
+        <strong><span data-roblox-points>0</span> pts</strong>
+        <span class="ss-roblox-hint">Finish a 10-round at 90%+ first-try → earn 5 pts</span>
+      </div>
+
+      <div class="eng-practice-cards">
+        <button type="button" class="eng-card" id="btn-eng-alphabet">
+          <span class="eng-card-emoji" aria-hidden="true">🔤</span>
+          <span class="eng-card-title">Alphabet</span>
+          <span class="eng-card-sub">Learn A–Z · tap the matching letter</span>
+        </button>
+        <button type="button" class="eng-card" id="btn-eng-words">
+          <span class="eng-card-emoji" aria-hidden="true">✏️</span>
+          <span class="eng-card-title">Easy Words</span>
+          <span class="eng-card-sub">Write simple words like cat &amp; sun</span>
+        </button>
+      </div>
+
+      <button type="button" class="btn secondary" data-go="home">Back</button>
+    </section>
+
+    <!-- ENGLISH · PLAY -->
+    <section id="screen-eng-play" class="screen">
+      <div class="play-top">
+        <button type="button" class="btn ghost small" id="btn-eng-quit">Quit</button>
+        <div class="play-meta">
+          <span id="eng-progress"></span>
+        </div>
+        <div class="play-score"><span id="eng-stars">0</span> ★</div>
+      </div>
+
+      <div class="eng-play-card" id="eng-play-card">
+        <p class="eng-mode-tag" id="eng-mode-tag">Alphabet</p>
+        <p class="eng-prompt" id="eng-prompt">A</p>
+        <p class="eng-hint" id="eng-hint">Tap the matching letter!</p>
+
+        <div id="eng-choices" class="eng-choices" hidden></div>
+
+        <form id="eng-word-form" class="eng-word-form" hidden autocomplete="off">
+          <label class="sr-only" for="eng-word-input">Type the word</label>
+          <div class="answer-row">
+            <input
+              id="eng-word-input"
+              type="text"
+              inputmode="text"
+              enterkeyhint="done"
+              maxlength="12"
+              placeholder="Type the word"
+              autocomplete="off"
+              autocapitalize="off"
+              autocorrect="off"
+              spellcheck="false"
+            />
+            <button type="submit" class="btn primary" id="btn-eng-pow">POW!</button>
+          </div>
+        </form>
+
+        <p id="eng-feedback" class="feedback" role="status" aria-live="polite"></p>
+        <button type="button" class="btn primary big" id="btn-eng-next" hidden>Next</button>
+      </div>
+    </section>
+
+    <!-- ENGLISH · RESULTS -->
+    <section id="screen-eng-results" class="screen">
+      <header class="hero-brand compact">
+        <h1 id="eng-results-title">Nice Work!</h1>
+        <p class="tagline" id="eng-results-sub"></p>
+      </header>
+      <div class="results-grid" id="eng-results-grid"></div>
+      <div id="eng-reward-box" class="ss-reward-box" hidden></div>
+      <div class="actions">
+        <button type="button" class="btn primary big" id="btn-eng-again">Play Again</button>
+        <button type="button" class="btn secondary" data-go="english">English Home</button>
+        <button type="button" class="btn ghost" data-go="home">Home Base</button>
+      </div>
     </section>
 
     <!-- SOCIAL STUDIES · WEEK 7 -->
@@ -598,6 +685,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v77.js?v=77"></script>
+  <script src="app-v78.js?v=78"></script>
 </body>
 </html>
