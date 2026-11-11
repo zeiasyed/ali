@@ -1829,10 +1829,194 @@
     }));
   }
 
+  function buildPenQuestions(n = ENG_TARGET) {
+    const letters = shuffleInPlace([...ENG_LETTER_WORDS]);
+    const words = shuffleInPlace([...ENG_EASY_WORDS]);
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      if (i % 2 === 0) {
+        const item = letters[Math.floor(i / 2) % letters.length];
+        out.push({
+          kind: "pen-letter",
+          target: item.letter.toLowerCase(),
+          display: item.letter,
+          emoji: item.emoji,
+          guide: item.letter,
+        });
+      } else {
+        const item = words[Math.floor(i / 2) % words.length];
+        out.push({
+          kind: "pen-word",
+          target: item.word,
+          display: item.word,
+          emoji: item.emoji,
+          guide: item.word,
+        });
+      }
+    }
+    return shuffleInPlace(out);
+  }
+
+  const engWritePad = {
+    ready: false,
+    drawing: false,
+    lastX: 0,
+    lastY: 0,
+    ctx: null,
+  };
+
+  function resizeEngWritePad() {
+    const canvas = $("eng-write-canvas");
+    const wrap = canvas?.parentElement;
+    if (!canvas || !wrap) return;
+    const rect = wrap.getBoundingClientRect();
+    const cssW = Math.max(1, Math.floor(rect.width));
+    const cssH = Math.max(1, Math.floor(rect.height));
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    canvas.width = Math.floor(cssW * dpr);
+    canvas.height = Math.floor(cssH * dpr);
+    canvas.style.width = `${cssW}px`;
+    canvas.style.height = `${cssH}px`;
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.lineCap = "round";
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = "#1a1f36";
+    ctx.fillStyle = "#1a1f36";
+    ctx.lineWidth = 5;
+    engWritePad.ctx = ctx;
+  }
+
+  function clearEngWritePad() {
+    const canvas = $("eng-write-canvas");
+    if (!canvas) return;
+    if (!engWritePad.ctx) resizeEngWritePad();
+    if (!engWritePad.ctx) return;
+    const rect = canvas.getBoundingClientRect();
+    engWritePad.ctx.clearRect(0, 0, rect.width || canvas.width, rect.height || canvas.height);
+  }
+
+  function setupEngWritePad() {
+    const canvas = $("eng-write-canvas");
+    if (!canvas || engWritePad.ready) return;
+    engWritePad.ready = true;
+
+    const pos = (e) => {
+      const r = canvas.getBoundingClientRect();
+      return { x: e.clientX - r.left, y: e.clientY - r.top };
+    };
+
+    const penWidth = (e) => {
+      if (e.pointerType === "pen") {
+        const pressure = Number.isFinite(e.pressure) && e.pressure > 0 ? e.pressure : 0.5;
+        return 2.4 + pressure * 6;
+      }
+      return 5;
+    };
+
+    canvas.addEventListener(
+      "pointerdown",
+      (e) => {
+        if (e.pointerType === "mouse" && e.button !== 0) return;
+        e.preventDefault();
+        canvas.setPointerCapture(e.pointerId);
+        engWritePad.drawing = true;
+        const p = pos(e);
+        engWritePad.lastX = p.x;
+        engWritePad.lastY = p.y;
+        const ctx = engWritePad.ctx;
+        if (!ctx) return;
+        ctx.lineWidth = penWidth(e);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, ctx.lineWidth / 2, 0, Math.PI * 2);
+        ctx.fill();
+      },
+      { passive: false }
+    );
+
+    canvas.addEventListener(
+      "pointermove",
+      (e) => {
+        if (!engWritePad.drawing) return;
+        e.preventDefault();
+        const p = pos(e);
+        const ctx = engWritePad.ctx;
+        if (!ctx) return;
+        ctx.lineWidth = penWidth(e);
+        ctx.beginPath();
+        ctx.moveTo(engWritePad.lastX, engWritePad.lastY);
+        ctx.lineTo(p.x, p.y);
+        ctx.stroke();
+        engWritePad.lastX = p.x;
+        engWritePad.lastY = p.y;
+      },
+      { passive: false }
+    );
+
+    const endDraw = (e) => {
+      if (!engWritePad.drawing) return;
+      engWritePad.drawing = false;
+      try {
+        canvas.releasePointerCapture(e.pointerId);
+      } catch (_) {
+        /* ignore */
+      }
+    };
+    canvas.addEventListener("pointerup", endDraw);
+    canvas.addEventListener("pointercancel", endDraw);
+    canvas.addEventListener("lostpointercapture", () => {
+      engWritePad.drawing = false;
+    });
+
+    window.addEventListener("resize", () => {
+      if (engSession?.mode === "pen" && $("eng-pen-form") && !$("eng-pen-form").hidden) {
+        resizeEngWritePad();
+      }
+    });
+  }
+
+  function prepareEngPenPad(guideText) {
+    setupEngWritePad();
+    const guide = $("eng-trace-guide");
+    if (guide) {
+      guide.textContent = guideText || "";
+      guide.classList.toggle("eng-trace-word", String(guideText || "").length > 1);
+    }
+    requestAnimationFrame(() => {
+      resizeEngWritePad();
+      clearEngWritePad();
+    });
+  }
+
+  function setEngPenKeyboard(wantKeyboard) {
+    const input = $("eng-pen-input");
+    const btn = $("btn-eng-pen-keyboard");
+    if (!input) return;
+    input.setAttribute("inputmode", wantKeyboard ? "text" : "none");
+    input.placeholder = wantKeyboard ? "Type here" : "Write with Pencil";
+    if (btn) btn.classList.toggle("keyboard-on", !!wantKeyboard);
+    if (wantKeyboard) {
+      window.setTimeout(() => {
+        input.focus({ preventScroll: true });
+        input.scrollIntoView({ block: "center", behavior: "smooth" });
+      }, 50);
+    } else {
+      try {
+        input.blur();
+      } catch {
+        /* ignore */
+      }
+    }
+  }
+
   function startEngPractice(mode) {
     engLastMode = mode;
     const questions =
-      mode === "words" ? buildWordQuestions(ENG_TARGET) : buildAlphabetQuestions(ENG_TARGET);
+      mode === "words"
+        ? buildWordQuestions(ENG_TARGET)
+        : mode === "pen"
+          ? buildPenQuestions(ENG_TARGET)
+          : buildAlphabetQuestions(ENG_TARGET);
     engSession = {
       mode,
       questions,
@@ -1864,10 +2048,12 @@
     const prompt = $("eng-prompt");
     const hint = $("eng-hint");
     const choices = $("eng-choices");
-    const form = $("eng-word-form");
+    const wordForm = $("eng-word-form");
+    const penForm = $("eng-pen-form");
     const feedback = $("eng-feedback");
     const nextBtn = $("btn-eng-next");
-    const input = $("eng-word-input");
+    const wordInput = $("eng-word-input");
+    const penInput = $("eng-pen-input");
 
     if (progress) progress.textContent = `${engSession.index + 1} / ${engSession.questions.length}`;
     if (stars) stars.textContent = String(engSession.correct);
@@ -1888,18 +2074,50 @@
         choices.hidden = true;
         choices.innerHTML = "";
       }
-      if (form) form.hidden = false;
-      if (input) {
-        input.disabled = false;
-        input.value = "";
-        window.setTimeout(() => input.focus(), 80);
+      if (penForm) penForm.hidden = true;
+      if (wordForm) wordForm.hidden = false;
+      if (wordInput) {
+        wordInput.disabled = false;
+        wordInput.value = "";
+        window.setTimeout(() => wordInput.focus(), 80);
       }
+      return;
+    }
+
+    if (engSession.mode === "pen") {
+      if (tag) tag.textContent = "Write with Pen";
+      if (choices) {
+        choices.hidden = true;
+        choices.innerHTML = "";
+      }
+      if (wordForm) wordForm.hidden = true;
+      if (penForm) penForm.hidden = false;
+      if (q.kind === "pen-letter") {
+        if (prompt) {
+          prompt.className = "eng-prompt";
+          prompt.innerHTML = `<span class="eng-emoji" aria-hidden="true">${q.emoji}</span>${q.display}`;
+        }
+        if (hint) hint.textContent = `Copy the letter ${q.display} with your Pencil!`;
+      } else {
+        if (prompt) {
+          prompt.className = "eng-prompt eng-prompt-word";
+          prompt.innerHTML = `<span class="eng-emoji" aria-hidden="true">${q.emoji}</span><span class="eng-copy-word">${q.display}</span>`;
+        }
+        if (hint) hint.textContent = "Copy the word with your Pencil!";
+      }
+      if (penInput) {
+        penInput.disabled = false;
+        penInput.value = "";
+      }
+      setEngPenKeyboard(false);
+      prepareEngPenPad(q.guide);
       return;
     }
 
     if (tag) tag.textContent = "Alphabet";
     if (choices) choices.hidden = false;
-    if (form) form.hidden = true;
+    if (wordForm) wordForm.hidden = true;
+    if (penForm) penForm.hidden = true;
     if (prompt) prompt.className = "eng-prompt";
 
     if (q.kind === "starts") {
@@ -2041,6 +2259,67 @@
     await playWrongSound();
   }
 
+  async function submitEngPen(event) {
+    if (event) event.preventDefault();
+    if (!engSession || engSession.answered || engSession.mode !== "pen") return;
+    const q = engCurrent();
+    const input = $("eng-pen-input");
+    if (!q || !input) return;
+
+    const typed = String(input.value || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z]/g, "");
+    if (!typed) {
+      const emptyFeedback = $("eng-feedback");
+      if (emptyFeedback) {
+        emptyFeedback.textContent = "Write with Pencil in the box, then POW!";
+        emptyFeedback.className = "feedback";
+      }
+      return;
+    }
+
+    engSession.attemptsOnCurrent += 1;
+    const feedback = $("eng-feedback");
+    const nextBtn = $("btn-eng-next");
+    const ok = typed === q.target;
+
+    if (ok) {
+      engSession.answered = true;
+      if (engSession.attemptsOnCurrent === 1) engSession.firstTryCorrect += 1;
+      engSession.correct += 1;
+      if ($("eng-stars")) $("eng-stars").textContent = String(engSession.correct);
+      input.disabled = true;
+      if (feedback) {
+        feedback.textContent =
+          engSession.attemptsOnCurrent === 1 ? "Beautiful writing! ★" : "Got it!";
+        feedback.className = "feedback right";
+      }
+      await playCorrectSound();
+      window.setTimeout(() => advanceEngQuestion(), 750);
+      return;
+    }
+
+    if (engSession.attemptsOnCurrent >= ENG_MAX_TRIES) {
+      engSession.answered = true;
+      input.disabled = true;
+      input.value = q.display;
+      if (feedback) {
+        feedback.textContent = `Write “${q.display}”`;
+        feedback.className = "feedback wrong";
+      }
+      if (nextBtn) nextBtn.hidden = false;
+      await playWrongSound();
+      return;
+    }
+
+    if (feedback) {
+      feedback.textContent = "Almost — clear and try again!";
+      feedback.className = "feedback wrong";
+    }
+    await playWrongSound();
+  }
+
   function advanceEngQuestion() {
     if (!engSession) return;
     if (engSession.index + 1 >= engSession.questions.length) {
@@ -2058,7 +2337,11 @@
     const firstTry = engSession.firstTryCorrect;
     const pct = Math.round((firstTry / total) * 100);
     const title =
-      engSession.mode === "words" ? "English · Easy Words" : "English · Alphabet";
+      engSession.mode === "words"
+        ? "English · Easy Words"
+        : engSession.mode === "pen"
+          ? "English · Write with Pen"
+          : "English · Alphabet";
     const reward = maybeAwardRobloxPoints(pct, firstTry, total, {
       week: "EN",
       title,
@@ -4903,6 +5186,11 @@
     startEngPractice("alphabet");
   });
 
+  $("btn-eng-pen")?.addEventListener("click", () => {
+    pokeAudio();
+    startEngPractice("pen");
+  });
+
   $("btn-eng-words")?.addEventListener("click", () => {
     pokeAudio();
     startEngPractice("words");
@@ -4921,6 +5209,25 @@
 
   $("eng-word-form")?.addEventListener("submit", (e) => {
     submitEngWord(e);
+  });
+
+  $("eng-pen-form")?.addEventListener("submit", (e) => {
+    submitEngPen(e);
+  });
+
+  $("btn-eng-clear-pad")?.addEventListener("click", () => clearEngWritePad());
+
+  $("btn-eng-pen-clear")?.addEventListener("click", () => {
+    const input = $("eng-pen-input");
+    if (!input || input.disabled) return;
+    input.value = "";
+    setEngPenKeyboard(false);
+  });
+
+  $("btn-eng-pen-keyboard")?.addEventListener("click", () => {
+    const btn = $("btn-eng-pen-keyboard");
+    const on = !btn?.classList.contains("keyboard-on");
+    setEngPenKeyboard(on);
   });
 
   $("btn-eng-next")?.addEventListener("click", () => advanceEngQuestion());

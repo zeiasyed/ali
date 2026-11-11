@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v56.css?v=78" />
+  <link rel="stylesheet" href="styles-v57.css?v=79" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -323,7 +323,7 @@
       <header class="hero-brand compact">
         <p class="eyebrow">English</p>
         <h1 class="ss-title">Letters &amp; Words</h1>
-        <p class="tagline">Pre-K practice · alphabet + easy writing words</p>
+        <p class="tagline">Pre-K practice · alphabet, pen writing &amp; easy words</p>
       </header>
 
       <div class="ss-roblox-bank">
@@ -338,10 +338,15 @@
           <span class="eng-card-title">Alphabet</span>
           <span class="eng-card-sub">Learn A–Z · tap the matching letter</span>
         </button>
-        <button type="button" class="eng-card" id="btn-eng-words">
+        <button type="button" class="eng-card" id="btn-eng-pen">
           <span class="eng-card-emoji" aria-hidden="true">✏️</span>
+          <span class="eng-card-title">Write with Pen</span>
+          <span class="eng-card-sub">Copy letters &amp; words with Pencil</span>
+        </button>
+        <button type="button" class="eng-card" id="btn-eng-words">
+          <span class="eng-card-emoji" aria-hidden="true">⌨️</span>
           <span class="eng-card-title">Easy Words</span>
-          <span class="eng-card-sub">Write simple words like cat &amp; sun</span>
+          <span class="eng-card-sub">Type simple words like cat &amp; sun</span>
         </button>
       </div>
 
@@ -381,6 +386,39 @@
               spellcheck="false"
             />
             <button type="submit" class="btn primary" id="btn-eng-pow">POW!</button>
+          </div>
+        </form>
+
+        <form id="eng-pen-form" class="eng-pen-form" hidden autocomplete="off">
+          <div class="eng-write-pad" id="eng-write-pad">
+            <div class="work-pad-head">
+              <p class="work-pad-label">Practice pad · write with Pencil</p>
+              <button type="button" id="btn-eng-clear-pad" class="btn-clear-pad">Clear pad</button>
+            </div>
+            <div class="eng-write-surface">
+              <p class="eng-trace-guide" id="eng-trace-guide" aria-hidden="true">A</p>
+              <canvas id="eng-write-canvas" aria-label="Writing practice pad"></canvas>
+            </div>
+          </div>
+          <p class="answer-pen-hint">Then write it in the box with Pencil to check</p>
+          <label class="sr-only" for="eng-pen-input">Write with Pencil</label>
+          <input
+            id="eng-pen-input"
+            type="text"
+            inputmode="none"
+            enterkeyhint="done"
+            maxlength="12"
+            placeholder="Write with Pencil"
+            autocomplete="off"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
+            class="eng-pen-input answer-scribble"
+          />
+          <div class="eng-pen-tools">
+            <button type="button" class="btn say-it" id="btn-eng-pen-clear">Clear box</button>
+            <button type="button" class="btn say-it" id="btn-eng-pen-keyboard">Keyboard</button>
+            <button type="submit" class="btn primary" id="btn-eng-pen-pow">POW!</button>
           </div>
         </form>
 
@@ -685,6 +723,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v78.js?v=78"></script>
+  <script src="app-v79.js?v=79"></script>
 </body>
 </html>
