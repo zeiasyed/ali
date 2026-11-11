@@ -723,19 +723,52 @@
 
   let answerKeyboardWanted = false;
 
-  function setAnswerInputMode(wantKeyboard) {
-    answerKeyboardWanted = !!wantKeyboard;
-    const mode = wantKeyboard ? "text" : "none";
-    const ans = $("answer");
-    const rem = $("answer-rem");
-    if (ans) ans.setAttribute("inputmode", mode);
-    if (rem) rem.setAttribute("inputmode", mode);
-    const btn = $("btn-keyboard");
-    if (btn) btn.classList.toggle("keyboard-on", wantKeyboard);
+  /** Pre-K / Kindergarten addition: keyboard only (no Pencil / Keyboard toggle) */
+  function usesKeyboardOnlyAnswer(op = session?.operation, grade = session?.grade) {
+    const gradeId = grade || state.settings.grade || getGradeId();
+    const operation = op || state.settings.operation || "multiply";
+    return (gradeId === "prek" || gradeId === "k") && operation === "add";
   }
 
-  /** Pencil mode: no soft keyboard until Keyboard button is pressed */
+  function setAnswerInputMode(wantKeyboard) {
+    answerKeyboardWanted = !!wantKeyboard;
+    const keyboardOnly = usesKeyboardOnlyAnswer();
+    const mode = keyboardOnly ? "numeric" : wantKeyboard ? "text" : "none";
+    const ans = $("answer");
+    const rem = $("answer-rem");
+    if (ans) {
+      ans.setAttribute("inputmode", mode);
+      ans.placeholder = keyboardOnly ? "Type here" : wantKeyboard ? "Type answer" : "Write with Pencil";
+    }
+    if (rem) rem.setAttribute("inputmode", mode);
+    const btn = $("btn-keyboard");
+    if (btn) btn.classList.toggle("keyboard-on", wantKeyboard && !keyboardOnly);
+  }
+
+  function syncAnswerEntryUI() {
+    const keyboardOnly = usesKeyboardOnlyAnswer(
+      $("operation")?.value || session?.operation || state.settings.operation,
+      $("grade")?.value || session?.grade || state.settings.grade
+    );
+    const hint = $("answer-pen-hint");
+    const keyBtn = $("btn-keyboard");
+    if (hint) {
+      hint.hidden = keyboardOnly;
+      hint.style.display = keyboardOnly ? "none" : "";
+    }
+    if (keyBtn) {
+      keyBtn.hidden = keyboardOnly;
+      keyBtn.style.display = keyboardOnly ? "none" : "";
+    }
+    document.body.classList.toggle("keyboard-only-answer", keyboardOnly);
+  }
+
+  /** Pencil mode by default; Pre-K/K addition opens the keyboard like before */
   function focusAnswer() {
+    if (usesKeyboardOnlyAnswer()) {
+      openAnswerKeyboard();
+      return;
+    }
     setAnswerInputMode(false);
     window.setTimeout(() => {
       try {
@@ -754,8 +787,12 @@
     window.setTimeout(() => {
       input.focus({ preventScroll: true });
       try {
-        const len = String(input.value || "").length;
-        input.setSelectionRange(len, len);
+        if (usesKeyboardOnlyAnswer()) {
+          input.select();
+        } else {
+          const len = String(input.value || "").length;
+          input.setSelectionRange(len, len);
+        }
       } catch {
         /* ignore */
       }
@@ -3106,6 +3143,7 @@
     }
 
     updateProblemTypeOptions(op);
+    syncAnswerEntryUI();
   }
 
   function updateProblemTypeOptions(operation) {
@@ -3603,6 +3641,7 @@
     setWorkPadVisible(isPad);
     setLongDivAnswerUI(isLongDiv);
     document.body.classList.toggle("ld-work-mode", isLongDiv);
+    syncAnswerEntryUI();
     updateHeroAvatar();
     $("hero-cheer").textContent = isPad
       ? isLongDiv
@@ -3829,6 +3868,7 @@
     }
 
     if (isPad) clearWorkPad();
+    syncAnswerEntryUI();
     focusAnswer();
   }
 
@@ -4534,13 +4574,15 @@
     startSocialLearn();
   });
 
-  // Only scroll the answer into view when the Keyboard button opened it
+  // Scroll answer into view when keyboard mode is on (button or Pre-K/K addition)
   $("answer").addEventListener("focus", () => {
-    if (!answerKeyboardWanted) return;
+    if (!answerKeyboardWanted && !usesKeyboardOnlyAnswer()) return;
     window.setTimeout(() => {
       $("answer")?.scrollIntoView({ block: "center", behavior: "smooth" });
     }, 300);
   });
+
+  syncAnswerEntryUI();
 
   ensureRobloxFloor();
   writeRobloxBankStore();

@@ -572,6 +572,14 @@ select, input[type="text"] {
   color: var(--ink);
 }
 
+body.keyboard-only-answer .answer-tools {
+  grid-template-columns: 1fr;
+}
+
+body.keyboard-only-answer #btn-keyboard {
+  display: none !important;
+}
+
 @media (max-width: 420px) {
   .answer-tools {
     grid-template-columns: 1fr;
