@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v58.css?v=80" />
+  <link rel="stylesheet" href="styles-v59.css?v=81" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -483,7 +483,7 @@
       <div class="ss-roblox-bank">
         <span class="ss-roblox-label">Roblox points bank</span>
         <strong><span data-roblox-points>0</span> pts</strong>
-        <span class="ss-roblox-hint">90%+ on Easy, Medium, or Hard → 5 pts</span>
+        <span class="ss-roblox-hint">90%+ on Easy 1/2, Medium, or Hard → 5 pts</span>
       </div>
 
       <div class="ss-actions">
@@ -551,7 +551,14 @@
         <div class="ss-diff-wrap">
           <p class="ss-diff-label">Choose difficulty</p>
           <div class="ss-diff-picks" role="group" aria-label="Quiz difficulty">
-            <button type="button" class="ss-diff-btn" data-ss-diff="easy">Easy</button>
+            <button type="button" class="ss-diff-btn" data-ss-diff="easy1">
+              Easy 1
+              <span class="ss-diff-note">same questions</span>
+            </button>
+            <button type="button" class="ss-diff-btn" data-ss-diff="easy2">
+              Easy 2
+              <span class="ss-diff-note">new each time</span>
+            </button>
             <button type="button" class="ss-diff-btn on" data-ss-diff="medium">Medium</button>
             <button type="button" class="ss-diff-btn" data-ss-diff="hard">Hard</button>
           </div>
@@ -732,6 +739,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v80.js?v=80"></script>
+  <script src="app-v81.js?v=81"></script>
 </body>
 </html>

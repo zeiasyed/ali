@@ -951,12 +951,17 @@ body.keyboard-only-answer #btn-keyboard {
 
 .ss-diff-picks {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0.45rem;
 }
 
 .ss-diff-btn {
-  min-height: 2.8rem;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 0.1rem;
+  min-height: 3.1rem;
+  padding: 0.45rem 0.35rem;
   border: 3px solid var(--ink);
   border-radius: 14px;
   background: #fff;
@@ -966,6 +971,13 @@ body.keyboard-only-answer #btn-keyboard {
   font-size: 1rem;
   color: var(--ink);
   cursor: pointer;
+}
+
+.ss-diff-note {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--muted);
+  letter-spacing: 0;
 }
 
 .ss-diff-btn.on {

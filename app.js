@@ -2433,9 +2433,24 @@
   // ---------------------------------------------------------------------------
   // Social Studies · Week 7 · Thinking Like a Geographer
   // ---------------------------------------------------------------------------
-  const SS_DIFFICULTIES = ["easy", "medium", "hard"];
+  const SS_DIFFICULTIES = ["easy1", "easy2", "medium", "hard"];
+  const SS_DIFF_LABELS = {
+    easy1: "Easy 1",
+    easy2: "Easy 2",
+    medium: "Medium",
+    hard: "Hard",
+  };
   let ssWeekId = 8;
   let ssQuizDifficulty = "medium";
+
+  function ssDiffLabel(diff) {
+    return SS_DIFF_LABELS[diff] || String(diff || "Medium");
+  }
+
+  function ssContentDifficulty(diff) {
+    if (diff === "easy1" || diff === "easy2" || diff === "easy") return "easy";
+    return SS_DIFFICULTIES.includes(diff) ? diff : "medium";
+  }
 
   const SS_CATALOG = {
     7: {
@@ -4360,19 +4375,26 @@
 
   function pickQuizQuestions(difficulty = ssQuizDifficulty) {
     const week = getSsWeek();
-    const diff = SS_DIFFICULTIES.includes(difficulty) ? difficulty : "medium";
-    ssQuizDifficulty = diff;
+    const mode = SS_DIFFICULTIES.includes(difficulty)
+      ? difficulty
+      : difficulty === "easy"
+        ? "easy2"
+        : "medium";
+    ssQuizDifficulty = mode;
+    const contentDiff = ssContentDifficulty(mode);
+    const fixed = mode === "easy1";
     const picked = (week.banks || [])
       .map((bank) => {
         const variants = bank.variants || [];
-        const pool = variants.filter((v) => (v.difficulty || "medium") === diff);
+        const pool = variants.filter((v) => (v.difficulty || "medium") === contentDiff);
         const use = pool.length ? pool : variants;
         if (!use.length) return null;
-        const q = use[Math.floor(Math.random() * use.length)];
-        return { ...q, bankId: bank.id, difficulty: diff };
+        const q = fixed ? use[0] : use[Math.floor(Math.random() * use.length)];
+        return { ...q, bankId: bank.id, difficulty: mode };
       })
       .filter(Boolean);
-    shuffleInPlace(picked);
+    // Easy 1 stays in the same order every time; other modes shuffle
+    if (!fixed) shuffleInPlace(picked);
     return picked;
   }
 
@@ -4519,7 +4541,10 @@
     const diff = ssSession?.difficulty || ssQuizDifficulty;
     const introBody = $("ss-quiz-intro-extra");
     if (introBody) {
-      introBody.textContent = `Week ${week.week} · ${diff} · ${total} questions. They change each time you play!`;
+      introBody.textContent =
+        diff === "easy1"
+          ? `Week ${week.week} · Easy 1 · ${total} questions. Same quiz every time.`
+          : `Week ${week.week} · ${ssDiffLabel(diff)} · ${total} questions. They change each time you play!`;
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -4547,12 +4572,11 @@
     const week = getSsWeek();
     const badge = $("ss-week-badge");
     if (badge) {
-      const diffLabel = (ssSession.difficulty || "medium").replace(/^./, (c) => c.toUpperCase());
-      badge.textContent = `Week ${week.week} · ${diffLabel} · ${week.title}`;
+      badge.textContent = `Week ${week.week} · ${ssDiffLabel(ssSession.difficulty)} · ${week.title}`;
     }
     const goal = $("ss-quiz-goal-bar");
     if (goal) {
-      goal.textContent = `Goal: 90%+ = 5 Roblox points · ${(ssSession.difficulty || "medium").toUpperCase()}`;
+      goal.textContent = `Goal: 90%+ = 5 Roblox points · ${ssDiffLabel(ssSession.difficulty)}`;
     }
     $("ss-question-text").textContent = q.text;
     $("ss-prompt").textContent = `${q.prompt || ""} · 2 tries`;
@@ -4568,8 +4592,8 @@
     const box = $("ss-choices");
     box.innerHTML = "";
     const choices = q.choices.slice();
-    // Keep TRUE/FALSE order; shuffle other choice lists
-    if (q.type !== "tf") shuffleInPlace(choices);
+    // Easy 1 + TRUE/FALSE keep fixed choice order; other modes shuffle
+    if (q.type !== "tf" && ssSession.difficulty !== "easy1") shuffleInPlace(choices);
     choices.forEach((choice, i) => {
       const btn = document.createElement("button");
       btn.type = "button";
@@ -4707,7 +4731,7 @@
     const week = getSsWeek();
     const reward = maybeAwardRobloxPoints(pct, right, total, {
       week: week.week,
-      title: `${week.title} · ${ssSession?.difficulty || ssQuizDifficulty}`,
+      title: `${week.title} · ${ssDiffLabel(ssSession?.difficulty || ssQuizDifficulty)}`,
     });
 
     $("ss-results-title").textContent =
@@ -4716,7 +4740,7 @@
         : pct >= 70
           ? "Nice Exploring!"
           : "Keep Studying!";
-    $("ss-results-sub").textContent = `${week.title} · ${(ssSession?.difficulty || ssQuizDifficulty)} · ${right}/${total} correct (${pct}%)`;
+    $("ss-results-sub").textContent = `${week.title} · ${ssDiffLabel(ssSession?.difficulty || ssQuizDifficulty)} · ${right}/${total} correct (${pct}%)`;
     $("ss-results-grid").innerHTML = `
       <div class="stat-card"><span>${right}</span> correct</div>
       <div class="stat-card"><span>${total - right}</span> missed</div>
