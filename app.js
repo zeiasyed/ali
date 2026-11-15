@@ -4382,19 +4382,20 @@
         : "medium";
     ssQuizDifficulty = mode;
     const contentDiff = ssContentDifficulty(mode);
-    const fixed = mode === "easy1";
+    const sameSet = mode === "easy1";
     const picked = (week.banks || [])
       .map((bank) => {
         const variants = bank.variants || [];
         const pool = variants.filter((v) => (v.difficulty || "medium") === contentDiff);
         const use = pool.length ? pool : variants;
         if (!use.length) return null;
-        const q = fixed ? use[0] : use[Math.floor(Math.random() * use.length)];
+        // Easy 1: always the same question from each bank; other modes pick randomly
+        const q = sameSet ? use[0] : use[Math.floor(Math.random() * use.length)];
         return { ...q, bankId: bank.id, difficulty: mode };
       })
       .filter(Boolean);
-    // Easy 1 stays in the same order every time; other modes shuffle
-    if (!fixed) shuffleInPlace(picked);
+    // All modes shuffle order — Easy 1 keeps the same set, just mixed up
+    shuffleInPlace(picked);
     return picked;
   }
 
@@ -4543,7 +4544,7 @@
     if (introBody) {
       introBody.textContent =
         diff === "easy1"
-          ? `Week ${week.week} · Easy 1 · ${total} questions. Same quiz every time.`
+          ? `Week ${week.week} · Easy 1 · ${total} questions. Same questions, mixed order each time.`
           : `Week ${week.week} · ${ssDiffLabel(diff)} · ${total} questions. They change each time you play!`;
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -4592,8 +4593,8 @@
     const box = $("ss-choices");
     box.innerHTML = "";
     const choices = q.choices.slice();
-    // Easy 1 + TRUE/FALSE keep fixed choice order; other modes shuffle
-    if (q.type !== "tf" && ssSession.difficulty !== "easy1") shuffleInPlace(choices);
+    // Keep TRUE/FALSE order; shuffle other choice lists
+    if (q.type !== "tf") shuffleInPlace(choices);
     choices.forEach((choice, i) => {
       const btn = document.createElement("button");
       btn.type = "button";
