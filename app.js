@@ -1723,7 +1723,8 @@
     document.querySelectorAll(".screen").forEach((el) => el.classList.remove("active"));
     $(`screen-${name}`).classList.add("active");
     const homeBtn = $("btn-global-home");
-    if (homeBtn) homeBtn.hidden = name === "home";
+    // Keep Home visible under the version badge on every screen
+    if (homeBtn) homeBtn.hidden = false;
     if (name === "home") {
       // Leave nested practice sessions when returning to the dashboard
       ssSession = null;
