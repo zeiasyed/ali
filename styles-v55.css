@@ -427,6 +427,33 @@ select, input[type="text"] {
   grid-column: 1 / -1;
 }
 
+.btn-global-home {
+  position: fixed;
+  top: max(0.55rem, env(safe-area-inset-top));
+  right: max(0.55rem, env(safe-area-inset-right));
+  z-index: 80;
+  min-height: 2.35rem;
+  padding: 0.4rem 0.9rem;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: #ffe08a;
+  box-shadow: 2px 2px 0 var(--ink);
+  font-family: var(--font-cartoon, var(--font-body));
+  font-weight: 800;
+  font-size: 0.95rem;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.btn-global-home:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
+}
+
+.btn-global-home[hidden] {
+  display: none !important;
+}
+
 .play-top {
   display: flex;
   align-items: center;

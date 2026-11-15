@@ -1722,7 +1722,14 @@
   function showScreen(name) {
     document.querySelectorAll(".screen").forEach((el) => el.classList.remove("active"));
     $(`screen-${name}`).classList.add("active");
-    if (name === "home") renderHome();
+    const homeBtn = $("btn-global-home");
+    if (homeBtn) homeBtn.hidden = name === "home";
+    if (name === "home") {
+      // Leave nested practice sessions when returning to the dashboard
+      ssSession = null;
+      engSession = null;
+      renderHome();
+    }
     if (name === "map") renderMap();
     if (name === "badges") renderBadges();
     if (name === "parent") renderParent();
