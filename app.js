@@ -1726,10 +1726,48 @@
     if (name === "map") renderMap();
     if (name === "badges") renderBadges();
     if (name === "parent") renderParent();
-    if (name === "social" || name === "english") {
+    if (name === "social" || name === "english" || name === "ss-hub") {
       renderRobloxBank();
+      if (name === "ss-hub") renderSsHub();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+  }
+
+  function openSsWeek(weekId) {
+    const id = Number(weekId);
+    if (!SS_CATALOG[id]) return;
+    ssWeekId = id;
+    showScreen("ss-hub");
+  }
+
+  function renderSsHub() {
+    const week = getSsWeek();
+    if ($("ss-hub-eyebrow")) $("ss-hub-eyebrow").textContent = week.eyebrow || `Week ${week.week}`;
+    if ($("ss-hub-title")) $("ss-hub-title").textContent = week.title || `Week ${week.week}`;
+    if ($("ss-hub-tagline")) $("ss-hub-tagline").textContent = week.tagline || week.guiding || "";
+    const study = $("ss-study");
+    if (study) {
+      study.innerHTML = (week.study || [])
+        .map(
+          (card) => `
+        <article class="ss-card">
+          <h3>${card.title}</h3>
+          <ul>
+            ${(card.items || []).map((item) => `<li>${item}</li>`).join("")}
+          </ul>
+        </article>`
+        )
+        .join("");
+    }
+    renderRobloxBank();
+  }
+
+  function setSsDifficulty(diff) {
+    const next = SS_DIFFICULTIES.includes(diff) ? diff : "medium";
+    ssQuizDifficulty = next;
+    document.querySelectorAll("[data-ss-diff]").forEach((btn) => {
+      btn.classList.toggle("on", btn.getAttribute("data-ss-diff") === next);
+    });
   }
 
   // ---------------------------------------------------------------------------
@@ -2395,15 +2433,19 @@
   // ---------------------------------------------------------------------------
   // Social Studies · Week 7 · Thinking Like a Geographer
   // ---------------------------------------------------------------------------
-  const SS_WEEK = {
-    week: 7,
-    unit: "Geography",
-    title: "Thinking Like a Geographer",
-    guiding: "How do maps help us learn about the Earth?",
-  };
+  const SS_DIFFICULTIES = ["easy", "medium", "hard"];
+  let ssWeekId = 8;
+  let ssQuizDifficulty = "medium";
 
-  /** Full-screen learning cards — kid language, one idea each */
-  const SS_LESSONS = [
+  const SS_CATALOG = {
+    7: {
+      week: 7,
+      unit: "Geography",
+      title: "Thinking Like a Geographer",
+      guiding: "How do maps help us learn about the Earth?",
+      eyebrow: "California Studies Weekly · Week 7",
+      tagline: "Unit: Geography · How do maps help us learn about the Earth?",
+      lessons: [
     {
       emoji: "🌍",
       badge: "Week 7 · Learning",
@@ -2560,17 +2602,44 @@
       ],
       remember: "Learn first. Then take the quiz.",
     },
-  ];
-
-  /**
-   * Each bank = one skill. Each bank has 4–5 alternate questions.
-   * Every quiz picks ONE random question from each bank, then shuffles order.
-   */
-  const SS_QUESTION_BANKS = [
+  ],
+      study: [
+      {
+        title: "What are maps & globes?",
+        items: [
+          "A <strong>globe</strong> is a model of the Earth. It shows water, land, and countries.",
+          "You would travel about <strong>25,000 miles</strong> to go around the Earth.",
+          "<strong>Maps</strong> are models of places. They show sizes, shapes, locations, and distances.",
+          "Maps can show roads, cities, national parks, landforms, boundaries, and weather.",
+        ],
+      },
+      {
+        title: "Cartographers & map tools",
+        items: [
+          "A <strong>cartographer</strong> creates maps and decides what to include.",
+          "The <strong>title</strong> tells what the map is about.",
+          "The <strong>legend</strong> explains symbols and colors.",
+          "The <strong>compass rose</strong> shows cardinal directions: north, south, east, west.",
+          "The <strong>scale</strong> helps you tell distance (how far places are).",
+        ],
+      },
+      {
+        title: "Kinds of maps",
+        items: [
+          "<strong>Population map</strong> — where people live",
+          "<strong>Political map</strong> — borders between cities, states, and countries",
+          "<strong>Physical map</strong> — natural features (mountains, valleys, lakes, streams)",
+          "<strong>Climate map</strong> — whether a place is usually warm, cold, wet, or dry",
+          "<strong>Climate</strong> is the study of weather over time",
+        ],
+      },
+    ],
+      banks: [
     {
       id: "globe",
       variants: [
         {
+          difficulty: "easy",
           type: "fill",
           prompt: "Tap the best word:",
           text: "A __________ is a round model of Earth.",
@@ -2579,6 +2648,7 @@
           explain: "A globe is a round model of Earth.",
         },
         {
+          difficulty: "medium",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "What is a globe?",
@@ -2592,6 +2662,7 @@
           explain: "A globe is a round model of Earth.",
         },
         {
+          difficulty: "hard",
           type: "fill",
           prompt: "Tap the best word:",
           text: "A globe shows water, land, and __________.",
@@ -2600,6 +2671,7 @@
           explain: "A globe shows water, land, and countries.",
         },
         {
+          difficulty: "easy",
           type: "tf",
           prompt: "True or False:",
           text: "A globe is shaped like Earth — round.",
@@ -2608,6 +2680,7 @@
           explain: "Yes — a globe is round like Earth.",
         },
         {
+          difficulty: "medium",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Which one is a model of the whole Earth?",
@@ -2621,6 +2694,7 @@
       id: "distance",
       variants: [
         {
+          difficulty: "hard",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "About how far is it around Earth?",
@@ -2629,6 +2703,7 @@
           explain: "Around Earth is about 25,000 miles.",
         },
         {
+          difficulty: "easy",
           type: "fill",
           prompt: "Tap the best word:",
           text: "To go all the way around Earth is about __________ miles.",
@@ -2637,6 +2712,7 @@
           explain: "Around Earth is about 25,000 miles.",
         },
         {
+          difficulty: "medium",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Earth is huge. About how many miles around is it?",
@@ -2645,6 +2721,7 @@
           explain: "About 25,000 miles around.",
         },
         {
+          difficulty: "hard",
           type: "tf",
           prompt: "True or False:",
           text: "It is about 25,000 miles around Earth.",
@@ -2653,6 +2730,7 @@
           explain: "True — about 25,000 miles.",
         },
         {
+          difficulty: "easy",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Which number matches “around Earth”?",
@@ -2666,6 +2744,7 @@
       id: "cartographer",
       variants: [
         {
+          difficulty: "medium",
           type: "fill",
           prompt: "Tap the best word:",
           text: "A person who makes maps is called a __________.",
@@ -2674,6 +2753,7 @@
           explain: "A cartographer is a map maker.",
         },
         {
+          difficulty: "hard",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Who makes maps?",
@@ -2682,6 +2762,7 @@
           explain: "A cartographer makes maps.",
         },
         {
+          difficulty: "easy",
           type: "tf",
           prompt: "True or False:",
           text: "A cartographer is a map maker.",
@@ -2690,6 +2771,7 @@
           explain: "True — cartographer = map maker.",
         },
         {
+          difficulty: "medium",
           type: "fill",
           prompt: "Tap the best word:",
           text: "Cartographer means __________ maker.",
@@ -2698,6 +2780,7 @@
           explain: "Cartographer = map maker.",
         },
         {
+          difficulty: "hard",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Like a writer picks words, a cartographer picks what goes on a __________.",
@@ -2711,6 +2794,7 @@
       id: "legend",
       variants: [
         {
+          difficulty: "easy",
           type: "fill",
           prompt: "Tap the best word:",
           text: "The __________ tells what the pictures and colors on a map mean.",
@@ -2719,6 +2803,7 @@
           explain: "The legend tells what map pictures mean.",
         },
         {
+          difficulty: "medium",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "What does a map legend do?",
@@ -2732,6 +2817,7 @@
           explain: "The legend explains symbols and colors.",
         },
         {
+          difficulty: "hard",
           type: "fill",
           prompt: "Tap the best word:",
           text: "Another name for a map legend is a __________.",
@@ -2740,6 +2826,7 @@
           explain: "The legend is also called the key.",
         },
         {
+          difficulty: "easy",
           type: "tf",
           prompt: "True or False:",
           text: "The legend explains what map symbols mean.",
@@ -2748,6 +2835,7 @@
           explain: "True — check the legend for symbol meanings.",
         },
         {
+          difficulty: "medium",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Blue means water on many maps. Where do you check that?",
@@ -2761,6 +2849,7 @@
       id: "compass",
       variants: [
         {
+          difficulty: "hard",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "What does a compass rose show?",
@@ -2774,6 +2863,7 @@
           explain: "A compass rose shows N, S, E, and W.",
         },
         {
+          difficulty: "easy",
           type: "fill",
           prompt: "Tap the best word:",
           text: "A compass rose shows __________ directions.",
@@ -2782,6 +2872,7 @@
           explain: "Cardinal directions are N, S, E, W.",
         },
         {
+          difficulty: "medium",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Which are the four main directions?",
@@ -2795,6 +2886,7 @@
           explain: "Those are the cardinal directions.",
         },
         {
+          difficulty: "hard",
           type: "tf",
           prompt: "True or False:",
           text: "A compass rose helps you find north, south, east, and west.",
@@ -2803,6 +2895,7 @@
           explain: "True — that’s what a compass rose shows.",
         },
         {
+          difficulty: "easy",
           type: "fill",
           prompt: "Tap the best word:",
           text: "Never Eat Soggy Worms helps you remember __________.",
@@ -2816,6 +2909,7 @@
       id: "scale",
       variants: [
         {
+          difficulty: "medium",
           type: "fill",
           prompt: "Tap the best word:",
           text: "The __________ helps you know how far places are on a map.",
@@ -2824,6 +2918,7 @@
           explain: "Scale means how far.",
         },
         {
+          difficulty: "hard",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "What does map scale tell you?",
@@ -2837,6 +2932,7 @@
           explain: "Scale tells distance.",
         },
         {
+          difficulty: "easy",
           type: "tf",
           prompt: "True or False:",
           text: "Scale helps you know distance on a map.",
@@ -2845,6 +2941,7 @@
           explain: "True — scale = how far.",
         },
         {
+          difficulty: "medium",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "A short line on a map can stand for many real __________.",
@@ -2853,6 +2950,7 @@
           explain: "Scale turns map length into real distance.",
         },
         {
+          difficulty: "hard",
           type: "fill",
           prompt: "Tap the best word:",
           text: "Distance means how __________.",
@@ -2866,6 +2964,7 @@
       id: "population",
       variants: [
         {
+          difficulty: "easy",
           type: "fill",
           prompt: "Tap the best word:",
           text: "A __________ map shows where people live.",
@@ -2874,6 +2973,7 @@
           explain: "Population map = where people live.",
         },
         {
+          difficulty: "medium",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Which map shows where people live?",
@@ -2882,6 +2982,7 @@
           explain: "Population = people.",
         },
         {
+          difficulty: "hard",
           type: "tf",
           prompt: "True or False:",
           text: "A population map is about where people live.",
@@ -2890,6 +2991,7 @@
           explain: "True — population means people.",
         },
         {
+          difficulty: "easy",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Busy cities with lots of people show up on a __________ map.",
@@ -2898,6 +3000,7 @@
           explain: "Population maps show where people live.",
         },
         {
+          difficulty: "medium",
           type: "fill",
           prompt: "Tap the best word:",
           text: "Population means __________.",
@@ -2911,6 +3014,7 @@
       id: "political",
       variants: [
         {
+          difficulty: "hard",
           type: "fill",
           prompt: "Tap the best word:",
           text: "A __________ map shows borders of cities, states, and countries.",
@@ -2919,6 +3023,7 @@
           explain: "Political map = borders.",
         },
         {
+          difficulty: "easy",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Which map shows borders between places?",
@@ -2927,6 +3032,7 @@
           explain: "Political maps show borders.",
         },
         {
+          difficulty: "medium",
           type: "tf",
           prompt: "True or False:",
           text: "A political map shows borders.",
@@ -2935,6 +3041,7 @@
           explain: "True — borders of cities, states, countries.",
         },
         {
+          difficulty: "hard",
           type: "fill",
           prompt: "Tap the best word:",
           text: "Borders are __________ between places.",
@@ -2943,6 +3050,7 @@
           explain: "Borders are dividing lines.",
         },
         {
+          difficulty: "easy",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "States and countries are shown with borders on a __________ map.",
@@ -2956,6 +3064,7 @@
       id: "physical",
       variants: [
         {
+          difficulty: "medium",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "What does a physical map show?",
@@ -2969,6 +3078,7 @@
           explain: "A physical map shows nature — land and water.",
         },
         {
+          difficulty: "hard",
           type: "fill",
           prompt: "Tap the best word:",
           text: "A __________ map shows mountains, valleys, lakes, and streams.",
@@ -2977,6 +3087,7 @@
           explain: "Physical map = nature features.",
         },
         {
+          difficulty: "easy",
           type: "tf",
           prompt: "True or False:",
           text: "A physical map shows natural features like mountains and lakes.",
@@ -2985,6 +3096,7 @@
           explain: "True — physical = nature.",
         },
         {
+          difficulty: "medium",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Which map is best for finding mountains?",
@@ -2993,6 +3105,7 @@
           explain: "Physical maps show landforms.",
         },
         {
+          difficulty: "hard",
           type: "fill",
           prompt: "Tap the best word:",
           text: "Physical maps show __________ features.",
@@ -3006,6 +3119,7 @@
       id: "climate-map",
       variants: [
         {
+          difficulty: "easy",
           type: "fill",
           prompt: "Tap the best word:",
           text: "A climate map shows if a place is usually warm, cold, wet, or __________.",
@@ -3014,6 +3128,7 @@
           explain: "Climate maps show warm, cold, wet, or dry.",
         },
         {
+          difficulty: "medium",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "What does a climate map show?",
@@ -3027,6 +3142,7 @@
           explain: "Climate maps show usual weather patterns.",
         },
         {
+          difficulty: "hard",
           type: "tf",
           prompt: "True or False:",
           text: "A climate map can show if a place is usually dry.",
@@ -3035,6 +3151,7 @@
           explain: "True — warm, cold, wet, or dry.",
         },
         {
+          difficulty: "easy",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Which map helps you see if a place is usually hot or cold?",
@@ -3043,6 +3160,7 @@
           explain: "Climate maps show usual weather.",
         },
         {
+          difficulty: "medium",
           type: "fill",
           prompt: "Tap the best word:",
           text: "Warm, cold, wet, and dry are ideas on a __________ map.",
@@ -3056,6 +3174,7 @@
       id: "climate-time",
       variants: [
         {
+          difficulty: "hard",
           type: "fill",
           prompt: "Tap the best word:",
           text: "Climate means weather over __________.",
@@ -3064,6 +3183,7 @@
           explain: "Climate = weather over time.",
         },
         {
+          difficulty: "easy",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Climate is weather studied over __________.",
@@ -3072,6 +3192,7 @@
           explain: "Climate = weather over time.",
         },
         {
+          difficulty: "medium",
           type: "tf",
           prompt: "True or False:",
           text: "Climate is just today’s weather.",
@@ -3080,6 +3201,7 @@
           explain: "Climate is weather over a long time.",
         },
         {
+          difficulty: "hard",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Today’s rain is weather. Climate is weather over __________.",
@@ -3088,6 +3210,7 @@
           explain: "Climate = weather over time.",
         },
         {
+          difficulty: "easy",
           type: "fill",
           prompt: "Tap the best word:",
           text: "Weather over a long time is called __________.",
@@ -3101,6 +3224,7 @@
       id: "many-maps",
       variants: [
         {
+          difficulty: "medium",
           type: "tf",
           prompt: "True or False:",
           text: "Only one kind of map is useful.",
@@ -3109,6 +3233,7 @@
           explain: "We use many kinds of maps.",
         },
         {
+          difficulty: "hard",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "How many kinds of maps can be useful?",
@@ -3117,6 +3242,7 @@
           explain: "Different maps give different information.",
         },
         {
+          difficulty: "easy",
           type: "tf",
           prompt: "True or False:",
           text: "Different maps can show different information.",
@@ -3125,6 +3251,7 @@
           explain: "True — each map has a job.",
         },
         {
+          difficulty: "medium",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Why do we have many map types?",
@@ -3138,6 +3265,7 @@
           explain: "Each map type has a purpose.",
         },
         {
+          difficulty: "hard",
           type: "fill",
           prompt: "Tap the best word:",
           text: "We use __________ kinds of maps to learn about Earth.",
@@ -3151,6 +3279,7 @@
       id: "title",
       variants: [
         {
+          difficulty: "easy",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "What does a map title tell you?",
@@ -3164,6 +3293,7 @@
           explain: "The title tells what the map is about.",
         },
         {
+          difficulty: "medium",
           type: "fill",
           prompt: "Tap the best word:",
           text: "The __________ is the name of the map.",
@@ -3172,6 +3302,7 @@
           explain: "Title = what the map is about.",
         },
         {
+          difficulty: "hard",
           type: "tf",
           prompt: "True or False:",
           text: "You should read the map title first.",
@@ -3180,6 +3311,7 @@
           explain: "The title tells what the map is about.",
         },
         {
+          difficulty: "easy",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "“California Parks” on a map is most likely the __________.",
@@ -3188,6 +3320,7 @@
           explain: "That’s the map’s title.",
         },
         {
+          difficulty: "medium",
           type: "fill",
           prompt: "Tap the best word:",
           text: "The title tells what the map is __________.",
@@ -3201,6 +3334,7 @@
       id: "map-uses",
       variants: [
         {
+          difficulty: "hard",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "What can a map help you find?",
@@ -3214,6 +3348,7 @@
           explain: "Maps can show roads, cities, and parks.",
         },
         {
+          difficulty: "easy",
           type: "fill",
           prompt: "Tap the best word:",
           text: "Maps are __________ of places.",
@@ -3222,6 +3357,7 @@
           explain: "Maps are models of places.",
         },
         {
+          difficulty: "medium",
           type: "tf",
           prompt: "True or False:",
           text: "Maps can help people find roads and cities.",
@@ -3230,6 +3366,7 @@
           explain: "True — maps help us find places.",
         },
         {
+          difficulty: "hard",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Which can a map show?",
@@ -3243,6 +3380,7 @@
           explain: "Maps can show parks, roads, cities, and more.",
         },
         {
+          difficulty: "easy",
           type: "fill",
           prompt: "Tap the best word:",
           text: "A map is usually __________ (not round like a globe).",
@@ -3256,6 +3394,7 @@
       id: "cartographer-choice",
       variants: [
         {
+          difficulty: "medium",
           type: "tf",
           prompt: "True or False:",
           text: "A cartographer picks what to put on a map.",
@@ -3264,6 +3403,7 @@
           explain: "Yes — a cartographer chooses what goes on the map.",
         },
         {
+          difficulty: "hard",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "Who decides what to include on a map?",
@@ -3277,6 +3417,7 @@
           explain: "The cartographer chooses what to include.",
         },
         {
+          difficulty: "easy",
           type: "tf",
           prompt: "True or False:",
           text: "A cartographer has a purpose for the map.",
@@ -3285,6 +3426,7 @@
           explain: "True — maps are made with a purpose.",
         },
         {
+          difficulty: "medium",
           type: "mc",
           prompt: "Pick the best answer:",
           text: "A cartographer is like a book author because both __________.",
@@ -3298,6 +3440,7 @@
           explain: "Both choose what matters for their work.",
         },
         {
+          difficulty: "hard",
           type: "fill",
           prompt: "Tap the best word:",
           text: "A cartographer decides what __________ on a map.",
@@ -3307,14 +3450,928 @@
         },
       ],
     },
-  ];
+  ],
+    },
+    8: {
+      week: 8,
+      unit: "Geography",
+      title: "Oceans and Continents",
+      guiding: "How do geographical tools help us learn about our world?",
+      eyebrow: "California Studies Weekly · Week 8",
+      tagline: "Unit: Geography · Map Skills · Oceans, continents, lines & time",
+      lessons: [
+    {
+      emoji: "🌊",
+      badge: "Week 8 · Learning",
+      title: "Oceans and Continents",
+      body: [
+        "This week we learn map skills.",
+        "Oceans. Continents. Lines on maps.",
+        "Big question:",
+        "How do geographical tools help us learn about our world?",
+      ],
+      remember: "Maps and globes are tools that help us learn about Earth.",
+    },
+    {
+      emoji: "🌏",
+      badge: "Water world",
+      title: "Five Oceans",
+      body: [
+        "Earth has five oceans.",
+        "Arctic. Atlantic. Indian. Pacific. Southern.",
+        "Oceans are the largest bodies of water.",
+      ],
+      remember: "5 oceans: Arctic, Atlantic, Indian, Pacific, Southern.",
+    },
+    {
+      emoji: "💧",
+      badge: "Water world",
+      title: "Mostly Water!",
+      body: [
+        "More than two-thirds of Earth is water.",
+        "Oceans look bigger than land on a world map.",
+        "Other water: rivers, lakes, ponds, and streams.",
+      ],
+      remember: "More than 2/3 of Earth is covered by water.",
+    },
+    {
+      emoji: "🗺️",
+      badge: "Land",
+      title: "Seven Continents",
+      body: [
+        "About one-third of Earth is land.",
+        "Big land areas are continents.",
+        "There are seven: Africa, Antarctica, Asia, Australia, Europe, North America, and South America.",
+      ],
+      remember: "7 continents. Land = about 1/3 of Earth.",
+    },
+    {
+      emoji: "📍",
+      badge: "Theme 1",
+      title: "Location",
+      body: [
+        "The first theme of geography is location.",
+        "Location means where a place is.",
+        "Absolute location is the exact place on a map.",
+      ],
+      remember: "Location = where. Absolute location = exact place.",
+    },
+    {
+      emoji: "↔️",
+      badge: "Latitude",
+      title: "Latitude Lines",
+      body: [
+        "Latitude lines run east and west.",
+        "They show how far a place is from the Equator.",
+        "Latitude lines are also called parallels.",
+      ],
+      remember: "Latitude = east–west lines (parallels).",
+    },
+    {
+      emoji: "🌐",
+      badge: "Latitude",
+      title: "The Equator",
+      body: [
+        "The Equator is an imaginary line around the middle of Earth.",
+        "It splits Earth into Northern and Southern Hemispheres.",
+        "Hemi- means half. A hemisphere is half a sphere.",
+      ],
+      remember: "Equator → Northern & Southern Hemispheres.",
+    },
+    {
+      emoji: "❄️",
+      badge: "Latitude",
+      title: "Special Latitude Lines",
+      body: [
+        "North of the Equator: Tropic of Cancer and Arctic Circle.",
+        "South of the Equator: Tropic of Capricorn and Antarctic Circle.",
+        "These help map warm and cold parts of Earth.",
+      ],
+      remember: "Cancer & Arctic north · Capricorn & Antarctic south.",
+    },
+    {
+      emoji: "↕️",
+      badge: "Longitude",
+      title: "Longitude Lines",
+      body: [
+        "Longitude lines run from the North Pole to the South Pole.",
+        "They show how far east or west a place is.",
+        "Longitude lines are called meridians.",
+      ],
+      remember: "Longitude = north–south lines (meridians).",
+    },
+    {
+      emoji: "🧭",
+      badge: "Longitude",
+      title: "Prime Meridian",
+      body: [
+        "The Prime Meridian is a special longitude line.",
+        "It splits Earth into Eastern and Western Hemispheres.",
+        "Other meridians measure distance from the Prime Meridian.",
+      ],
+      remember: "Prime Meridian → Eastern & Western Hemispheres.",
+    },
+    {
+      emoji: "🔤",
+      badge: "Grid",
+      title: "Coordinate Grid",
+      body: [
+        "Cartographers divide maps into small squares.",
+        "Those squares make a grid.",
+        "A coordinate grid uses letters and numbers to name places.",
+      ],
+      remember: "Grid = letters + numbers for absolute location.",
+    },
+    {
+      emoji: "⬆️",
+      badge: "Directions",
+      title: "Cardinal Directions",
+      body: [
+        "Cardinal directions are the four main points.",
+        "North. South. East. West.",
+        "North and south point toward Earth’s poles.",
+      ],
+      remember: "Cardinal = N, S, E, W.",
+    },
+    {
+      emoji: "↗️",
+      badge: "Directions",
+      title: "Intermediate Directions",
+      body: [
+        "In-between directions are intermediate directions.",
+        "Northwest. Northeast. Southwest. Southeast.",
+        "Find them on a compass rose with the cardinal points.",
+      ],
+      remember: "Intermediate = NW, NE, SW, SE.",
+    },
+    {
+      emoji: "🕒",
+      badge: "Time",
+      title: "Time Zones",
+      body: [
+        "Earth spins once each day — 24 hours.",
+        "That is why Earth has 24 time zones.",
+        "A time zone shows what time it is in a place.",
+      ],
+      remember: "24 hours → 24 time zones.",
+    },
+    {
+      emoji: "➕",
+      badge: "Time",
+      title: "Prime Meridian Time",
+      body: [
+        "The Prime Meridian is the starting point for time zones.",
+        "Go east → add one hour per zone.",
+        "Go west → take one hour away per zone.",
+      ],
+      remember: "East = +1 hour · West = −1 hour.",
+    },
+    {
+      emoji: "🇺🇸",
+      badge: "Time",
+      title: "U.S. Time Zones",
+      body: [
+        "Big countries can have many time zones.",
+        "The United States has six time zones.",
+        "Time zone lines often follow political borders to make life easier.",
+      ],
+      remember: "United States = 6 time zones.",
+    },
+    {
+      emoji: "📅",
+      badge: "Time",
+      title: "International Date Line",
+      body: [
+        "The International Date Line marks where one day becomes the next.",
+        "It is halfway around the world from the Prime Meridian.",
+        "It is not straight because it follows political boundaries.",
+      ],
+      remember: "Date Line = new day boundary (not a straight line).",
+    },
+    {
+      emoji: "⭐",
+      badge: "You did it!",
+      title: "Ready, Map Explorer!",
+      body: [
+        "You learned oceans, continents, latitude, longitude, directions, and time zones!",
+        "Pick Easy, Medium, or Hard for the quiz.",
+        "Hit 90%+ to earn Roblox points!",
+      ],
+      remember: "Learn first. Then take the quiz.",
+    },
+  ],
+      study: [
+      {
+        title: "Oceans & continents",
+        items: [
+          "Earth has <strong>five oceans</strong>: Arctic, Atlantic, Indian, Pacific, Southern.",
+          "More than <strong>two-thirds</strong> of Earth is water. About <strong>one-third</strong> is land.",
+          "Other bodies of water: rivers, lakes, ponds, and streams.",
+          "There are <strong>seven continents</strong>: Africa, Antarctica, Asia, Australia, Europe, North America, South America.",
+        ],
+      },
+      {
+        title: "Location, latitude & longitude",
+        items: [
+          "Geography’s first theme is <strong>location</strong> (where a place is).",
+          "<strong>Absolute location</strong> uses vertical and horizontal lines.",
+          "<strong>Latitude</strong> (parallels) run east–west and measure distance from the <strong>Equator</strong>.",
+          "The Equator splits Earth into <strong>Northern</strong> and <strong>Southern</strong> Hemispheres.",
+          "North of Equator: Tropic of Cancer, Arctic Circle. South: Tropic of Capricorn, Antarctic Circle.",
+          "<strong>Longitude</strong> (meridians) run pole to pole. The <strong>Prime Meridian</strong> splits Eastern & Western Hemispheres.",
+          "A <strong>coordinate grid</strong> uses letters and numbers.",
+        ],
+      },
+      {
+        title: "Directions & time",
+        items: [
+          "<strong>Cardinal</strong>: north, south, east, west.",
+          "<strong>Intermediate</strong>: northwest, northeast, southwest, southeast.",
+          "Earth has <strong>24 time zones</strong> (24-hour rotation).",
+          "From the Prime Meridian: east = +1 hour per zone, west = −1 hour.",
+          "The United States has <strong>six</strong> time zones. Boundaries often follow political borders.",
+          "The <strong>International Date Line</strong> marks where the day changes (not a straight line).",
+        ],
+      },
+    ],
+      banks: [
+    {
+      id: "oceans-count",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "How many oceans does Earth have?",
+          choices: ["3", "4", "5", "7"],
+          answer: "5",
+          explain: "Earth has five oceans.",
+        },
+        {
+          difficulty: "medium",
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Earth has __________ oceans.",
+          choices: ["three", "four", "five", "nine"],
+          answer: "five",
+          explain: "There are five oceans.",
+        },
+        {
+          difficulty: "hard",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which list names all five oceans?",
+          choices: ["Arctic, Atlantic, Indian, Pacific, Southern", "Arctic, Atlantic, Caspian, Pacific, Southern", "Atlantic, Indian, Pacific, Red, Southern", "Arctic, Baltic, Indian, Pacific, Southern"],
+          answer: "Arctic, Atlantic, Indian, Pacific, Southern",
+          explain: "Those five are Earth's oceans.",
+        }
+      ],
+    },
+    {
+      id: "oceans-names",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which one is an ocean?",
+          choices: ["Sahara", "Pacific", "Amazon", "Himalaya"],
+          answer: "Pacific",
+          explain: "The Pacific is an ocean.",
+        },
+        {
+          difficulty: "medium",
+          type: "tf",
+          prompt: "True or False:",
+          text: "The Southern Ocean is one of Earth's five oceans.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "Yes — Southern is one of the five.",
+        },
+        {
+          difficulty: "hard",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Oceans are the __________ bodies of water.",
+          choices: ["smallest", "saltiest only in lakes", "largest", "newest"],
+          answer: "largest",
+          explain: "Oceans are the largest bodies of water.",
+        }
+      ],
+    },
+    {
+      id: "water-fraction",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which covers more of Earth — oceans or land?",
+          choices: ["Land", "Oceans", "They are equal", "Only ice"],
+          answer: "Oceans",
+          explain: "Oceans cover more than land.",
+        },
+        {
+          difficulty: "medium",
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "More than __________ of Earth is covered in water.",
+          choices: ["one-third", "two-thirds", "one-half", "one-fourth"],
+          answer: "two-thirds",
+          explain: "More than two-thirds is water.",
+        },
+        {
+          difficulty: "hard",
+          type: "tf",
+          prompt: "True or False:",
+          text: "Less than half of Earth is covered by water.",
+          choices: ["TRUE", "FALSE"],
+          answer: "FALSE",
+          explain: "More than two-thirds is water.",
+        }
+      ],
+    },
+    {
+      id: "other-water",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which is NOT an ocean?",
+          choices: ["Lake", "Pacific", "Atlantic", "Indian"],
+          answer: "Lake",
+          explain: "A lake is another body of water, not an ocean.",
+        },
+        {
+          difficulty: "medium",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Besides oceans, bodies of water include rivers, lakes, ponds, and __________.",
+          choices: ["continents", "streams", "equators", "meridians"],
+          answer: "streams",
+          explain: "Streams are smaller bodies of water.",
+        },
+        {
+          difficulty: "hard",
+          type: "tf",
+          prompt: "True or False:",
+          text: "Rivers, lakes, ponds, and streams can be different sizes and shapes.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "Yes — they vary in size and shape.",
+        }
+      ],
+    },
+    {
+      id: "continents-count",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "How many continents are there?",
+          choices: ["5", "6", "7", "8"],
+          answer: "7",
+          explain: "There are seven continents.",
+        },
+        {
+          difficulty: "medium",
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Large areas of land are called __________.",
+          choices: ["oceans", "continents", "equators", "grids"],
+          answer: "continents",
+          explain: "Continents are large land areas.",
+        },
+        {
+          difficulty: "hard",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "About how much of Earth is covered by land?",
+          choices: ["Two-thirds", "One-third", "Almost all", "None"],
+          answer: "One-third",
+          explain: "About one-third is land.",
+        }
+      ],
+    },
+    {
+      id: "continents-names",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which is a continent?",
+          choices: ["Pacific", "Asia", "Atlantic", "Equator"],
+          answer: "Asia",
+          explain: "Asia is a continent.",
+        },
+        {
+          difficulty: "medium",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which continent is farthest south?",
+          choices: ["Europe", "Antarctica", "Asia", "North America"],
+          answer: "Antarctica",
+          explain: "Antarctica is at the South Pole.",
+        },
+        {
+          difficulty: "hard",
+          type: "tf",
+          prompt: "True or False:",
+          text: "Australia is one of the seven continents.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "Yes — Australia is a continent.",
+        }
+      ],
+    },
+    {
+      id: "location-theme",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "The first theme of geography is __________.",
+          choices: ["location", "food", "music", "sports"],
+          answer: "location",
+          explain: "Location is the first theme of geography.",
+        },
+        {
+          difficulty: "medium",
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Location means __________ a place is.",
+          choices: ["why", "where", "when", "who"],
+          answer: "where",
+          explain: "Location = where a place is.",
+        },
+        {
+          difficulty: "hard",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Absolute location means __________.",
+          choices: ["a nickname for a city", "the exact place on a map", "only the ocean name", "a made-up story"],
+          answer: "the exact place on a map",
+          explain: "Absolute location is the exact place.",
+        }
+      ],
+    },
+    {
+      id: "latitude",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Latitude lines run __________.",
+          choices: ["north and south only", "east and west", "only through space", "in a spiral"],
+          answer: "east and west",
+          explain: "Latitude lines run east and west.",
+        },
+        {
+          difficulty: "medium",
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Latitude lines are also called __________.",
+          choices: ["meridians", "parallels", "time zones", "compasses"],
+          answer: "parallels",
+          explain: "Latitude lines = parallels.",
+        },
+        {
+          difficulty: "hard",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Latitude lines show how far places are from the __________.",
+          choices: ["Prime Meridian", "Equator", "Date Line", "South Pole only"],
+          answer: "Equator",
+          explain: "Latitude measures distance from the Equator.",
+        }
+      ],
+    },
+    {
+      id: "equator",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "The Equator runs around the __________ of Earth.",
+          choices: ["middle", "only North Pole", "only South Pole", "moon"],
+          answer: "middle",
+          explain: "The Equator is around the middle.",
+        },
+        {
+          difficulty: "medium",
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "The Equator divides Earth into Northern and Southern __________.",
+          choices: ["oceans", "hemispheres", "continents", "grids"],
+          answer: "hemispheres",
+          explain: "It makes two hemispheres.",
+        },
+        {
+          difficulty: "hard",
+          type: "tf",
+          prompt: "True or False:",
+          text: "The prefix hemi- means half, so a hemisphere is half a sphere.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "Hemi- means half.",
+        }
+      ],
+    },
+    {
+      id: "latitude-special",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which line is north of the Equator?",
+          choices: ["Tropic of Capricorn", "Arctic Circle", "Antarctic Circle", "Southern Ocean only"],
+          answer: "Arctic Circle",
+          explain: "Arctic Circle is north of the Equator.",
+        },
+        {
+          difficulty: "medium",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "The Tropic of Capricorn is __________ of the Equator.",
+          choices: ["north", "south", "east only", "west only"],
+          answer: "south",
+          explain: "Capricorn is south of the Equator.",
+        },
+        {
+          difficulty: "hard",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which pair is south of the Equator?",
+          choices: ["Tropic of Cancer and Arctic Circle", "Tropic of Capricorn and Antarctic Circle", "Prime Meridian and Date Line", "Only the Arctic Circle"],
+          answer: "Tropic of Capricorn and Antarctic Circle",
+          explain: "Those two are south of the Equator.",
+        }
+      ],
+    },
+    {
+      id: "longitude",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Longitude lines run from the North Pole to the __________.",
+          choices: ["Equator only", "South Pole", "moon", "Pacific only"],
+          answer: "South Pole",
+          explain: "Longitude lines go pole to pole.",
+        },
+        {
+          difficulty: "medium",
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "Lines of longitude are called __________.",
+          choices: ["parallels", "meridians", "oceans", "continents"],
+          answer: "meridians",
+          explain: "Longitude lines = meridians.",
+        },
+        {
+          difficulty: "hard",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Longitude lines show how far __________ a place is from the Prime Meridian.",
+          choices: ["east or west", "hot or cold", "high or low only", "wet or dry only"],
+          answer: "east or west",
+          explain: "Longitude = east/west from the Prime Meridian.",
+        }
+      ],
+    },
+    {
+      id: "prime-meridian",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "The Prime Meridian is a line of __________.",
+          choices: ["latitude", "longitude", "only weather", "only rivers"],
+          answer: "longitude",
+          explain: "It is a longitude line.",
+        },
+        {
+          difficulty: "medium",
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "The Prime Meridian divides Earth into Eastern and Western __________.",
+          choices: ["oceans", "hemispheres", "forests", "deserts"],
+          answer: "hemispheres",
+          explain: "It makes Eastern and Western Hemispheres.",
+        },
+        {
+          difficulty: "hard",
+          type: "tf",
+          prompt: "True or False:",
+          text: "The Prime Meridian is also the starting point for time zones.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "Time zones start at the Prime Meridian.",
+        }
+      ],
+    },
+    {
+      id: "grid",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "A map grid is made of small __________.",
+          choices: ["songs", "squares", "clouds", "mountains"],
+          answer: "squares",
+          explain: "Lines make small squares — a grid.",
+        },
+        {
+          difficulty: "medium",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "A coordinate grid uses __________ to label places.",
+          choices: ["only colors", "letters and numbers", "only emojis", "only animal names"],
+          answer: "letters and numbers",
+          explain: "Grids use letters and numbers.",
+        },
+        {
+          difficulty: "hard",
+          type: "tf",
+          prompt: "True or False:",
+          text: "Vertical and horizontal lines help find absolute location on a map.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "Those lines help find absolute location.",
+        }
+      ],
+    },
+    {
+      id: "cardinal",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which are the four cardinal directions?",
+          choices: ["N, S, E, W", "NE, NW, SE, SW", "Up, Down, Left, In", "Hot, Cold, Wet, Dry"],
+          answer: "N, S, E, W",
+          explain: "Cardinal = north, south, east, west.",
+        },
+        {
+          difficulty: "medium",
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "North and south point toward Earth's __________.",
+          choices: ["oceans", "poles", "equators only", "deserts"],
+          answer: "poles",
+          explain: "N and S refer to the poles.",
+        },
+        {
+          difficulty: "hard",
+          type: "tf",
+          prompt: "True or False:",
+          text: "Cardinal directions help us locate places around the world.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "They help us find our way.",
+        }
+      ],
+    },
+    {
+      id: "intermediate",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Which is an intermediate direction?",
+          choices: ["North", "Northeast", "East", "South"],
+          answer: "Northeast",
+          explain: "Northeast is intermediate.",
+        },
+        {
+          difficulty: "medium",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Intermediate directions include northwest, northeast, southwest, and __________.",
+          choices: ["south", "southeast", "east", "west"],
+          answer: "southeast",
+          explain: "SE is an intermediate direction.",
+        },
+        {
+          difficulty: "hard",
+          type: "tf",
+          prompt: "True or False:",
+          text: "Both cardinal and intermediate directions appear on a compass rose.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "A compass rose can show all eight.",
+        }
+      ],
+    },
+    {
+      id: "time-zones",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "How many time zones does Earth have?",
+          choices: ["12", "24", "7", "5"],
+          answer: "24",
+          explain: "Earth has 24 time zones.",
+        },
+        {
+          difficulty: "medium",
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "A time zone shows what __________ it is in a place.",
+          choices: ["color", "time", "ocean", "continent"],
+          answer: "time",
+          explain: "Time zones show the local time.",
+        },
+        {
+          difficulty: "hard",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Earth has 24 time zones because it rotates fully in __________.",
+          choices: ["12 hours", "24 hours", "7 days", "60 minutes only"],
+          answer: "24 hours",
+          explain: "One full spin takes 24 hours.",
+        }
+      ],
+    },
+    {
+      id: "time-east-west",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "From the Prime Meridian, moving east means you __________ an hour per zone.",
+          choices: ["add", "subtract", "erase", "freeze"],
+          answer: "add",
+          explain: "East → add one hour.",
+        },
+        {
+          difficulty: "medium",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "From the Prime Meridian, moving west means you __________ an hour per zone.",
+          choices: ["add", "take away", "double", "ignore"],
+          answer: "take away",
+          explain: "West → subtract one hour.",
+        },
+        {
+          difficulty: "hard",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "If you go two zones east of the Prime Meridian, you add __________.",
+          choices: ["1 hour", "2 hours", "24 hours", "0 hours"],
+          answer: "2 hours",
+          explain: "One hour per zone east.",
+        }
+      ],
+    },
+    {
+      id: "us-time",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "How many time zones does the United States have?",
+          choices: ["1", "2", "6", "24"],
+          answer: "6",
+          explain: "The U.S. has six time zones.",
+        },
+        {
+          difficulty: "medium",
+          type: "tf",
+          prompt: "True or False:",
+          text: "Larger countries often have many time zones.",
+          choices: ["TRUE", "FALSE"],
+          answer: "TRUE",
+          explain: "Big countries can span many zones.",
+        },
+        {
+          difficulty: "hard",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Time zone boundaries often follow __________ instead of only longitude lines.",
+          choices: ["political boundaries", "only rivers", "only mountain tops", "only ocean waves"],
+          answer: "political boundaries",
+          explain: "They often follow political borders.",
+        }
+      ],
+    },
+    {
+      id: "date-line",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "The International Date Line shows the boundary between one __________ and the next.",
+          choices: ["day", "ocean", "continent", "school"],
+          answer: "day",
+          explain: "It marks where the day changes.",
+        },
+        {
+          difficulty: "medium",
+          type: "fill",
+          prompt: "Tap the best word:",
+          text: "The International Date Line is about halfway around the world from the __________.",
+          choices: ["Equator", "Prime Meridian", "Arctic Circle", "Amazon"],
+          answer: "Prime Meridian",
+          explain: "It is opposite the Prime Meridian.",
+        },
+        {
+          difficulty: "hard",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Why isn't the International Date Line perfectly straight?",
+          choices: ["It follows political boundaries", "It is only drawn in pencil", "Oceans erase it each night", "It must match the Equator"],
+          answer: "It follows political boundaries",
+          explain: "It bends to follow political lines.",
+        }
+      ],
+    },
+    {
+      id: "lat-long-absolute",
+      variants: [
+        {
+          difficulty: "easy",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "We use latitude and longitude to find __________.",
+          choices: ["absolute location", "only weather songs", "only animal homes", "only book titles"],
+          answer: "absolute location",
+          explain: "Lat/long find absolute location.",
+        },
+        {
+          difficulty: "medium",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Longitude measures Earth's rotation in __________.",
+          choices: ["colors", "degrees", "continents", "oceans only"],
+          answer: "degrees",
+          explain: "Longitude is measured in degrees.",
+        },
+        {
+          difficulty: "hard",
+          type: "mc",
+          prompt: "Pick the best answer:",
+          text: "Each degree of longitude has 60 minutes, and each minute has __________ seconds.",
+          choices: ["10", "24", "60", "100"],
+          answer: "60",
+          explain: "60 seconds in each minute.",
+        }
+      ],
+    }
+  ],
+    },
+  };
 
-  function pickQuizQuestions() {
-    const picked = SS_QUESTION_BANKS.map((bank) => {
-      const variants = bank.variants || [];
-      const q = variants[Math.floor(Math.random() * variants.length)];
-      return { ...q, bankId: bank.id };
-    });
+  function getSsWeek() {
+    return SS_CATALOG[ssWeekId] || SS_CATALOG[8];
+  }
+
+  // Back-compat aliases used by older reward logging
+  const SS_WEEK = new Proxy(
+    {},
+    {
+      get(_t, prop) {
+        const w = getSsWeek();
+        if (prop === "week") return w.week;
+        if (prop === "title") return w.title;
+        if (prop === "unit") return w.unit;
+        if (prop === "guiding") return w.guiding;
+        return w[prop];
+      },
+    }
+  );
+
+  function pickQuizQuestions(difficulty = ssQuizDifficulty) {
+    const week = getSsWeek();
+    const diff = SS_DIFFICULTIES.includes(difficulty) ? difficulty : "medium";
+    ssQuizDifficulty = diff;
+    const picked = (week.banks || [])
+      .map((bank) => {
+        const variants = bank.variants || [];
+        const pool = variants.filter((v) => (v.difficulty || "medium") === diff);
+        const use = pool.length ? pool : variants;
+        if (!use.length) return null;
+        const q = use[Math.floor(Math.random() * use.length)];
+        return { ...q, bankId: bank.id, difficulty: diff };
+      })
+      .filter(Boolean);
     shuffleInPlace(picked);
     return picked;
   }
@@ -3329,9 +4386,9 @@
   }
 
   function renderSocialLesson() {
-    const lesson = SS_LESSONS[ssLearnIndex];
+    const lesson = getSsWeek().lessons[ssLearnIndex];
     if (!lesson) return;
-    const total = SS_LESSONS.length;
+    const total = getSsWeek().lessons.length;
     $("ss-learn-progress").textContent = `${ssLearnIndex + 1} of ${total}`;
     $("ss-lesson-emoji").textContent = lesson.emoji || "";
     $("ss-lesson-badge").textContent = lesson.badge || "Learning";
@@ -3380,7 +4437,7 @@
       renderSocialLesson();
       return;
     }
-    if (ssLearnIndex >= SS_LESSONS.length - 1) {
+    if (ssLearnIndex >= getSsWeek().lessons.length - 1) {
       startSocialQuiz();
       return;
     }
@@ -3396,9 +4453,12 @@
     return arr;
   }
 
-  function startSocialQuiz() {
-    const questions = pickQuizQuestions();
+  function startSocialQuiz(difficulty = ssQuizDifficulty) {
+    setSsDifficulty(difficulty);
+    const questions = pickQuizQuestions(ssQuizDifficulty);
     ssSession = {
+      weekId: ssWeekId,
+      difficulty: ssQuizDifficulty,
       questions,
       index: 0,
       correct: 0,
@@ -3451,12 +4511,15 @@
   function renderSocialQuizIntro() {
     renderRobloxBank();
     setQuizIntroMode(true);
+    setSsDifficulty(ssSession?.difficulty || ssQuizDifficulty);
     $("ss-score").textContent = "0";
     updateSsProgressUi();
+    const week = getSsWeek();
     const total = ssSession?.questions?.length || 0;
+    const diff = ssSession?.difficulty || ssQuizDifficulty;
     const introBody = $("ss-quiz-intro-extra");
     if (introBody) {
-      introBody.textContent = `This quiz has ${total} questions. They change each time you play!`;
+      introBody.textContent = `Week ${week.week} · ${diff} · ${total} questions. They change each time you play!`;
     }
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -3481,6 +4544,16 @@
     $("ss-quiz-card")?.classList.remove("ss-revealed");
     updateSsProgressUi();
     $("ss-score").textContent = String(ssSession.correct);
+    const week = getSsWeek();
+    const badge = $("ss-week-badge");
+    if (badge) {
+      const diffLabel = (ssSession.difficulty || "medium").replace(/^./, (c) => c.toUpperCase());
+      badge.textContent = `Week ${week.week} · ${diffLabel} · ${week.title}`;
+    }
+    const goal = $("ss-quiz-goal-bar");
+    if (goal) {
+      goal.textContent = `Goal: 90%+ = 5 Roblox points · ${(ssSession.difficulty || "medium").toUpperCase()}`;
+    }
     $("ss-question-text").textContent = q.text;
     $("ss-prompt").textContent = `${q.prompt || ""} · 2 tries`;
     $("ss-feedback").textContent = "";
@@ -3631,7 +4704,11 @@
     const total = ssSession.questions.length;
     const right = ssSession.correct;
     const pct = Math.round((right / total) * 100);
-    const reward = maybeAwardRobloxPoints(pct, right, total);
+    const week = getSsWeek();
+    const reward = maybeAwardRobloxPoints(pct, right, total, {
+      week: week.week,
+      title: `${week.title} · ${ssSession?.difficulty || ssQuizDifficulty}`,
+    });
 
     $("ss-results-title").textContent =
       pct >= ROBLOX_PASS_PCT
@@ -3639,7 +4716,7 @@
         : pct >= 70
           ? "Nice Exploring!"
           : "Keep Studying!";
-    $("ss-results-sub").textContent = `${SS_WEEK.title} · ${right}/${total} correct (${pct}%)`;
+    $("ss-results-sub").textContent = `${week.title} · ${(ssSession?.difficulty || ssQuizDifficulty)} · ${right}/${total} correct (${pct}%)`;
     $("ss-results-grid").innerHTML = `
       <div class="stat-card"><span>${right}</span> correct</div>
       <div class="stat-card"><span>${total - right}</span> missed</div>
@@ -5237,6 +6314,28 @@
     startEngPractice(engLastMode || "alphabet");
   });
 
+  document.querySelectorAll("[data-ss-week]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      pokeAudio();
+      openSsWeek(btn.getAttribute("data-ss-week"));
+    });
+  });
+
+  document.querySelectorAll("[data-ss-diff]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const diff = btn.getAttribute("data-ss-diff");
+      setSsDifficulty(diff);
+      if (ssSession?.intro) {
+        ssSession.difficulty = ssQuizDifficulty;
+        ssSession.questions = pickQuizQuestions(ssQuizDifficulty);
+        ssSession.index = 0;
+        ssSession.correct = 0;
+        ssSession.misses = [];
+        renderSocialQuizIntro();
+      }
+    });
+  });
+
   $("btn-ss-learn")?.addEventListener("click", () => {
     pokeAudio();
     startSocialLearn();
@@ -5244,7 +6343,7 @@
 
   $("btn-ss-quiz")?.addEventListener("click", () => {
     pokeAudio();
-    startSocialQuiz();
+    startSocialQuiz(ssQuizDifficulty);
   });
 
   $("btn-ss-study-jump")?.addEventListener("click", () => {
@@ -5252,29 +6351,36 @@
   });
 
   $("btn-ss-learn-quit")?.addEventListener("click", () => {
-    if (confirm("Leave Learning and go back?")) showScreen("social");
+    if (confirm("Leave Learning and go back?")) showScreen("ss-hub");
   });
 
   $("btn-ss-learn-back")?.addEventListener("click", () => advanceSocialLearn(-1));
 
   $("btn-ss-learn-next")?.addEventListener("click", () => {
-    if (ssLearnIndex >= SS_LESSONS.length - 1) pokeAudio();
+    if (ssLearnIndex >= getSsWeek().lessons.length - 1) pokeAudio();
     advanceSocialLearn(1);
   });
 
   $("btn-ss-quit")?.addEventListener("click", () => {
     if (!ssSession) {
-      showScreen("social");
+      showScreen("ss-hub");
       return;
     }
     if (confirm("Quit this Social Studies assessment?")) {
       ssSession = null;
-      showScreen("social");
+      showScreen("ss-hub");
     }
   });
 
   $("btn-ss-quiz-go")?.addEventListener("click", () => {
     pokeAudio();
+    if (ssSession?.intro) {
+      ssSession.difficulty = ssQuizDifficulty;
+      ssSession.questions = pickQuizQuestions(ssQuizDifficulty);
+      ssSession.index = 0;
+      ssSession.correct = 0;
+      ssSession.misses = [];
+    }
     beginSocialQuizQuestions();
   });
 
