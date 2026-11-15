@@ -449,8 +449,9 @@ select, input[type="text"] {
 
 .btn-global-home {
   position: fixed;
-  top: max(0.55rem, env(safe-area-inset-top));
-  right: max(0.55rem, env(safe-area-inset-right));
+  top: calc(max(0.55rem, env(safe-area-inset-top)) + 2.7rem);
+  left: max(0.55rem, env(safe-area-inset-left));
+  right: auto;
   z-index: 80;
   min-height: 2.35rem;
   padding: 0.4rem 0.9rem;
