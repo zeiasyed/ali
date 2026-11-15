@@ -427,6 +427,26 @@ select, input[type="text"] {
   grid-column: 1 / -1;
 }
 
+.app-version-badge {
+  position: fixed;
+  top: max(0.55rem, env(safe-area-inset-top));
+  left: max(0.55rem, env(safe-area-inset-left));
+  z-index: 80;
+  min-height: 2.35rem;
+  padding: 0.4rem 0.75rem;
+  border: 3px solid var(--ink);
+  border-radius: 999px;
+  background: rgba(255, 253, 246, 0.96);
+  box-shadow: 2px 2px 0 var(--ink);
+  font-family: var(--font-cartoon, var(--font-body));
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--ink);
+  display: inline-flex;
+  align-items: center;
+  pointer-events: none;
+}
+
 .btn-global-home {
   position: fixed;
   top: max(0.55rem, env(safe-area-inset-top));
