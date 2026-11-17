@@ -2593,6 +2593,7 @@
     if (hearBtn) hearBtn.hidden = true;
     const prekSpell = $("eng-prek-spell");
     if (prekSpell) prekSpell.hidden = true;
+    if (engSession.mode !== "words") setEngWordsPadOnly(false);
 
     if (engSession.mode === "prek-spell") {
       if (tag) tag.textContent = "Spell It";
