@@ -2508,6 +2508,21 @@ body.ld-answer-mode #answer.ld-quot-input {
   user-select: none;
 }
 
+/* Easy Words: bigger pad, POW only */
+body.eng-words-pad .eng-write-surface {
+  min-height: min(48dvh, 420px);
+}
+
+body.eng-words-pad .eng-pen-tools {
+  justify-content: center;
+}
+
+body.eng-words-pad .eng-pen-tools #btn-eng-pen-pow {
+  width: min(100%, 280px);
+  min-height: 3.1rem;
+  font-size: 1.25rem;
+}
+
 /* iPad landscape / keyboard: keep English writing on-screen */
 #screen-eng-play.active {
   max-height: var(--vvh, 100dvh);
@@ -2556,6 +2571,10 @@ body.ld-answer-mode #answer.ld-quot-input {
 
   body.play-landscape.eng-play-on #screen-eng-play .eng-write-surface {
     min-height: min(28dvh, 160px);
+  }
+
+  body.play-landscape.eng-play-on.eng-words-pad #screen-eng-play .eng-write-surface {
+    min-height: min(42dvh, 260px);
   }
 
   body.play-landscape.eng-play-on #screen-eng-play .eng-trace-guide {
