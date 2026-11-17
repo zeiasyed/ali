@@ -2669,6 +2669,8 @@
     if (hearBtn) hearBtn.hidden = true;
     const prekSpell = $("eng-prek-spell");
     if (prekSpell) prekSpell.hidden = true;
+    const easyForm = $("eng-easy-form");
+    if (easyForm) easyForm.hidden = true;
     if (engSession.mode !== "words") setEngWordsPadOnly(false);
 
     if (engSession.mode === "prek-spell") {
@@ -2704,23 +2706,36 @@
         prompt.className = "eng-prompt eng-prompt-word";
         prompt.innerHTML = `<span class="eng-emoji" aria-hidden="true">${q.emoji}</span><span class="eng-copy-word">${q.word}</span>`;
       }
-      if (hint) hint.textContent = "Write the word with your finger on the pad!";
+      if (hint) hint.textContent = "Copy the word in the writing box!";
       if (choices) {
         choices.hidden = true;
         choices.innerHTML = "";
       }
-      // Pad + POW only — no letter-tile section
       if (wordForm) wordForm.hidden = true;
-      if (penForm) penForm.hidden = false;
+      if (penForm) penForm.hidden = true;
       if (prekSpell) prekSpell.hidden = true;
       if (hearBtn) hearBtn.hidden = false;
-      setEngWordsPadOnly(true);
-      if (penInput) {
-        penInput.value = "";
-        penInput.disabled = true;
+      setEngWordsPadOnly(false);
+      const easyForm = $("eng-easy-form");
+      const easyInput = $("eng-easy-input");
+      const easyGuide = $("eng-easy-guide");
+      if (easyForm) easyForm.hidden = false;
+      if (easyGuide) {
+        easyGuide.textContent = String(q.word || "").toUpperCase();
       }
-      setEngPenKeyboard(false);
-      prepareEngPenPad(String(q.word || "").toUpperCase());
+      if (easyInput) {
+        easyInput.disabled = false;
+        easyInput.value = "";
+        // Letter keyboard / Pencil Scribble — value is checked on POW
+        easyInput.setAttribute("inputmode", "text");
+        window.setTimeout(() => {
+          try {
+            easyInput.focus({ preventScroll: true });
+          } catch {
+            easyInput.focus();
+          }
+        }, 120);
+      }
       window.setTimeout(() => speakEngWord(q.word), 250);
       return;
     }
@@ -2886,26 +2901,44 @@
     await playWrongSound();
   }
 
-  async function submitEngWord(event) {
+  function normalizeEngWord(raw) {
+    return String(raw || "")
+      .trim()
+      .toLowerCase()
+      // Scribble / handwriting lookalikes
+      .replace(/0/g, "o")
+      .replace(/1/g, "l")
+      .replace(/5/g, "s")
+      .replace(/[^a-z]/g, "");
+  }
+
+  async function submitEasyWord(event) {
     if (event) event.preventDefault();
     if (!engSession || engSession.answered || engSession.mode !== "words") return;
     const q = engCurrent();
-    const input = $("eng-word-input");
+    const input = $("eng-easy-input") || $("eng-word-input");
     if (!q || !input) return;
 
-    const typed = String(input.value || "")
-      .trim()
-      .toLowerCase()
-      .replace(/[^a-z]/g, "");
+    const typed = normalizeEngWord(input.value);
+    const target = normalizeEngWord(q.word || q.target);
+    const feedback = $("eng-feedback");
+    const nextBtn = $("btn-eng-next");
+
     if (!typed) {
-      input.focus();
+      if (feedback) {
+        feedback.textContent = "Write the word in the box, then POW!";
+        feedback.className = "feedback";
+      }
+      try {
+        input.focus({ preventScroll: true });
+      } catch {
+        input.focus();
+      }
       return;
     }
 
     engSession.attemptsOnCurrent += 1;
-    const feedback = $("eng-feedback");
-    const nextBtn = $("btn-eng-next");
-    const ok = typed === q.word;
+    const ok = typed === target;
 
     if (ok) {
       engSession.answered = true;
@@ -2915,7 +2948,8 @@
       if ($("eng-stars")) $("eng-stars").textContent = String(engSession.correct);
       input.disabled = true;
       if (feedback) {
-        feedback.textContent = engSession.attemptsOnCurrent === 1 ? "Nice writing! ★" : "Got it!";
+        feedback.textContent =
+          engSession.attemptsOnCurrent === 1 ? "Nice writing! ★" : "Got it!";
         feedback.className = "feedback right";
       }
       await playCorrectSound();
@@ -2927,9 +2961,9 @@
       engSession.answered = true;
       noteEngNeedsRetry();
       input.disabled = true;
-      input.value = q.word;
+      input.value = q.word || target;
       if (feedback) {
-        feedback.textContent = `It's “${q.word}”`;
+        feedback.textContent = `It's “${q.word || target}”`;
         feedback.className = "feedback wrong";
       }
       if (nextBtn) nextBtn.hidden = false;
@@ -2938,11 +2972,20 @@
     }
 
     if (feedback) {
-      feedback.textContent = "Almost — try again!";
+      feedback.textContent = "Not quite — clear and write it again!";
       feedback.className = "feedback wrong";
     }
-    input.select();
+    input.value = "";
+    try {
+      input.focus({ preventScroll: true });
+    } catch {
+      input.focus();
+    }
     await playWrongSound();
+  }
+
+  async function submitEngWord(event) {
+    return submitEasyWord(event);
   }
 
   async function submitEngPen(event) {
@@ -2966,32 +3009,6 @@
       .replace(/[^a-z]/g, "");
     const padInk = engWritePadHasInk();
     const targetWord = String(q.target || q.word || "").toLowerCase();
-
-    // Easy Words: copy the shown word on the pad, then POW
-    if (engSession.mode === "words") {
-      if (!padInk) {
-        const emptyFeedback = $("eng-feedback");
-        if (emptyFeedback) {
-          emptyFeedback.textContent = "Draw the word on the pad, then POW!";
-          emptyFeedback.className = "feedback";
-        }
-        return;
-      }
-      engSession.attemptsOnCurrent += 1;
-      engSession.answered = true;
-      if (engSession.attemptsOnCurrent === 1) engSession.firstTryCorrect += 1;
-      engSession.correct += 1;
-      if ($("eng-stars")) $("eng-stars").textContent = String(engSession.correct);
-      const feedback = $("eng-feedback");
-      if (feedback) {
-        feedback.textContent =
-          engSession.attemptsOnCurrent === 1 ? "Nice writing! ★" : "Got it!";
-        feedback.className = "feedback right";
-      }
-      await playCorrectSound();
-      window.setTimeout(() => advanceEngQuestion(), 750);
-      return;
-    }
 
     // Write with Pen: finger/Pencil drawing on the practice pad counts
     if (!typed && padInk && engSession.mode === "pen") {
@@ -7169,7 +7186,22 @@
   });
 
   $("eng-word-form")?.addEventListener("submit", (e) => {
-    submitEngWord(e);
+    submitEasyWord(e);
+  });
+
+  $("eng-easy-form")?.addEventListener("submit", (e) => {
+    submitEasyWord(e);
+  });
+
+  $("btn-eng-easy-clear")?.addEventListener("click", () => {
+    const input = $("eng-easy-input");
+    if (!input || input.disabled) return;
+    input.value = "";
+    try {
+      input.focus({ preventScroll: true });
+    } catch {
+      input.focus();
+    }
   });
 
   $("eng-pen-form")?.addEventListener("submit", (e) => {
