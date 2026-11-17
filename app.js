@@ -2556,10 +2556,10 @@
       keyboard.hidden = !!on;
       keyboard.style.display = on ? "none" : "";
     }
-    // Easy Words uses the tile POW under the pad, not the pen-form POW
+    // Easy Words: keep tools visible but only POW (clear/keyboard already hidden)
     if (tools) {
-      tools.hidden = !!on;
-      tools.style.display = on ? "none" : "";
+      tools.hidden = false;
+      tools.style.display = "";
     }
   }
 
@@ -2704,17 +2704,15 @@
         prompt.className = "eng-prompt eng-prompt-word";
         prompt.innerHTML = `<span class="eng-emoji" aria-hidden="true">${q.emoji}</span><span class="eng-copy-word">${q.word}</span>`;
       }
-      if (hint) {
-        hint.textContent = "Practice on the pad, then tap the letters in order!";
-      }
+      if (hint) hint.textContent = "Write the word with your finger on the pad!";
       if (choices) {
         choices.hidden = true;
         choices.innerHTML = "";
       }
-      // Bigger practice pad + letter tiles to check the real spelling
+      // Pad + POW only — no letter-tile section
       if (wordForm) wordForm.hidden = true;
       if (penForm) penForm.hidden = false;
-      if (prekSpell) prekSpell.hidden = false;
+      if (prekSpell) prekSpell.hidden = true;
       if (hearBtn) hearBtn.hidden = false;
       setEngWordsPadOnly(true);
       if (penInput) {
@@ -2723,7 +2721,6 @@
       }
       setEngPenKeyboard(false);
       prepareEngPenPad(String(q.word || "").toUpperCase());
-      renderPrekSpellBoard(q);
       window.setTimeout(() => speakEngWord(q.word), 250);
       return;
     }
@@ -2970,9 +2967,29 @@
     const padInk = engWritePadHasInk();
     const targetWord = String(q.target || q.word || "").toLowerCase();
 
-    // Easy Words is checked by letter tiles (not freehand ink)
+    // Easy Words: copy the shown word on the pad, then POW
     if (engSession.mode === "words") {
-      await submitPrekSpell();
+      if (!padInk) {
+        const emptyFeedback = $("eng-feedback");
+        if (emptyFeedback) {
+          emptyFeedback.textContent = "Draw the word on the pad, then POW!";
+          emptyFeedback.className = "feedback";
+        }
+        return;
+      }
+      engSession.attemptsOnCurrent += 1;
+      engSession.answered = true;
+      if (engSession.attemptsOnCurrent === 1) engSession.firstTryCorrect += 1;
+      engSession.correct += 1;
+      if ($("eng-stars")) $("eng-stars").textContent = String(engSession.correct);
+      const feedback = $("eng-feedback");
+      if (feedback) {
+        feedback.textContent =
+          engSession.attemptsOnCurrent === 1 ? "Nice writing! ★" : "Got it!";
+        feedback.className = "feedback right";
+      }
+      await playCorrectSound();
+      window.setTimeout(() => advanceEngQuestion(), 750);
       return;
     }
 
