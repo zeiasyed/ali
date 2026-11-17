@@ -737,14 +737,26 @@
   function setAnswerInputMode(wantKeyboard) {
     answerKeyboardWanted = !!wantKeyboard;
     const keyboardOnly = usesKeyboardOnlyAnswer();
-    const mode = keyboardOnly ? "numeric" : wantKeyboard ? "text" : "none";
+    // Math always needs the number pad (not letters) when the keyboard is open
+    const mode = keyboardOnly || wantKeyboard ? "numeric" : "none";
     const ans = $("answer");
     const rem = $("answer-rem");
-    if (ans) {
-      ans.setAttribute("inputmode", mode);
-      ans.placeholder = keyboardOnly ? "Type here" : wantKeyboard ? "Type answer" : "Write with Pencil";
-    }
-    if (rem) rem.setAttribute("inputmode", mode);
+    const applyMode = (el, placeholder) => {
+      if (!el) return;
+      el.setAttribute("inputmode", mode);
+      if (mode === "numeric") {
+        el.setAttribute("pattern", "[0-9]*");
+        el.setAttribute("enterkeyhint", "done");
+      } else {
+        el.removeAttribute("pattern");
+      }
+      if (placeholder != null) el.placeholder = placeholder;
+    };
+    applyMode(
+      ans,
+      keyboardOnly ? "Type here" : wantKeyboard ? "Type answer" : "Write with Pencil"
+    );
+    applyMode(rem, null);
     const btn = $("btn-keyboard");
     if (btn) btn.classList.toggle("keyboard-on", wantKeyboard && !keyboardOnly);
   }
@@ -819,6 +831,13 @@
   function openAnswerKeyboard() {
     const input = $("answer");
     if (!input) return;
+    // Blur first so iPad rebuilds the keyboard as numeric, not letters
+    try {
+      input.blur();
+      $("answer-rem")?.blur();
+    } catch {
+      /* ignore */
+    }
     setAnswerInputMode(true);
     syncPlayViewportFit();
     window.setTimeout(() => {
@@ -2206,14 +2225,42 @@
     });
   }
 
+  function syncEngWordKeyboard() {
+    const input = $("eng-word-input");
+    if (!input) return;
+    // Easy Words / typing: letter keyboard
+    input.setAttribute("inputmode", "text");
+    input.setAttribute("enterkeyhint", "done");
+    input.removeAttribute("pattern");
+    input.setAttribute("autocapitalize", "off");
+  }
+
   function setEngPenKeyboard(wantKeyboard) {
     const input = $("eng-pen-input");
     const btn = $("btn-eng-pen-keyboard");
     if (!input) return;
-    input.setAttribute("inputmode", wantKeyboard ? "text" : "none");
-    input.placeholder = wantKeyboard ? "Type here" : "Write with Pencil";
+    const q = engCurrent();
+    const letterMode =
+      engSession?.mode === "pen" && (q?.kind === "pen-letter" || String(q?.target || "").length === 1);
+    if (wantKeyboard) {
+      // Letters for English — never the number pad
+      input.setAttribute("inputmode", "text");
+      input.removeAttribute("pattern");
+      input.setAttribute("enterkeyhint", "done");
+      input.setAttribute("autocapitalize", letterMode ? "characters" : "off");
+      input.placeholder = letterMode ? "Type the letter" : "Type the word";
+    } else {
+      input.setAttribute("inputmode", "none");
+      input.removeAttribute("pattern");
+      input.placeholder = "Write with Pencil";
+    }
     if (btn) btn.classList.toggle("keyboard-on", !!wantKeyboard);
     if (wantKeyboard) {
+      try {
+        input.blur();
+      } catch {
+        /* ignore */
+      }
       window.setTimeout(() => {
         input.focus({ preventScroll: true });
         input.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -2306,6 +2353,7 @@
       if (wordInput) {
         wordInput.disabled = false;
         wordInput.value = "";
+        syncEngWordKeyboard();
         window.setTimeout(() => wordInput.focus(), 80);
       }
       return;
