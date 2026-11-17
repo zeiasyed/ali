@@ -5206,7 +5206,8 @@
     }
     if ($("shuffle")) $("shuffle").checked = !!state.settings.shuffle;
     if ($("voice-mode")) $("voice-mode").checked = !!state.settings.voiceMode;
-    syncOperationUI();
+    if ($("subject")) $("subject").value = "math";
+    syncSubjectUI();
     updateHeroAvatar();
   }
 
@@ -5215,6 +5216,26 @@
     el.hidden = !visible;
     el.style.display = visible ? "" : "none";
     el.setAttribute("aria-hidden", visible ? "false" : "true");
+  }
+
+  function getSubject() {
+    return $("subject")?.value || "math";
+  }
+
+  function syncSubjectUI() {
+    const subject = getSubject();
+    const isMath = subject === "math";
+    const isEnglish = subject === "english";
+    const isSocial = subject === "social";
+    setSetupVisible($("subject-math"), isMath);
+    setSetupVisible($("subject-english"), isEnglish);
+    setSetupVisible($("subject-social"), isSocial);
+    const tag = $("home-tagline");
+    if (tag) {
+      if (isEnglish) tag.textContent = "Letters, spelling & easy words!";
+      else if (isSocial) tag.textContent = "Learn California Studies Weekly!";
+    }
+    if (isMath) syncOperationUI();
   }
 
   function syncOperationUI() {
@@ -6453,6 +6474,17 @@
   // Events
   $("setup-form")?.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const subject = getSubject();
+    pokeAudio();
+    if (subject === "english") {
+      showScreen("english");
+      return;
+    }
+    if (subject === "social") {
+      showScreen("social");
+      return;
+    }
+
     const operation = $("operation")?.value || "multiply";
     const tables = operation === "multiply" ? getSelectedTables() : state.settings.tables || rangeTables(10);
     if (operation === "multiply" && !tables.length) {
@@ -6470,7 +6502,6 @@
     const voiceOn = !!$("voice-mode")?.checked;
     const padOp = isPadPractice(operation);
     const lockedTen = locksFixedTenMission(operation);
-    pokeAudio();
     if (voiceOn && speechSupported() && !padOp) {
       await ensureMicAccess();
     }
@@ -6489,6 +6520,10 @@
       tables,
       problemType: $("problem-type")?.value || "product",
     });
+  });
+
+  $("subject")?.addEventListener("change", () => {
+    syncSubjectUI();
   });
 
   $("grade")?.addEventListener("change", () => {

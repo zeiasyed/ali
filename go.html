@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v66.css?v=91" />
+  <link rel="stylesheet" href="styles-v67.css?v=92" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -77,7 +77,7 @@
   </style>
 </head>
 <body>
-  <div id="app-version-badge" class="app-version-badge" aria-label="App version">v91</div>
+  <div id="app-version-badge" class="app-version-badge" aria-label="App version">v92</div>
   <button type="button" id="btn-global-home" class="btn-global-home" data-go="home">
     Home
   </button>
@@ -122,6 +122,8 @@
       </div>
 
       <form id="setup-form" class="setup">
+        <!-- 1. Who -->
+        <p class="setup-step">1 · Who</p>
         <label>
           Grade
           <select id="grade" name="grade">
@@ -134,188 +136,215 @@
           </select>
         </label>
 
+        <!-- 2. What subject -->
+        <p class="setup-step">2 · Subject</p>
         <label>
-          Skill
-          <select id="operation" name="operation">
-            <option value="multiply" selected>Multiplication</option>
-            <option value="md-mult">Practice · multi-digit ×</option>
-            <option value="long-div">Practice · long division</option>
-            <option value="add">Addition</option>
-            <option value="sub">Subtraction</option>
-            <option value="round">Rounding · nearest 10 / 100</option>
+          Subject
+          <select id="subject" name="subject">
+            <option value="math" selected>Math</option>
+            <option value="english">English</option>
+            <option value="social">Social Studies</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v91 · smart keyboard</p>
 
-        <div id="md-wrap" class="md-range-wrap" hidden>
-          <p class="md-range-title">Custom range · multi-digit × single digit</p>
-          <p class="setup-note">10 questions · big work space for pencil · 90%+ first-try = 5 Roblox pts</p>
-          <div class="md-range-grid">
-            <label>
-              Big number min
-              <input id="md-big-min" name="mdBigMin" type="number" inputmode="numeric" min="10" max="9999" value="10" />
-            </label>
-            <label>
-              Big number max
-              <input id="md-big-max" name="mdBigMax" type="number" inputmode="numeric" min="10" max="9999" value="99" />
-            </label>
-            <label>
-              Single digit min
-              <input id="md-small-min" name="mdSmallMin" type="number" inputmode="numeric" min="1" max="9" value="2" />
-            </label>
-            <label>
-              Single digit max
-              <input id="md-small-max" name="mdSmallMax" type="number" inputmode="numeric" min="1" max="9" value="9" />
-            </label>
-          </div>
+        <!-- English / SS shortcuts -->
+        <div id="subject-english" class="subject-panel" hidden>
+          <p class="setup-note">Alphabet, Spell the Word, Write with Pen, and Easy Words.</p>
+          <button type="submit" class="btn primary big" id="btn-go-english">Open English</button>
+        </div>
+        <div id="subject-social" class="subject-panel" hidden>
+          <p class="setup-note">California Studies Weekly · Learn &amp; quiz for Roblox points.</p>
+          <button type="submit" class="btn primary big" id="btn-go-social">Open Social Studies</button>
         </div>
 
-        <div id="long-div-wrap" class="md-range-wrap" hidden>
-          <p class="md-range-title">Custom range · long division (with remainders)</p>
-          <p class="setup-note">10 questions · quotient + R · miss 2× → show work &amp; answer · 90%+ first-try = 5 Roblox pts</p>
-          <div class="md-range-grid">
-            <label>
-              Dividend min
-              <input id="ld-div-min" name="ldDivMin" type="number" inputmode="numeric" min="10" max="9999" value="10" />
-            </label>
-            <label>
-              Dividend max
-              <input id="ld-div-max" name="ldDivMax" type="number" inputmode="numeric" min="10" max="9999" value="99" />
-            </label>
-            <label>
-              Divisor min
-              <input id="ld-by-min" name="ldByMin" type="number" inputmode="numeric" min="2" max="9" value="2" />
-            </label>
-            <label>
-              Divisor max
-              <input id="ld-by-max" name="ldByMax" type="number" inputmode="numeric" min="2" max="9" value="9" />
-            </label>
-          </div>
-        </div>
-
-        <label id="difficulty-wrap">
-          Difficulty
-          <select id="difficulty" name="difficulty">
-            <option value="easy">Easy · tables 1–5</option>
-            <option value="medium" selected>Medium · tables 1–10</option>
-            <option value="hard">Hard · tables 1–12</option>
-            <option value="expert">Expert · tables 1–15</option>
-          </select>
-        </label>
-
-        <label id="digit-wrap" hidden>
-          Number size
-          <select id="digit-level" name="digitLevel">
-            <option value="single" selected>Single digit (1–9)</option>
-            <option value="dual">Dual digit (10–99)</option>
-          </select>
-        </label>
-
-        <div id="round-wrap" hidden>
+        <!-- 3–5 Math only -->
+        <div id="subject-math" class="subject-panel">
+          <p class="setup-step">3 · Math skill</p>
           <label>
-            Rounding practice
-            <select id="round-preset" name="roundPreset">
-              <option value="mix:2">Mix nearest 10 &amp; 100 · 2 digits</option>
-              <option value="mix:3" selected>Mix nearest 10 &amp; 100 · 3 digits</option>
-              <option value="mix:4">Mix nearest 10 &amp; 100 · 4 digits</option>
-              <option value="mix:mix">Mix nearest 10 &amp; 100 · all digit sizes</option>
-              <option value="10:2">Only nearest 10 · 2 digits</option>
-              <option value="10:3">Only nearest 10 · 3 digits</option>
-              <option value="10:4">Only nearest 10 · 4 digits</option>
-              <option value="100:2">Only nearest 100 · 2 digits</option>
-              <option value="100:3">Only nearest 100 · 3 digits</option>
-              <option value="100:4">Only nearest 100 · 4 digits</option>
+            Skill
+            <select id="operation" name="operation">
+              <option value="multiply" selected>Multiplication</option>
+              <option value="add">Addition</option>
+              <option value="sub">Subtraction</option>
+              <option value="round">Rounding · nearest 10 / 100</option>
+              <option value="md-mult">Practice · multi-digit ×</option>
+              <option value="long-div">Practice · long division</option>
             </select>
           </label>
-          <p class="setup-note">Switches between nearest 10 and 100 · 10 questions · 90%+ first-try = 5 Roblox pts</p>
+
+          <p class="setup-step">4 · Level &amp; focus</p>
+          <label id="difficulty-wrap">
+            Difficulty
+            <select id="difficulty" name="difficulty">
+              <option value="easy">Easy · tables 1–5</option>
+              <option value="medium" selected>Medium · tables 1–10</option>
+              <option value="hard">Hard · tables 1–12</option>
+              <option value="expert">Expert · tables 1–15</option>
+            </select>
+          </label>
+
+          <label id="digit-wrap" hidden>
+            Number size
+            <select id="digit-level" name="digitLevel">
+              <option value="single" selected>Single digit (1–9)</option>
+              <option value="dual">Dual digit (10–99)</option>
+            </select>
+          </label>
+
+          <div id="round-wrap" hidden>
+            <label>
+              Rounding practice
+              <select id="round-preset" name="roundPreset">
+                <option value="mix:2">Mix nearest 10 &amp; 100 · 2 digits</option>
+                <option value="mix:3" selected>Mix nearest 10 &amp; 100 · 3 digits</option>
+                <option value="mix:4">Mix nearest 10 &amp; 100 · 4 digits</option>
+                <option value="mix:mix">Mix nearest 10 &amp; 100 · all digit sizes</option>
+                <option value="10:2">Only nearest 10 · 2 digits</option>
+                <option value="10:3">Only nearest 10 · 3 digits</option>
+                <option value="10:4">Only nearest 10 · 4 digits</option>
+                <option value="100:2">Only nearest 100 · 2 digits</option>
+                <option value="100:3">Only nearest 100 · 3 digits</option>
+                <option value="100:4">Only nearest 100 · 4 digits</option>
+              </select>
+            </label>
+            <p class="setup-note">Switches between nearest 10 and 100 · 10 questions · 90%+ first-try = 5 Roblox pts</p>
+          </div>
+          <!-- Kept for older saved settings / fallback -->
+          <select id="round-place" hidden aria-hidden="true">
+            <option value="10" selected>10</option>
+            <option value="100">100</option>
+            <option value="mix">mix</option>
+          </select>
+          <select id="round-digits" hidden aria-hidden="true">
+            <option value="2">2</option>
+            <option value="3" selected>3</option>
+            <option value="4">4</option>
+            <option value="mix">mix</option>
+          </select>
+
+          <div id="md-wrap" class="md-range-wrap" hidden>
+            <p class="md-range-title">Custom range · multi-digit × single digit</p>
+            <p class="setup-note">10 questions · big work space for pencil · 90%+ first-try = 5 Roblox pts</p>
+            <div class="md-range-grid">
+              <label>
+                Big number min
+                <input id="md-big-min" name="mdBigMin" type="number" inputmode="numeric" min="10" max="9999" value="10" />
+              </label>
+              <label>
+                Big number max
+                <input id="md-big-max" name="mdBigMax" type="number" inputmode="numeric" min="10" max="9999" value="99" />
+              </label>
+              <label>
+                Single digit min
+                <input id="md-small-min" name="mdSmallMin" type="number" inputmode="numeric" min="1" max="9" value="2" />
+              </label>
+              <label>
+                Single digit max
+                <input id="md-small-max" name="mdSmallMax" type="number" inputmode="numeric" min="1" max="9" value="9" />
+              </label>
+            </div>
+          </div>
+
+          <div id="long-div-wrap" class="md-range-wrap" hidden>
+            <p class="md-range-title">Custom range · long division (with remainders)</p>
+            <p class="setup-note">10 questions · quotient + R · miss 2× → show work &amp; answer · 90%+ first-try = 5 Roblox pts</p>
+            <div class="md-range-grid">
+              <label>
+                Dividend min
+                <input id="ld-div-min" name="ldDivMin" type="number" inputmode="numeric" min="10" max="9999" value="10" />
+              </label>
+              <label>
+                Dividend max
+                <input id="ld-div-max" name="ldDivMax" type="number" inputmode="numeric" min="10" max="9999" value="99" />
+              </label>
+              <label>
+                Divisor min
+                <input id="ld-by-min" name="ldByMin" type="number" inputmode="numeric" min="2" max="9" value="2" />
+              </label>
+              <label>
+                Divisor max
+                <input id="ld-by-max" name="ldByMax" type="number" inputmode="numeric" min="2" max="9" value="9" />
+              </label>
+            </div>
+          </div>
+
+          <fieldset class="table-picker" id="table-picker">
+            <legend>Practice tables</legend>
+            <p class="table-hint">Tap the tables to practice (gold = on)</p>
+            <div class="table-actions">
+              <button type="button" class="btn-link" id="tables-all">All</button>
+              <button type="button" class="btn-link" id="tables-none">None</button>
+            </div>
+            <div id="table-chips" class="table-chips" role="group" aria-label="Times tables">
+              <button type="button" class="table-chip" data-table="1" aria-pressed="true">1×</button>
+              <button type="button" class="table-chip" data-table="2" aria-pressed="true">2×</button>
+              <button type="button" class="table-chip" data-table="3" aria-pressed="true">3×</button>
+              <button type="button" class="table-chip" data-table="4" aria-pressed="true">4×</button>
+              <button type="button" class="table-chip" data-table="5" aria-pressed="true">5×</button>
+              <button type="button" class="table-chip" data-table="6" aria-pressed="true">6×</button>
+              <button type="button" class="table-chip" data-table="7" aria-pressed="true">7×</button>
+              <button type="button" class="table-chip" data-table="8" aria-pressed="true">8×</button>
+              <button type="button" class="table-chip" data-table="9" aria-pressed="true">9×</button>
+              <button type="button" class="table-chip" data-table="10" aria-pressed="true">10×</button>
+              <button type="button" class="table-chip" data-table="11" aria-pressed="true">11×</button>
+              <button type="button" class="table-chip" data-table="12" aria-pressed="true">12×</button>
+              <button type="button" class="table-chip" data-table="13" aria-pressed="true">13×</button>
+              <button type="button" class="table-chip" data-table="14" aria-pressed="true">14×</button>
+              <button type="button" class="table-chip" data-table="15" aria-pressed="true">15×</button>
+            </div>
+          </fieldset>
+
+          <label id="problem-type-wrap">
+            Problem type
+            <select id="problem-type" name="problemType">
+              <option value="product" selected>4 × 3 = ?</option>
+              <option value="missing-b">4 × ? = 12</option>
+              <option value="missing-a">? × 3 = 12</option>
+              <option value="mix">Mix all styles</option>
+            </select>
+          </label>
+
+          <p class="setup-step">5 · Mission</p>
+          <label>
+            Mission mode
+            <select id="mode" name="mode">
+              <option value="endless">Endless practice</option>
+              <option value="10" selected>Fixed round · 10 questions</option>
+              <option value="20">Fixed round · 20 questions</option>
+              <option value="timed">Timed challenge · 60 seconds</option>
+            </select>
+          </label>
+          <p id="mult-roblox-note" class="setup-note" hidden>
+            Fixed round 10 (or 20) · 90%+ first-try = 5 Roblox pts each round
+          </p>
+
+          <p class="setup-step">6 · Options</p>
+          <label class="toggle-row">
+            <span>Go in order (7×1, 7×2, 7×3…)</span>
+            <input type="checkbox" id="in-order" checked />
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+
+          <label class="toggle-row">
+            <span>Auto-listen each question</span>
+            <input type="checkbox" id="voice-mode" checked />
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+
+          <label class="toggle-row">
+            <span>Timed · 5 seconds per question</span>
+            <input type="checkbox" id="per-question-timer" />
+            <span class="switch" aria-hidden="true"></span>
+          </label>
+          <p class="setup-note">In order = sequential tables. Timed = 5 seconds each, then next question.</p>
+
+          <button type="submit" class="btn primary big" id="btn-start-math">Start Mission</button>
         </div>
-        <!-- Kept for older saved settings / fallback -->
-        <select id="round-place" hidden aria-hidden="true">
-          <option value="10" selected>10</option>
-          <option value="100">100</option>
-          <option value="mix">mix</option>
-        </select>
-        <select id="round-digits" hidden aria-hidden="true">
-          <option value="2">2</option>
-          <option value="3" selected>3</option>
-          <option value="4">4</option>
-          <option value="mix">mix</option>
-        </select>
 
-        <fieldset class="table-picker" id="table-picker">
-          <legend>Practice tables</legend>
-          <p class="table-hint">Tap the tables to practice (gold = on)</p>
-          <div class="table-actions">
-            <button type="button" class="btn-link" id="tables-all">All</button>
-            <button type="button" class="btn-link" id="tables-none">None</button>
-          </div>
-          <div id="table-chips" class="table-chips" role="group" aria-label="Times tables">
-            <button type="button" class="table-chip" data-table="1" aria-pressed="true">1×</button>
-            <button type="button" class="table-chip" data-table="2" aria-pressed="true">2×</button>
-            <button type="button" class="table-chip" data-table="3" aria-pressed="true">3×</button>
-            <button type="button" class="table-chip" data-table="4" aria-pressed="true">4×</button>
-            <button type="button" class="table-chip" data-table="5" aria-pressed="true">5×</button>
-            <button type="button" class="table-chip" data-table="6" aria-pressed="true">6×</button>
-            <button type="button" class="table-chip" data-table="7" aria-pressed="true">7×</button>
-            <button type="button" class="table-chip" data-table="8" aria-pressed="true">8×</button>
-            <button type="button" class="table-chip" data-table="9" aria-pressed="true">9×</button>
-            <button type="button" class="table-chip" data-table="10" aria-pressed="true">10×</button>
-            <button type="button" class="table-chip" data-table="11" aria-pressed="true">11×</button>
-            <button type="button" class="table-chip" data-table="12" aria-pressed="true">12×</button>
-            <button type="button" class="table-chip" data-table="13" aria-pressed="true">13×</button>
-            <button type="button" class="table-chip" data-table="14" aria-pressed="true">14×</button>
-            <button type="button" class="table-chip" data-table="15" aria-pressed="true">15×</button>
-          </div>
-        </fieldset>
-
-        <label>
-          Mission mode
-          <select id="mode" name="mode">
-            <option value="endless">Endless practice</option>
-            <option value="10" selected>Fixed round · 10 questions</option>
-            <option value="20">Fixed round · 20 questions</option>
-            <option value="timed">Timed challenge · 60 seconds</option>
-          </select>
-        </label>
-        <p id="mult-roblox-note" class="setup-note" hidden>
-          Fixed round 10 (or 20) · 90%+ first-try = 5 Roblox pts each round
-        </p>
-
-        <label id="problem-type-wrap">
-          Problem type
-          <select id="problem-type" name="problemType">
-            <option value="product" selected>4 × 3 = ?</option>
-            <option value="missing-b">4 × ? = 12</option>
-            <option value="missing-a">? × 3 = 12</option>
-            <option value="mix">Mix all styles</option>
-          </select>
-        </label>
-
-        <label class="toggle-row">
-          <span>Auto-listen each question</span>
-          <input type="checkbox" id="voice-mode" checked />
-          <span class="switch" aria-hidden="true"></span>
-        </label>
-
-        <label class="toggle-row">
-          <span>Go in order (7×1, 7×2, 7×3…)</span>
-          <input type="checkbox" id="in-order" checked />
-          <span class="switch" aria-hidden="true"></span>
-        </label>
-
-        <label class="toggle-row">
-          <span>Timed · 5 seconds per question</span>
-          <input type="checkbox" id="per-question-timer" />
-          <span class="switch" aria-hidden="true"></span>
-        </label>
-        <p class="setup-note">In order = sequential tables. Timed = 5 seconds each, then next question. Mic listens automatically.</p>
-
-        <button type="submit" class="btn primary big">Start Mission</button>
+        <p class="setup-note" id="app-version-note">App v92 · setup order</p>
       </form>
 
       <nav class="home-nav">
-        <button type="button" class="btn primary" data-go="english">English</button>
-        <button type="button" class="btn primary" data-go="social">Social Studies</button>
         <button type="button" class="btn secondary" data-go="map">Hero Map</button>
         <button type="button" class="btn secondary" data-go="badges">Heroes</button>
         <button type="button" class="btn ghost" data-go="parent">Parent</button>
@@ -750,6 +779,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v91.js?v=91"></script>
+  <script src="app-v92.js?v=92"></script>
 </body>
 </html>

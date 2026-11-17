@@ -213,6 +213,28 @@ body {
   gap: 1rem;
 }
 
+.setup-step {
+  margin: 0.35rem 0 0;
+  font-weight: 900;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5a6478;
+}
+
+.setup-step:first-child {
+  margin-top: 0;
+}
+
+.subject-panel {
+  display: grid;
+  gap: 1rem;
+}
+
+.subject-panel[hidden] {
+  display: none !important;
+}
+
 .setup label {
   display: grid;
   gap: 0.4rem;
