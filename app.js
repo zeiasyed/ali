@@ -30,6 +30,8 @@
       digitLevel: "single",
       difficulty: "easy",
       roundPreset: "mix:2",
+      // Pre-K: Math + English only (no Social Studies)
+      subjects: ["math", "english"],
     },
     k: {
       label: "Kindergarten",
@@ -38,6 +40,7 @@
       digitLevel: "single",
       difficulty: "easy",
       roundPreset: "mix:2",
+      subjects: ["math", "english", "social"],
     },
     1: {
       label: "Grade 1",
@@ -46,6 +49,7 @@
       digitLevel: "single",
       difficulty: "easy",
       roundPreset: "mix:2",
+      subjects: ["math", "english", "social"],
     },
     2: {
       label: "Grade 2",
@@ -54,6 +58,7 @@
       digitLevel: "dual",
       difficulty: "easy",
       roundPreset: "mix:2",
+      subjects: ["math", "english", "social"],
     },
     3: {
       label: "Grade 3",
@@ -62,6 +67,7 @@
       digitLevel: "dual",
       difficulty: "medium",
       roundPreset: "mix:3",
+      subjects: ["math", "english", "social"],
     },
     4: {
       label: "Grade 4",
@@ -70,8 +76,20 @@
       digitLevel: "dual",
       difficulty: "hard",
       roundPreset: "mix:mix",
+      subjects: ["math", "english", "social"],
     },
   };
+
+  const SUBJECT_LABELS = {
+    math: "Math",
+    english: "English",
+    social: "Social Studies",
+  };
+
+  function gradeAllowsSocial(gradeId = getGradeId()) {
+    const subjects = getGradeProfile(gradeId).subjects || ["math", "english", "social"];
+    return subjects.includes("social");
+  }
 
   const SKILL_LABELS = {
     multiply: "Multiplication",
@@ -1627,7 +1645,26 @@
     }
 
     renderTableChips();
+    syncSubjectOptions(gradeId);
     syncOperationUI();
+  }
+
+  function syncSubjectOptions(gradeId = getGradeId()) {
+    const profile = getGradeProfile(gradeId);
+    const allowed = profile.subjects || ["math", "english", "social"];
+    const select = $("subject");
+    if (!select) return;
+    const previous = select.value || "math";
+    select.innerHTML = "";
+    for (const id of allowed) {
+      const opt = document.createElement("option");
+      opt.value = id;
+      opt.textContent = SUBJECT_LABELS[id] || id;
+      select.appendChild(opt);
+    }
+    const next = allowed.includes(previous) ? previous : "math";
+    select.value = next;
+    syncSubjectUI();
   }
 
   function parseRoundPreset(value) {
@@ -1843,6 +1880,11 @@
   }
 
   function showScreen(name) {
+    // Pre-K has no Social Studies
+    const ssScreens = ["social", "ss-hub", "ss-learn", "ss-quiz", "ss-results"];
+    if (ssScreens.includes(name) && !gradeAllowsSocial()) {
+      name = "home";
+    }
     document.querySelectorAll(".screen").forEach((el) => el.classList.remove("active"));
     $(`screen-${name}`).classList.add("active");
     const homeBtn = $("btn-global-home");
@@ -6482,6 +6524,11 @@
       return;
     }
     if (subject === "social") {
+      if (!gradeAllowsSocial()) {
+        if ($("subject")) $("subject").value = "math";
+        syncSubjectUI();
+        return;
+      }
       showScreen("social");
       return;
     }
