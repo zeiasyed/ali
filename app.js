@@ -2169,13 +2169,34 @@
     }
   }
 
+  function getQuestionLetters(q) {
+    if (Array.isArray(q?.letters) && q.letters.length) {
+      return q.letters.map((L) => String(L).toUpperCase().replace(/[^A-Z]/g, "")).filter(Boolean);
+    }
+    return String(q?.word || q?.target || "")
+      .toUpperCase()
+      .replace(/[^A-Z]/g, "")
+      .split("");
+  }
+
+  function readSpellBuildFromSlots() {
+    const slots = $("eng-spell-slots");
+    if (!slots) return (engSession?.spellBuild || []).map((L) => String(L).toUpperCase());
+    return [...slots.querySelectorAll(".eng-spell-slot")]
+      .map((el) => String(el.textContent || "").trim().toUpperCase())
+      .filter(Boolean);
+  }
+
   function renderPrekSpellBoard(q) {
     const slots = $("eng-spell-slots");
     const tiles = $("eng-spell-tiles");
-    if (!slots || !tiles || !q?.letters) return;
+    const letters = getQuestionLetters(q);
+    if (!slots || !tiles || !letters.length || !engSession) return;
+    // Keep a normalized copy on the question so submit always matches
+    q.letters = letters;
     engSession.spellBuild = [];
-    engSession.spellTilePool = shuffleInPlace([...q.letters]);
-    slots.innerHTML = q.letters
+    engSession.spellTilePool = shuffleInPlace([...letters]);
+    slots.innerHTML = letters
       .map((_, i) => `<button type="button" class="eng-spell-slot" data-slot="${i}" aria-label="Letter ${i + 1}"></button>`)
       .join("");
     tiles.innerHTML = engSession.spellTilePool
@@ -2194,12 +2215,16 @@
           return;
         }
         if (btn.disabled) return;
-        const letter = btn.getAttribute("data-letter");
-        if (engSession.spellBuild.length >= q.letters.length) return;
+        const letter = String(btn.getAttribute("data-letter") || "").toUpperCase();
+        if (engSession.spellBuild.length >= letters.length) return;
         engSession.spellBuild.push(letter);
         btn.disabled = true;
         btn.classList.add("used");
         refreshPrekSpellSlots();
+        // Auto-check as soon as all letters are in
+        if (engSession.spellBuild.length >= letters.length) {
+          window.setTimeout(() => submitPrekSpell(), 80);
+        }
       });
     });
     slots.querySelectorAll(".eng-spell-slot").forEach((btn) => {
@@ -2216,7 +2241,7 @@
         const removed = engSession.spellBuild.pop();
         refreshPrekSpellSlots();
         const tile = [...$("eng-spell-tiles").querySelectorAll(".eng-spell-tile")].find(
-          (t) => t.disabled && t.getAttribute("data-letter") === removed
+          (t) => t.disabled && String(t.getAttribute("data-letter") || "").toUpperCase() === removed
         );
         if (tile) {
           tile.disabled = false;
@@ -2254,11 +2279,27 @@
     }
     const q = engCurrent();
     if (!q) return;
-    const built = (engSession.spellBuild || []).join("");
-    const target = (q.letters || []).join("");
+    const letters = getQuestionLetters(q);
+    q.letters = letters;
+    const builtArr = readSpellBuildFromSlots();
+    // Keep spellBuild in sync with what is on screen
+    engSession.spellBuild = builtArr;
+    const built = builtArr.join("");
+    const target = letters.join("");
     const feedback = $("eng-feedback");
     const nextBtn = $("btn-eng-next");
-    const pretty = q.display || (q.letters || []).join(" ") || String(q.word || "").toUpperCase();
+    const pretty =
+      letters.join(" ") ||
+      q.display ||
+      String(q.word || q.target || "").toUpperCase();
+
+    if (!target) {
+      if (feedback) {
+        feedback.textContent = "Missing word — go back and try again.";
+        feedback.className = "feedback wrong";
+      }
+      return;
+    }
 
     if (!built || built.length < target.length) {
       if (feedback) {
@@ -2284,11 +2325,7 @@
         });
       if (feedback) {
         feedback.textContent =
-          engSession.attemptsOnCurrent === 1
-            ? engSession.mode === "words"
-              ? `Yes! ${pretty} ★`
-              : `Yes! ${pretty} ★`
-            : "Got it!";
+          engSession.attemptsOnCurrent === 1 ? `Yes! ${pretty} ★` : "Got it!";
         feedback.className = "feedback right";
       }
       await playCorrectSound();
