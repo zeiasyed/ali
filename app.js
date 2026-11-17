@@ -823,8 +823,11 @@
     document.documentElement.style.setProperty("--vvh", `${Math.round(visible)}px`);
     document.body.classList.toggle("play-landscape", landscape);
     document.body.classList.toggle("kb-open", kbOpen);
-    const playOn = $("screen-play")?.classList.contains("active");
+    const playOn =
+      $("screen-play")?.classList.contains("active") ||
+      $("screen-eng-play")?.classList.contains("active");
     document.body.classList.toggle("play-fit", !!(playOn && (landscape || kbOpen)));
+    document.body.classList.toggle("eng-play-on", !!$("screen-eng-play")?.classList.contains("active"));
   }
 
   function ensureAnswerVisible() {
@@ -2420,7 +2423,9 @@
 
     window.addEventListener("resize", () => {
       if (
-        (engSession?.mode === "pen" || engSession?.mode === "spell") &&
+        (engSession?.mode === "pen" ||
+          engSession?.mode === "spell" ||
+          engSession?.mode === "words") &&
         $("eng-pen-form") &&
         !$("eng-pen-form").hidden
       ) {
@@ -2592,19 +2597,25 @@
         prompt.className = "eng-prompt eng-prompt-word";
         prompt.innerHTML = `<span class="eng-emoji" aria-hidden="true">${q.emoji}</span><span class="eng-copy-word">${q.word}</span>`;
       }
-      if (hint) hint.textContent = "Type the word you see!";
+      if (hint) hint.textContent = "Write the word with your finger on the pad!";
       if (choices) {
         choices.hidden = true;
         choices.innerHTML = "";
       }
-      if (penForm) penForm.hidden = true;
-      if (wordForm) wordForm.hidden = false;
-      if (wordInput) {
-        wordInput.disabled = false;
-        wordInput.value = "";
-        syncEngWordKeyboard();
-        window.setTimeout(() => wordInput.focus(), 80);
+      // iPad-friendly: write on pad by default (no keyboard covering the word)
+      if (wordForm) wordForm.hidden = true;
+      if (penForm) penForm.hidden = false;
+      if (hearBtn) hearBtn.hidden = false;
+      const wordsHint = document.querySelector("#eng-pen-form .answer-pen-hint");
+      if (wordsHint) wordsHint.textContent = "Finger or Pencil on the pad · or tap Keyboard";
+      if (penInput) {
+        penInput.disabled = false;
+        penInput.value = "";
+        penInput.placeholder = "Optional · or type here";
       }
+      setEngPenKeyboard(false);
+      prepareEngPenPad(String(q.word || "").toUpperCase());
+      window.setTimeout(() => speakEngWord(q.word), 250);
       return;
     }
 
@@ -2831,7 +2842,9 @@
     if (
       !engSession ||
       engSession.answered ||
-      (engSession.mode !== "pen" && engSession.mode !== "spell")
+      (engSession.mode !== "pen" &&
+        engSession.mode !== "spell" &&
+        engSession.mode !== "words")
     ) {
       return;
     }
@@ -2844,9 +2857,10 @@
       .toLowerCase()
       .replace(/[^a-z]/g, "");
     const padInk = engWritePadHasInk();
+    const targetWord = String(q.target || q.word || "").toLowerCase();
 
-    // Write with Pen: finger/Pencil drawing on the practice pad counts
-    if (!typed && engSession.mode === "pen" && padInk) {
+    // Write with Pen / Easy Words: finger drawing on the pad counts
+    if (!typed && padInk && (engSession.mode === "pen" || engSession.mode === "words")) {
       engSession.attemptsOnCurrent += 1;
       engSession.answered = true;
       if (engSession.attemptsOnCurrent === 1) engSession.firstTryCorrect += 1;
@@ -2856,7 +2870,11 @@
       const feedback = $("eng-feedback");
       if (feedback) {
         feedback.textContent =
-          engSession.attemptsOnCurrent === 1 ? "Beautiful writing! ★" : "Got it!";
+          engSession.attemptsOnCurrent === 1
+            ? engSession.mode === "words"
+              ? "Nice writing! ★"
+              : "Beautiful writing! ★"
+            : "Got it!";
         feedback.className = "feedback right";
       }
       await playCorrectSound();
@@ -2868,7 +2886,7 @@
       const emptyFeedback = $("eng-feedback");
       if (emptyFeedback) {
         emptyFeedback.textContent =
-          engSession.mode === "pen"
+          engSession.mode === "pen" || engSession.mode === "words"
             ? "Draw on the pad with your finger, then POW!"
             : padInk
               ? "Nice drawing! Now tap Keyboard and type the word"
@@ -2881,7 +2899,7 @@
     engSession.attemptsOnCurrent += 1;
     const feedback = $("eng-feedback");
     const nextBtn = $("btn-eng-next");
-    const ok = typed === q.target;
+    const ok = typed === targetWord;
 
     if (ok) {
       engSession.answered = true;
@@ -2895,7 +2913,9 @@
           engSession.attemptsOnCurrent === 1
             ? engSession.mode === "spell"
               ? "Great spelling! ★"
-              : "Beautiful writing! ★"
+              : engSession.mode === "words"
+                ? "Nice writing! ★"
+                : "Beautiful writing! ★"
             : "Got it!";
         feedback.className = "feedback right";
       }
@@ -2908,11 +2928,11 @@
       engSession.answered = true;
       noteEngNeedsRetry();
       input.disabled = true;
-      input.value = q.display;
+      input.value = q.display || q.word || targetWord;
       if (feedback) {
         feedback.textContent =
-          engSession.mode === "spell"
-            ? `It's “${q.display}”`
+          engSession.mode === "spell" || engSession.mode === "words"
+            ? `It's “${q.display || q.word}”`
             : `Write “${q.display}”`;
         feedback.className = "feedback wrong";
       }
@@ -7003,7 +7023,8 @@
 
   $("btn-eng-hear")?.addEventListener("click", () => {
     const q = engCurrent();
-    if (q?.target) speakEngWord(q.target);
+    const word = q?.target || q?.word;
+    if (word) speakEngWord(word);
   });
 
   $("btn-eng-quit")?.addEventListener("click", () => {

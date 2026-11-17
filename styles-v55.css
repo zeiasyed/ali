@@ -2508,6 +2508,98 @@ body.ld-answer-mode #answer.ld-quot-input {
   user-select: none;
 }
 
+/* iPad landscape / keyboard: keep English writing on-screen */
+#screen-eng-play.active {
+  max-height: var(--vvh, 100dvh);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+@media (orientation: landscape) {
+  body.play-landscape.eng-play-on #screen-eng-play .play-top {
+    margin-bottom: 0.25rem;
+  }
+
+  body.play-landscape.eng-play-on #screen-eng-play .eng-play-card {
+    padding: 0.55rem 0.75rem 0.65rem;
+  }
+
+  body.play-landscape.eng-play-on #screen-eng-play .eng-mode-tag {
+    margin-bottom: 0.15rem;
+    font-size: 0.75rem;
+  }
+
+  body.play-landscape.eng-play-on #screen-eng-play .eng-prompt {
+    font-size: clamp(1.5rem, 6.5vh, 2.4rem);
+    margin-bottom: 0.2rem;
+  }
+
+  body.play-landscape.eng-play-on #screen-eng-play .eng-prompt .eng-emoji {
+    font-size: clamp(1.4rem, 5vh, 2rem);
+  }
+
+  body.play-landscape.eng-play-on #screen-eng-play .eng-hint,
+  body.play-landscape.eng-play-on #screen-eng-play .answer-pen-hint {
+    display: none !important;
+  }
+
+  body.play-landscape.eng-play-on #screen-eng-play #btn-eng-hear {
+    min-height: 2.2rem;
+    padding: 0.3rem 0.85rem;
+    margin-bottom: 0.35rem;
+  }
+
+  body.play-landscape.eng-play-on #screen-eng-play .eng-write-pad {
+    margin-bottom: 0.35rem;
+    padding: 0.35rem;
+  }
+
+  body.play-landscape.eng-play-on #screen-eng-play .eng-write-surface {
+    min-height: min(28dvh, 160px);
+  }
+
+  body.play-landscape.eng-play-on #screen-eng-play .eng-trace-guide {
+    font-size: clamp(2.4rem, 14vh, 4.5rem);
+  }
+
+  body.play-landscape.eng-play-on #screen-eng-play .eng-pen-input,
+  body.play-landscape.eng-play-on #screen-eng-play #eng-pen-input {
+    min-height: 2.35rem;
+    padding: 0.3rem 0.5rem;
+    font-size: clamp(1.2rem, 4.5vh, 1.6rem);
+  }
+
+  body.play-landscape.eng-play-on #screen-eng-play .eng-pen-tools .btn,
+  body.play-landscape.eng-play-on #screen-eng-play .eng-prek-spell-tools .btn {
+    min-height: 2.35rem;
+    padding: 0.3rem 0.7rem;
+  }
+
+  body.play-landscape.eng-play-on #screen-eng-play .eng-spell-slot,
+  body.play-landscape.eng-play-on #screen-eng-play .eng-spell-tile {
+    width: 2.55rem;
+    height: 2.55rem;
+    min-width: 2.55rem;
+    min-height: 2.55rem;
+    font-size: 1.25rem;
+  }
+}
+
+body.kb-open.eng-play-on #screen-eng-play .eng-hint,
+body.kb-open.eng-play-on #screen-eng-play .answer-pen-hint,
+body.kb-open.eng-play-on #screen-eng-play .eng-write-pad {
+  display: none !important;
+}
+
+body.kb-open.eng-play-on #screen-eng-play .eng-prompt {
+  font-size: clamp(1.35rem, 5.5vh, 2rem);
+  margin-bottom: 0.15rem;
+}
+
+body.kb-open.eng-play-on #screen-eng-play .eng-play-card {
+  padding: 0.45rem 0.65rem 0.5rem;
+}
+
 .eng-trace-guide {
   position: absolute;
   inset: 0;
