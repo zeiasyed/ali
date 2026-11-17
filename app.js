@@ -2080,11 +2080,20 @@
 
   function buildWordQuestions(n = ENG_TARGET) {
     const pool = shuffleInPlace([...ENG_EASY_WORDS]);
-    return pool.slice(0, Math.min(n, pool.length)).map((item) => ({
-      kind: "write",
-      word: item.word,
-      emoji: item.emoji,
-    }));
+    return pool.slice(0, Math.min(n, pool.length)).map((item) => {
+      const letters = String(item.word || "")
+        .toUpperCase()
+        .replace(/[^A-Z]/g, "")
+        .split("");
+      return {
+        kind: "write",
+        word: item.word,
+        target: item.word,
+        display: letters.join(" "),
+        emoji: item.emoji,
+        letters,
+      };
+    });
   }
 
   function buildPenQuestions(n = ENG_TARGET) {
@@ -2177,7 +2186,13 @@
       .join("");
     tiles.querySelectorAll(".eng-spell-tile").forEach((btn) => {
       btn.addEventListener("click", () => {
-        if (!engSession || engSession.answered || engSession.mode !== "prek-spell") return;
+        if (
+          !engSession ||
+          engSession.answered ||
+          (engSession.mode !== "prek-spell" && engSession.mode !== "words")
+        ) {
+          return;
+        }
         if (btn.disabled) return;
         const letter = btn.getAttribute("data-letter");
         if (engSession.spellBuild.length >= q.letters.length) return;
@@ -2189,7 +2204,13 @@
     });
     slots.querySelectorAll(".eng-spell-slot").forEach((btn) => {
       btn.addEventListener("click", () => {
-        if (!engSession || engSession.answered || engSession.mode !== "prek-spell") return;
+        if (
+          !engSession ||
+          engSession.answered ||
+          (engSession.mode !== "prek-spell" && engSession.mode !== "words")
+        ) {
+          return;
+        }
         // Pop last letter if tapping filled slots
         if (!engSession.spellBuild.length) return;
         const removed = engSession.spellBuild.pop();
@@ -2219,22 +2240,29 @@
 
   function clearPrekSpellBoard() {
     const q = engCurrent();
-    if (!q || engSession?.mode !== "prek-spell") return;
+    if (!q || (engSession?.mode !== "prek-spell" && engSession?.mode !== "words")) return;
     renderPrekSpellBoard(q);
   }
 
   async function submitPrekSpell() {
-    if (!engSession || engSession.answered || engSession.mode !== "prek-spell") return;
+    if (
+      !engSession ||
+      engSession.answered ||
+      (engSession.mode !== "prek-spell" && engSession.mode !== "words")
+    ) {
+      return;
+    }
     const q = engCurrent();
     if (!q) return;
     const built = (engSession.spellBuild || []).join("");
     const target = (q.letters || []).join("");
     const feedback = $("eng-feedback");
     const nextBtn = $("btn-eng-next");
+    const pretty = q.display || (q.letters || []).join(" ") || String(q.word || "").toUpperCase();
 
     if (!built || built.length < target.length) {
       if (feedback) {
-        feedback.textContent = `Tap the letters for ${q.display}!`;
+        feedback.textContent = `Tap the letters for ${pretty}!`;
         feedback.className = "feedback";
       }
       return;
@@ -2256,7 +2284,11 @@
         });
       if (feedback) {
         feedback.textContent =
-          engSession.attemptsOnCurrent === 1 ? `Yes! ${q.display} ★` : "Got it!";
+          engSession.attemptsOnCurrent === 1
+            ? engSession.mode === "words"
+              ? `Yes! ${pretty} ★`
+              : `Yes! ${pretty} ★`
+            : "Got it!";
         feedback.className = "feedback right";
       }
       await playCorrectSound();
@@ -2268,7 +2300,7 @@
       engSession.answered = true;
       noteEngNeedsRetry();
       if (feedback) {
-        feedback.textContent = `It's ${q.display}!`;
+        feedback.textContent = `It's ${pretty}!`;
         feedback.className = "feedback wrong";
       }
       if (nextBtn) nextBtn.hidden = false;
@@ -2280,6 +2312,7 @@
       feedback.textContent = "Almost — clear and try again!";
       feedback.className = "feedback wrong";
     }
+    clearPrekSpellBoard();
     await playWrongSound();
   }
 
@@ -2463,6 +2496,7 @@
     const input = $("eng-pen-input");
     const clearBox = $("btn-eng-pen-clear");
     const keyboard = $("btn-eng-pen-keyboard");
+    const tools = document.querySelector("#eng-pen-form .eng-pen-tools");
     const label = document.querySelector("#eng-pen-form label[for='eng-pen-input']");
     if (hint) {
       hint.hidden = !!on;
@@ -2484,6 +2518,11 @@
     if (keyboard) {
       keyboard.hidden = !!on;
       keyboard.style.display = on ? "none" : "";
+    }
+    // Easy Words uses the tile POW under the pad, not the pen-form POW
+    if (tools) {
+      tools.hidden = !!on;
+      tools.style.display = on ? "none" : "";
     }
   }
 
@@ -2628,14 +2667,17 @@
         prompt.className = "eng-prompt eng-prompt-word";
         prompt.innerHTML = `<span class="eng-emoji" aria-hidden="true">${q.emoji}</span><span class="eng-copy-word">${q.word}</span>`;
       }
-      if (hint) hint.textContent = "Write the word with your finger on the pad!";
+      if (hint) {
+        hint.textContent = "Practice on the pad, then tap the letters in order!";
+      }
       if (choices) {
         choices.hidden = true;
         choices.innerHTML = "";
       }
-      // Pad only — bigger writing area, no keyboard / text box
+      // Bigger practice pad + letter tiles to check the real spelling
       if (wordForm) wordForm.hidden = true;
       if (penForm) penForm.hidden = false;
+      if (prekSpell) prekSpell.hidden = false;
       if (hearBtn) hearBtn.hidden = false;
       setEngWordsPadOnly(true);
       if (penInput) {
@@ -2644,6 +2686,7 @@
       }
       setEngPenKeyboard(false);
       prepareEngPenPad(String(q.word || "").toUpperCase());
+      renderPrekSpellBoard(q);
       window.setTimeout(() => speakEngWord(q.word), 250);
       return;
     }
@@ -2890,29 +2933,9 @@
     const padInk = engWritePadHasInk();
     const targetWord = String(q.target || q.word || "").toLowerCase();
 
-    // Easy Words: pad only (no typing)
+    // Easy Words is checked by letter tiles (not freehand ink)
     if (engSession.mode === "words") {
-      if (!padInk) {
-        const emptyFeedback = $("eng-feedback");
-        if (emptyFeedback) {
-          emptyFeedback.textContent = "Draw the word on the pad, then POW!";
-          emptyFeedback.className = "feedback";
-        }
-        return;
-      }
-      engSession.attemptsOnCurrent += 1;
-      engSession.answered = true;
-      if (engSession.attemptsOnCurrent === 1) engSession.firstTryCorrect += 1;
-      engSession.correct += 1;
-      if ($("eng-stars")) $("eng-stars").textContent = String(engSession.correct);
-      const feedback = $("eng-feedback");
-      if (feedback) {
-        feedback.textContent =
-          engSession.attemptsOnCurrent === 1 ? "Nice writing! ★" : "Got it!";
-        feedback.className = "feedback right";
-      }
-      await playCorrectSound();
-      window.setTimeout(() => advanceEngQuestion(), 750);
+      await submitPrekSpell();
       return;
     }
 
