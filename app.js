@@ -1647,6 +1647,7 @@
     renderTableChips();
     syncSubjectOptions(gradeId);
     syncOperationUI();
+    syncEngHubCards();
   }
 
   function syncSubjectOptions(gradeId = getGradeId()) {
@@ -1902,6 +1903,7 @@
     if (name === "social" || name === "english" || name === "ss-hub") {
       renderRobloxBank();
       if (name === "ss-hub") renderSsHub();
+      if (name === "english") syncEngHubCards();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
     // Compact play layout for landscape / keyboard after screen switch
@@ -2006,6 +2008,22 @@
     { word: "ball", emoji: "⚽" },
   ];
 
+  /** Pre-K spelling — see C A T, tap letters in order */
+  const ENG_PREK_SPELL_WORDS = [
+    { word: "cat", emoji: "🐱", letters: ["C", "A", "T"] },
+    { word: "dog", emoji: "🐶", letters: ["D", "O", "G"] },
+    { word: "sun", emoji: "☀️", letters: ["S", "U", "N"] },
+    { word: "hat", emoji: "🎩", letters: ["H", "A", "T"] },
+    { word: "pig", emoji: "🐷", letters: ["P", "I", "G"] },
+    { word: "bus", emoji: "🚌", letters: ["B", "U", "S"] },
+    { word: "cup", emoji: "☕", letters: ["C", "U", "P"] },
+    { word: "bee", emoji: "🐝", letters: ["B", "E", "E"] },
+    { word: "mom", emoji: "👩", letters: ["M", "O", "M"] },
+    { word: "dad", emoji: "👨", letters: ["D", "A", "D"] },
+    { word: "red", emoji: "🔴", letters: ["R", "E", "D"] },
+    { word: "map", emoji: "🗺️", letters: ["M", "A", "P"] },
+  ];
+
   /** Kindergarten CVC spelling — emoji + sounds, no printed word */
   const ENG_SPELL_WORDS = [
     { word: "cat", emoji: "🐱", sounds: ["c", "a", "t"] },
@@ -2104,6 +2122,162 @@
       sounds: item.sounds || item.word.split(""),
       guide: "",
     }));
+  }
+
+  function buildPrekSpellQuestions(n = ENG_TARGET) {
+    const pool = shuffleInPlace([...ENG_PREK_SPELL_WORDS]);
+    return pool.slice(0, Math.min(n, pool.length)).map((item) => {
+      const letters = (item.letters || item.word.toUpperCase().split("")).map((L) =>
+        String(L).toUpperCase()
+      );
+      return {
+        kind: "prek-spell",
+        target: item.word.toLowerCase(),
+        display: letters.join(" "),
+        emoji: item.emoji,
+        letters,
+        guide: letters.join(" "),
+      };
+    });
+  }
+
+  function syncEngHubCards() {
+    const gradeId = getGradeId();
+    const isPrek = gradeId === "prek";
+    const prekBtn = $("btn-eng-prek-spell");
+    const spellBtn = $("btn-eng-spell");
+    if (prekBtn) {
+      prekBtn.hidden = !isPrek;
+      prekBtn.style.display = isPrek ? "" : "none";
+    }
+    if (spellBtn) {
+      // Kindergarten+ spelling (sounds) — hide for Pre-K
+      spellBtn.hidden = isPrek;
+      spellBtn.style.display = isPrek ? "none" : "";
+    }
+  }
+
+  function renderPrekSpellBoard(q) {
+    const slots = $("eng-spell-slots");
+    const tiles = $("eng-spell-tiles");
+    if (!slots || !tiles || !q?.letters) return;
+    engSession.spellBuild = [];
+    engSession.spellTilePool = shuffleInPlace([...q.letters]);
+    slots.innerHTML = q.letters
+      .map((_, i) => `<button type="button" class="eng-spell-slot" data-slot="${i}" aria-label="Letter ${i + 1}"></button>`)
+      .join("");
+    tiles.innerHTML = engSession.spellTilePool
+      .map(
+        (letter, i) =>
+          `<button type="button" class="eng-spell-tile" data-tile="${i}" data-letter="${letter}">${letter}</button>`
+      )
+      .join("");
+    tiles.querySelectorAll(".eng-spell-tile").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (!engSession || engSession.answered || engSession.mode !== "prek-spell") return;
+        if (btn.disabled) return;
+        const letter = btn.getAttribute("data-letter");
+        if (engSession.spellBuild.length >= q.letters.length) return;
+        engSession.spellBuild.push(letter);
+        btn.disabled = true;
+        btn.classList.add("used");
+        refreshPrekSpellSlots();
+      });
+    });
+    slots.querySelectorAll(".eng-spell-slot").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        if (!engSession || engSession.answered || engSession.mode !== "prek-spell") return;
+        // Pop last letter if tapping filled slots
+        if (!engSession.spellBuild.length) return;
+        const removed = engSession.spellBuild.pop();
+        refreshPrekSpellSlots();
+        const tile = [...$("eng-spell-tiles").querySelectorAll(".eng-spell-tile")].find(
+          (t) => t.disabled && t.getAttribute("data-letter") === removed
+        );
+        if (tile) {
+          tile.disabled = false;
+          tile.classList.remove("used");
+        }
+      });
+    });
+    refreshPrekSpellSlots();
+  }
+
+  function refreshPrekSpellSlots() {
+    const slots = $("eng-spell-slots");
+    if (!slots || !engSession) return;
+    const built = engSession.spellBuild || [];
+    slots.querySelectorAll(".eng-spell-slot").forEach((el, i) => {
+      const letter = built[i] || "";
+      el.textContent = letter;
+      el.classList.toggle("filled", !!letter);
+    });
+  }
+
+  function clearPrekSpellBoard() {
+    const q = engCurrent();
+    if (!q || engSession?.mode !== "prek-spell") return;
+    renderPrekSpellBoard(q);
+  }
+
+  async function submitPrekSpell() {
+    if (!engSession || engSession.answered || engSession.mode !== "prek-spell") return;
+    const q = engCurrent();
+    if (!q) return;
+    const built = (engSession.spellBuild || []).join("");
+    const target = (q.letters || []).join("");
+    const feedback = $("eng-feedback");
+    const nextBtn = $("btn-eng-next");
+
+    if (!built || built.length < target.length) {
+      if (feedback) {
+        feedback.textContent = `Tap the letters for ${q.display}!`;
+        feedback.className = "feedback";
+      }
+      return;
+    }
+
+    engSession.attemptsOnCurrent += 1;
+    const ok = built === target;
+
+    if (ok) {
+      engSession.answered = true;
+      if (engSession.attemptsOnCurrent === 1) engSession.firstTryCorrect += 1;
+      else noteEngNeedsRetry();
+      engSession.correct += 1;
+      if ($("eng-stars")) $("eng-stars").textContent = String(engSession.correct);
+      $("eng-spell-tiles")
+        ?.querySelectorAll(".eng-spell-tile")
+        .forEach((btn) => {
+          btn.disabled = true;
+        });
+      if (feedback) {
+        feedback.textContent =
+          engSession.attemptsOnCurrent === 1 ? `Yes! ${q.display} ★` : "Got it!";
+        feedback.className = "feedback right";
+      }
+      await playCorrectSound();
+      window.setTimeout(() => advanceEngQuestion(), 700);
+      return;
+    }
+
+    if (engSession.attemptsOnCurrent >= ENG_MAX_TRIES) {
+      engSession.answered = true;
+      noteEngNeedsRetry();
+      if (feedback) {
+        feedback.textContent = `It's ${q.display}!`;
+        feedback.className = "feedback wrong";
+      }
+      if (nextBtn) nextBtn.hidden = false;
+      await playWrongSound();
+      return;
+    }
+
+    if (feedback) {
+      feedback.textContent = "Almost — clear and try again!";
+      feedback.className = "feedback wrong";
+    }
+    await playWrongSound();
   }
 
   function speakEngWord(word) {
@@ -2326,7 +2500,9 @@
           ? buildPenQuestions(ENG_TARGET)
           : mode === "spell"
             ? buildSpellQuestions(ENG_TARGET)
-            : buildAlphabetQuestions(ENG_TARGET);
+            : mode === "prek-spell"
+              ? buildPrekSpellQuestions(ENG_TARGET)
+              : buildAlphabetQuestions(ENG_TARGET);
     engSession = {
       mode,
       questions,
@@ -2377,8 +2553,38 @@
     if (soundBoxes) {
       soundBoxes.hidden = true;
       soundBoxes.innerHTML = "";
+      soundBoxes.classList.remove("eng-sound-boxes-caps");
     }
     if (hearBtn) hearBtn.hidden = true;
+    const prekSpell = $("eng-prek-spell");
+    if (prekSpell) prekSpell.hidden = true;
+
+    if (engSession.mode === "prek-spell") {
+      if (tag) tag.textContent = "Spell It";
+      if (choices) {
+        choices.hidden = true;
+        choices.innerHTML = "";
+      }
+      if (wordForm) wordForm.hidden = true;
+      if (penForm) penForm.hidden = true;
+      if (prekSpell) prekSpell.hidden = false;
+      if (prompt) {
+        prompt.className = "eng-prompt eng-prompt-word";
+        prompt.innerHTML = `<span class="eng-emoji" aria-hidden="true">${q.emoji}</span>`;
+      }
+      if (soundBoxes) {
+        soundBoxes.hidden = false;
+        soundBoxes.classList.add("eng-sound-boxes-caps");
+        soundBoxes.innerHTML = (q.letters || [])
+          .map((L) => `<span class="eng-sound-box eng-sound-box-cap">${L}</span>`)
+          .join('<span class="eng-sound-dot">·</span>');
+      }
+      if (hint) hint.textContent = `Spell ${q.display} · tap the letters in order!`;
+      if (hearBtn) hearBtn.hidden = false;
+      renderPrekSpellBoard(q);
+      window.setTimeout(() => speakEngWord(q.target), 250);
+      return;
+    }
 
     if (engSession.mode === "words") {
       if (tag) tag.textContent = "Easy Words";
@@ -2762,7 +2968,9 @@
           ? "English · Write with Pen"
           : engSession.mode === "spell"
             ? "English · Spell the Word"
-            : "English · Alphabet";
+            : engSession.mode === "prek-spell"
+              ? "English · Spell It"
+              : "English · Alphabet";
     const reward = maybeAwardRobloxPoints(pct, firstTry, total, {
       week: "EN",
       title,
@@ -6764,9 +6972,23 @@
     startEngPractice("alphabet");
   });
 
+  $("btn-eng-prek-spell")?.addEventListener("click", () => {
+    pokeAudio();
+    startEngPractice("prek-spell");
+  });
+
   $("btn-eng-spell")?.addEventListener("click", () => {
     pokeAudio();
     startEngPractice("spell");
+  });
+
+  $("btn-eng-spell-pow")?.addEventListener("click", () => {
+    pokeAudio();
+    submitPrekSpell();
+  });
+
+  $("btn-eng-spell-clear")?.addEventListener("click", () => {
+    clearPrekSpellBoard();
   });
 
   $("btn-eng-pen")?.addEventListener("click", () => {

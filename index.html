@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v67.css?v=95" />
+  <link rel="stylesheet" href="styles-v68.css?v=96" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -77,7 +77,7 @@
   </style>
 </head>
 <body>
-  <div id="app-version-badge" class="app-version-badge" aria-label="App version">v95</div>
+  <div id="app-version-badge" class="app-version-badge" aria-label="App version">v96</div>
   <button type="button" id="btn-global-home" class="btn-global-home" data-go="home">
     Home
   </button>
@@ -341,7 +341,7 @@
           <button type="submit" class="btn primary big" id="btn-start-math">Start Mission</button>
         </div>
 
-        <p class="setup-note" id="app-version-note">App v95 · Pre-K no SS</p>
+        <p class="setup-note" id="app-version-note">App v96 · Pre-K Spell It</p>
       </form>
 
       <nav class="home-nav">
@@ -371,7 +371,12 @@
           <span class="eng-card-title">Alphabet</span>
           <span class="eng-card-sub">Learn A–Z · tap the matching letter</span>
         </button>
-        <button type="button" class="eng-card" id="btn-eng-spell">
+        <button type="button" class="eng-card" id="btn-eng-prek-spell" data-eng-grade="prek">
+          <span class="eng-card-emoji" aria-hidden="true">🐱</span>
+          <span class="eng-card-title">Spell It</span>
+          <span class="eng-card-sub">Pre-K · C A T · tap letters in order</span>
+        </button>
+        <button type="button" class="eng-card" id="btn-eng-spell" data-eng-grade="k+">
           <span class="eng-card-emoji" aria-hidden="true">👂</span>
           <span class="eng-card-title">Spell the Word</span>
           <span class="eng-card-sub">Kindergarten · hear sounds · write with Pencil</span>
@@ -407,6 +412,15 @@
         <div id="eng-sound-boxes" class="eng-sound-boxes" hidden></div>
         <p class="eng-hint" id="eng-hint">Tap the matching letter!</p>
         <button type="button" class="btn secondary" id="btn-eng-hear" hidden>Hear word</button>
+
+        <div id="eng-prek-spell" class="eng-prek-spell" hidden>
+          <div id="eng-spell-slots" class="eng-spell-slots" aria-label="Your spelling"></div>
+          <div id="eng-spell-tiles" class="eng-spell-tiles" role="group" aria-label="Letter tiles"></div>
+          <div class="eng-prek-spell-tools">
+            <button type="button" class="btn say-it" id="btn-eng-spell-clear">Clear</button>
+            <button type="button" class="btn primary" id="btn-eng-spell-pow">POW!</button>
+          </div>
+        </div>
 
         <div id="eng-choices" class="eng-choices" hidden></div>
 
@@ -780,6 +794,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v95.js?v=95"></script>
+  <script src="app-v96.js?v=96"></script>
 </body>
 </html>
