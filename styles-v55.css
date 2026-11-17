@@ -2051,11 +2051,51 @@ body.ld-answer-mode #answer.ld-quot-input {
 }
 
 .eng-card:nth-child(2) {
-  background: linear-gradient(145deg, #e8fff0 0%, #c9f5d8 100%);
+  background: linear-gradient(145deg, #fff3e0 0%, #ffe0b8 100%);
 }
 
 .eng-card:nth-child(3) {
+  background: linear-gradient(145deg, #e8fff0 0%, #c9f5d8 100%);
+}
+
+.eng-card:nth-child(4) {
   background: linear-gradient(145deg, #e8f6ff 0%, #cfe9ff 100%);
+}
+
+.eng-sound-boxes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.15rem 0 0.65rem;
+}
+
+.eng-sound-box {
+  min-width: 2.4rem;
+  min-height: 2.4rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--ink);
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 2px 2px 0 var(--ink);
+  font-family: var(--font-cartoon, var(--font-body));
+  font-weight: 800;
+  font-size: 1.25rem;
+  text-transform: lowercase;
+}
+
+.eng-sound-dot {
+  font-weight: 800;
+  color: var(--muted);
+  font-size: 1.2rem;
+}
+
+#btn-eng-hear {
+  margin: 0 auto 0.75rem;
+  display: inline-flex;
 }
 
 .eng-card:active {

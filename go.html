@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v64.css?v=86" />
+  <link rel="stylesheet" href="styles-v65.css?v=87" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -77,7 +77,7 @@
   </style>
 </head>
 <body>
-  <div id="app-version-badge" class="app-version-badge" aria-label="App version">v86</div>
+  <div id="app-version-badge" class="app-version-badge" aria-label="App version">v87</div>
   <button type="button" id="btn-global-home" class="btn-global-home" data-go="home">
     Home
   </button>
@@ -145,7 +145,7 @@
             <option value="round">Rounding · nearest 10 / 100</option>
           </select>
         </label>
-        <p class="setup-note" id="app-version-note">App v86 · Home always under version</p>
+        <p class="setup-note" id="app-version-note">App v87 · Spell the Word</p>
 
         <div id="md-wrap" class="md-range-wrap" hidden>
           <p class="md-range-title">Custom range · multi-digit × single digit</p>
@@ -327,7 +327,7 @@
       <header class="hero-brand compact">
         <p class="eyebrow">English</p>
         <h1 class="ss-title">Letters &amp; Words</h1>
-        <p class="tagline">Pre-K practice · alphabet, pen writing &amp; easy words</p>
+        <p class="tagline">Pre-K / K · alphabet, spelling, pen writing &amp; easy words</p>
       </header>
 
       <div class="ss-roblox-bank">
@@ -341,6 +341,11 @@
           <span class="eng-card-emoji" aria-hidden="true">🔤</span>
           <span class="eng-card-title">Alphabet</span>
           <span class="eng-card-sub">Learn A–Z · tap the matching letter</span>
+        </button>
+        <button type="button" class="eng-card" id="btn-eng-spell">
+          <span class="eng-card-emoji" aria-hidden="true">👂</span>
+          <span class="eng-card-title">Spell the Word</span>
+          <span class="eng-card-sub">Kindergarten · hear sounds · write with Pencil</span>
         </button>
         <button type="button" class="eng-card" id="btn-eng-pen">
           <span class="eng-card-emoji" aria-hidden="true">✏️</span>
@@ -370,7 +375,9 @@
       <div class="eng-play-card" id="eng-play-card">
         <p class="eng-mode-tag" id="eng-mode-tag">Alphabet</p>
         <p class="eng-prompt" id="eng-prompt">A</p>
+        <div id="eng-sound-boxes" class="eng-sound-boxes" hidden></div>
         <p class="eng-hint" id="eng-hint">Tap the matching letter!</p>
+        <button type="button" class="btn secondary" id="btn-eng-hear" hidden>Hear word</button>
 
         <div id="eng-choices" class="eng-choices" hidden></div>
 
@@ -743,6 +750,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v86.js?v=86"></script>
+  <script src="app-v87.js?v=87"></script>
 </body>
 </html>

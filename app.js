@@ -1839,6 +1839,30 @@
     { word: "ball", emoji: "⚽" },
   ];
 
+  /** Kindergarten CVC spelling — emoji + sounds, no printed word */
+  const ENG_SPELL_WORDS = [
+    { word: "cat", emoji: "🐱", sounds: ["c", "a", "t"] },
+    { word: "dog", emoji: "🐶", sounds: ["d", "o", "g"] },
+    { word: "sun", emoji: "☀️", sounds: ["s", "u", "n"] },
+    { word: "pig", emoji: "🐷", sounds: ["p", "i", "g"] },
+    { word: "hat", emoji: "🎩", sounds: ["h", "a", "t"] },
+    { word: "cup", emoji: "☕", sounds: ["c", "u", "p"] },
+    { word: "bus", emoji: "🚌", sounds: ["b", "u", "s"] },
+    { word: "car", emoji: "🚗", sounds: ["c", "a", "r"] },
+    { word: "bed", emoji: "🛏️", sounds: ["b", "e", "d"] },
+    { word: "pen", emoji: "🖊️", sounds: ["p", "e", "n"] },
+    { word: "fox", emoji: "🦊", sounds: ["f", "o", "x"] },
+    { word: " hen", emoji: "🐔", sounds: ["h", "e", "n"] },
+    { word: "map", emoji: "🗺️", sounds: ["m", "a", "p"] },
+    { word: "jam", emoji: "🍓", sounds: ["j", "a", "m"] },
+    { word: "box", emoji: "📦", sounds: ["b", "o", "x"] },
+    { word: "web", emoji: "🕸️", sounds: ["w", "e", "b"] },
+    { word: "bug", emoji: "🐛", sounds: ["b", "u", "g"] },
+    { word: "mud", emoji: "🟤", sounds: ["m", "u", "d"] },
+    { word: "net", emoji: "🥅", sounds: ["n", "e", "t"] },
+    { word: "log", emoji: "🪵", sounds: ["l", "o", "g"] },
+  ].map((item) => ({ ...item, word: item.word.trim() }));
+
   let engSession = null;
   let engLastMode = "alphabet";
 
@@ -1901,6 +1925,31 @@
       }
     }
     return shuffleInPlace(out);
+  }
+
+  function buildSpellQuestions(n = ENG_TARGET) {
+    const pool = shuffleInPlace([...ENG_SPELL_WORDS]);
+    return pool.slice(0, Math.min(n, pool.length)).map((item) => ({
+      kind: "spell",
+      target: item.word,
+      display: item.word,
+      emoji: item.emoji,
+      sounds: item.sounds || item.word.split(""),
+      guide: "",
+    }));
+  }
+
+  function speakEngWord(word) {
+    try {
+      if (!window.speechSynthesis || !word) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(String(word));
+      u.rate = 0.9;
+      u.pitch = 1.05;
+      window.speechSynthesis.speak(u);
+    } catch {
+      /* ignore */
+    }
   }
 
   const engWritePad = {
@@ -2015,7 +2064,11 @@
     });
 
     window.addEventListener("resize", () => {
-      if (engSession?.mode === "pen" && $("eng-pen-form") && !$("eng-pen-form").hidden) {
+      if (
+        (engSession?.mode === "pen" || engSession?.mode === "spell") &&
+        $("eng-pen-form") &&
+        !$("eng-pen-form").hidden
+      ) {
         resizeEngWritePad();
       }
     });
@@ -2062,7 +2115,9 @@
         ? buildWordQuestions(ENG_TARGET)
         : mode === "pen"
           ? buildPenQuestions(ENG_TARGET)
-          : buildAlphabetQuestions(ENG_TARGET);
+          : mode === "spell"
+            ? buildSpellQuestions(ENG_TARGET)
+            : buildAlphabetQuestions(ENG_TARGET);
     engSession = {
       mode,
       questions,
@@ -2100,6 +2155,8 @@
     const nextBtn = $("btn-eng-next");
     const wordInput = $("eng-word-input");
     const penInput = $("eng-pen-input");
+    const soundBoxes = $("eng-sound-boxes");
+    const hearBtn = $("btn-eng-hear");
 
     if (progress) progress.textContent = `${engSession.index + 1} / ${engSession.questions.length}`;
     if (stars) stars.textContent = String(engSession.correct);
@@ -2108,6 +2165,11 @@
       feedback.className = "feedback";
     }
     if (nextBtn) nextBtn.hidden = true;
+    if (soundBoxes) {
+      soundBoxes.hidden = true;
+      soundBoxes.innerHTML = "";
+    }
+    if (hearBtn) hearBtn.hidden = true;
 
     if (engSession.mode === "words") {
       if (tag) tag.textContent = "Easy Words";
@@ -2127,6 +2189,39 @@
         wordInput.value = "";
         window.setTimeout(() => wordInput.focus(), 80);
       }
+      return;
+    }
+
+    if (engSession.mode === "spell") {
+      if (tag) tag.textContent = "Spell the Word";
+      if (choices) {
+        choices.hidden = true;
+        choices.innerHTML = "";
+      }
+      if (wordForm) wordForm.hidden = true;
+      if (penForm) penForm.hidden = false;
+      if (prompt) {
+        prompt.className = "eng-prompt eng-prompt-word";
+        prompt.innerHTML = `<span class="eng-emoji" aria-hidden="true">${q.emoji}</span>`;
+      }
+      if (soundBoxes) {
+        soundBoxes.hidden = false;
+        soundBoxes.innerHTML = (q.sounds || [])
+          .map((s) => `<span class="eng-sound-box">${s}</span>`)
+          .join('<span class="eng-sound-dot">·</span>');
+      }
+      if (hint) {
+        hint.textContent = "Say the sounds, then spell the word with Pencil!";
+      }
+      if (hearBtn) hearBtn.hidden = false;
+      if (penInput) {
+        penInput.disabled = false;
+        penInput.value = "";
+        penInput.placeholder = "Spell with Pencil";
+      }
+      setEngPenKeyboard(false);
+      prepareEngPenPad("");
+      window.setTimeout(() => speakEngWord(q.target), 250);
       return;
     }
 
@@ -2307,7 +2402,13 @@
 
   async function submitEngPen(event) {
     if (event) event.preventDefault();
-    if (!engSession || engSession.answered || engSession.mode !== "pen") return;
+    if (
+      !engSession ||
+      engSession.answered ||
+      (engSession.mode !== "pen" && engSession.mode !== "spell")
+    ) {
+      return;
+    }
     const q = engCurrent();
     const input = $("eng-pen-input");
     if (!q || !input) return;
@@ -2338,7 +2439,11 @@
       input.disabled = true;
       if (feedback) {
         feedback.textContent =
-          engSession.attemptsOnCurrent === 1 ? "Beautiful writing! ★" : "Got it!";
+          engSession.attemptsOnCurrent === 1
+            ? engSession.mode === "spell"
+              ? "Great spelling! ★"
+              : "Beautiful writing! ★"
+            : "Got it!";
         feedback.className = "feedback right";
       }
       await playCorrectSound();
@@ -2351,7 +2456,10 @@
       input.disabled = true;
       input.value = q.display;
       if (feedback) {
-        feedback.textContent = `Write “${q.display}”`;
+        feedback.textContent =
+          engSession.mode === "spell"
+            ? `It's “${q.display}”`
+            : `Write “${q.display}”`;
         feedback.className = "feedback wrong";
       }
       if (nextBtn) nextBtn.hidden = false;
@@ -2387,7 +2495,9 @@
         ? "English · Easy Words"
         : engSession.mode === "pen"
           ? "English · Write with Pen"
-          : "English · Alphabet";
+          : engSession.mode === "spell"
+            ? "English · Spell the Word"
+            : "English · Alphabet";
     const reward = maybeAwardRobloxPoints(pct, firstTry, total, {
       week: "EN",
       title,
@@ -6296,6 +6406,11 @@
     startEngPractice("alphabet");
   });
 
+  $("btn-eng-spell")?.addEventListener("click", () => {
+    pokeAudio();
+    startEngPractice("spell");
+  });
+
   $("btn-eng-pen")?.addEventListener("click", () => {
     pokeAudio();
     startEngPractice("pen");
@@ -6304,6 +6419,11 @@
   $("btn-eng-words")?.addEventListener("click", () => {
     pokeAudio();
     startEngPractice("words");
+  });
+
+  $("btn-eng-hear")?.addEventListener("click", () => {
+    const q = engCurrent();
+    if (q?.target) speakEngWord(q.target);
   });
 
   $("btn-eng-quit")?.addEventListener("click", () => {
