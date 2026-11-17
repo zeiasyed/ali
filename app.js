@@ -1995,7 +1995,14 @@
     lastX: 0,
     lastY: 0,
     ctx: null,
+    strokeCount: 0,
+    inkDistance: 0,
   };
+
+  function engWritePadHasInk() {
+    // Enough finger/Pencil ink on the practice pad to count as a real drawing
+    return engWritePad.strokeCount >= 1 && engWritePad.inkDistance >= 28;
+  }
 
   function resizeEngWritePad() {
     const canvas = $("eng-write-canvas");
@@ -2026,6 +2033,8 @@
     if (!engWritePad.ctx) return;
     const rect = canvas.getBoundingClientRect();
     engWritePad.ctx.clearRect(0, 0, rect.width || canvas.width, rect.height || canvas.height);
+    engWritePad.strokeCount = 0;
+    engWritePad.inkDistance = 0;
   }
 
   function setupEngWritePad() {
@@ -2053,6 +2062,7 @@
         e.preventDefault();
         canvas.setPointerCapture(e.pointerId);
         engWritePad.drawing = true;
+        engWritePad.strokeCount += 1;
         const p = pos(e);
         engWritePad.lastX = p.x;
         engWritePad.lastY = p.y;
@@ -2062,6 +2072,7 @@
         ctx.beginPath();
         ctx.arc(p.x, p.y, ctx.lineWidth / 2, 0, Math.PI * 2);
         ctx.fill();
+        engWritePad.inkDistance += 2;
       },
       { passive: false }
     );
@@ -2074,6 +2085,9 @@
         const p = pos(e);
         const ctx = engWritePad.ctx;
         if (!ctx) return;
+        const dx = p.x - engWritePad.lastX;
+        const dy = p.y - engWritePad.lastY;
+        engWritePad.inkDistance += Math.hypot(dx, dy);
         ctx.lineWidth = penWidth(e);
         ctx.beginPath();
         ctx.moveTo(engWritePad.lastX, engWritePad.lastY);
@@ -2248,15 +2262,18 @@
           .join('<span class="eng-sound-dot">·</span>');
       }
       if (hint) {
-        hint.textContent = "Say the sounds, then spell the word with Pencil!";
+        hint.textContent = "Say the sounds, then type the word (Keyboard)!";
       }
       if (hearBtn) hearBtn.hidden = false;
+      const spellHint = document.querySelector("#eng-pen-form .answer-pen-hint");
+      if (spellHint) spellHint.textContent = "Tap Keyboard and type the word, then POW!";
       if (penInput) {
         penInput.disabled = false;
         penInput.value = "";
-        penInput.placeholder = "Spell with Pencil";
+        penInput.placeholder = "Type the word";
       }
-      setEngPenKeyboard(false);
+      // Finger-friendly: open keyboard for spelling (Scribble needs Apple Pencil)
+      setEngPenKeyboard(true);
       prepareEngPenPad("");
       window.setTimeout(() => speakEngWord(q.target), 250);
       return;
@@ -2275,17 +2292,20 @@
           prompt.className = "eng-prompt";
           prompt.innerHTML = `<span class="eng-emoji" aria-hidden="true">${q.emoji}</span>${q.display}`;
         }
-        if (hint) hint.textContent = `Copy the letter ${q.display} with your Pencil!`;
+        if (hint) hint.textContent = `Draw the letter ${q.display} with your finger on the pad!`;
       } else {
         if (prompt) {
           prompt.className = "eng-prompt eng-prompt-word";
           prompt.innerHTML = `<span class="eng-emoji" aria-hidden="true">${q.emoji}</span><span class="eng-copy-word">${q.display}</span>`;
         }
-        if (hint) hint.textContent = "Copy the word with your Pencil!";
+        if (hint) hint.textContent = "Draw the word with your finger on the pad!";
       }
+      const penHint = document.querySelector("#eng-pen-form .answer-pen-hint");
+      if (penHint) penHint.textContent = "Finger or Pencil on the pad · then POW!";
       if (penInput) {
         penInput.disabled = false;
         penInput.value = "";
+        penInput.placeholder = "Optional · or type here";
       }
       setEngPenKeyboard(false);
       prepareEngPenPad(q.guide);
@@ -2454,10 +2474,36 @@
       .trim()
       .toLowerCase()
       .replace(/[^a-z]/g, "");
+    const padInk = engWritePadHasInk();
+
+    // Write with Pen: finger/Pencil drawing on the practice pad counts
+    if (!typed && engSession.mode === "pen" && padInk) {
+      engSession.attemptsOnCurrent += 1;
+      engSession.answered = true;
+      if (engSession.attemptsOnCurrent === 1) engSession.firstTryCorrect += 1;
+      engSession.correct += 1;
+      if ($("eng-stars")) $("eng-stars").textContent = String(engSession.correct);
+      input.disabled = true;
+      const feedback = $("eng-feedback");
+      if (feedback) {
+        feedback.textContent =
+          engSession.attemptsOnCurrent === 1 ? "Beautiful writing! ★" : "Got it!";
+        feedback.className = "feedback right";
+      }
+      await playCorrectSound();
+      window.setTimeout(() => advanceEngQuestion(), 750);
+      return;
+    }
+
     if (!typed) {
       const emptyFeedback = $("eng-feedback");
       if (emptyFeedback) {
-        emptyFeedback.textContent = "Write with Pencil in the box, then POW!";
+        emptyFeedback.textContent =
+          engSession.mode === "pen"
+            ? "Draw on the pad with your finger, then POW!"
+            : padInk
+              ? "Nice drawing! Now tap Keyboard and type the word"
+              : "Type the word (tap Keyboard), then POW!";
         emptyFeedback.className = "feedback";
       }
       return;
