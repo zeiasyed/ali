@@ -548,6 +548,135 @@ select, input[type="text"] {
   text-align: center;
 }
 
+/* iPad landscape / keyboard: keep multiplication answer on-screen */
+#screen-play.active {
+  max-height: var(--vvh, 100dvh);
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+@media (orientation: landscape) {
+  body.play-landscape #screen-play .character-stage,
+  body.play-landscape #screen-play .streak-bar {
+    display: none !important;
+  }
+
+  body.play-landscape #screen-play .play-top {
+    margin-bottom: 0.35rem;
+  }
+
+  body.play-landscape #screen-play .problem-card {
+    padding: 0.55rem 0.75rem 0.55rem;
+    border-radius: 16px;
+  }
+
+  body.play-landscape #screen-play .problem,
+  body.play-landscape #screen-play .problem.equation {
+    font-size: clamp(1.55rem, 7.5vh, 2.55rem);
+    margin-bottom: 0.3rem;
+  }
+
+  body.play-landscape #screen-play .problem-hint,
+  body.play-landscape #screen-play .answer-pen-hint,
+  body.play-landscape #screen-play .voice-status {
+    display: none !important;
+  }
+
+  body.play-landscape #screen-play #answer,
+  body.play-landscape #screen-play #answer-rem {
+    min-height: 2.55rem;
+    padding: 0.35rem 0.55rem;
+    font-size: clamp(1.35rem, 5.5vh, 1.95rem);
+  }
+
+  body.play-landscape #screen-play #answer-form {
+    gap: 0.4rem;
+  }
+
+  body.play-landscape #screen-play .answer-tools {
+    gap: 0.35rem;
+  }
+
+  body.play-landscape #screen-play .answer-tools .btn.say-it,
+  body.play-landscape #screen-play #btn-pow {
+    min-height: 2.4rem;
+    padding: 0.35rem 0.7rem;
+  }
+
+  body.play-landscape #screen-play .feedback {
+    margin-top: 0.25rem;
+    font-size: 0.95rem;
+  }
+
+  body.play-landscape.md-work-mode #screen-play .work-pad-surface {
+    min-height: min(22dvh, 140px);
+  }
+}
+
+body.kb-open #screen-play .character-stage,
+body.kb-open #screen-play .streak-bar,
+body.kb-open #screen-play .voice-status,
+body.kb-open #screen-play .problem-hint,
+body.kb-open #screen-play .answer-pen-hint {
+  display: none !important;
+}
+
+body.kb-open #screen-play .problem-card {
+  padding: 0.45rem 0.7rem 0.45rem;
+}
+
+body.kb-open #screen-play .problem,
+body.kb-open #screen-play .problem.equation {
+  font-size: clamp(1.4rem, 6.5vh, 2.3rem);
+  margin-bottom: 0.25rem;
+}
+
+body.kb-open #screen-play #answer,
+body.kb-open #screen-play #answer-rem {
+  min-height: 2.4rem;
+  padding: 0.3rem 0.5rem;
+  font-size: clamp(1.3rem, 5vh, 1.85rem);
+}
+
+body.kb-open #screen-play #answer-form {
+  gap: 0.35rem;
+}
+
+body.kb-open.md-work-mode #screen-play .work-pad,
+body.play-fit.md-work-mode #screen-play .work-pad {
+  margin: 0.15rem 0 0.3rem;
+  padding: 0.3rem;
+}
+
+body.kb-open.md-work-mode #screen-play .work-pad-surface,
+body.play-fit.md-work-mode #screen-play .work-pad-surface {
+  min-height: min(18dvh, 120px);
+}
+
+body.play-fit .app {
+  padding-top: max(0.35rem, env(safe-area-inset-top));
+  padding-bottom: max(0.35rem, env(safe-area-inset-bottom));
+}
+
+body.play-fit .roblox-hud,
+body.kb-open .roblox-hud {
+  display: none !important;
+}
+
+body.play-fit #screen-play .play-top,
+body.kb-open #screen-play .play-top {
+  margin-bottom: 0.2rem;
+}
+
+body.kb-open.play-landscape #screen-play #btn-mic {
+  display: none !important;
+}
+
+body.kb-open.play-landscape #screen-play .problem,
+body.kb-open.play-landscape #screen-play .problem.equation {
+  font-size: clamp(1.25rem, 5.5vh, 2rem);
+}
+
 .problem {
   margin: 0 0 1.15rem;
   font-family: var(--font-nums);

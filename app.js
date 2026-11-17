@@ -780,10 +780,43 @@
     }, 40);
   }
 
+  function syncPlayViewportFit() {
+    const vv = window.visualViewport;
+    const full = window.innerHeight || document.documentElement.clientHeight || 1;
+    const visible = vv?.height || full;
+    const landscape = window.matchMedia("(orientation: landscape)").matches;
+    const kbOpen = visible / full < 0.78;
+    document.documentElement.style.setProperty("--vvh", `${Math.round(visible)}px`);
+    document.body.classList.toggle("play-landscape", landscape);
+    document.body.classList.toggle("kb-open", kbOpen);
+    const playOn = $("screen-play")?.classList.contains("active");
+    document.body.classList.toggle("play-fit", !!(playOn && (landscape || kbOpen)));
+  }
+
+  function ensureAnswerVisible() {
+    const input = $("answer");
+    if (!input) return;
+    syncPlayViewportFit();
+    window.requestAnimationFrame(() => {
+      const vv = window.visualViewport;
+      const rect = input.getBoundingClientRect();
+      if (!vv) {
+        input.scrollIntoView({ block: "nearest", inline: "nearest" });
+        return;
+      }
+      const topLimit = vv.offsetTop + 8;
+      const bottomLimit = vv.offsetTop + vv.height - 10;
+      if (rect.bottom > bottomLimit || rect.top < topLimit) {
+        input.scrollIntoView({ block: "nearest", inline: "nearest" });
+      }
+    });
+  }
+
   function openAnswerKeyboard() {
     const input = $("answer");
     if (!input) return;
     setAnswerInputMode(true);
+    syncPlayViewportFit();
     window.setTimeout(() => {
       input.focus({ preventScroll: true });
       try {
@@ -796,7 +829,9 @@
       } catch {
         /* ignore */
       }
-      input.scrollIntoView({ block: "center", behavior: "smooth" });
+      ensureAnswerVisible();
+      // Second pass after iPad keyboard finishes animating
+      window.setTimeout(ensureAnswerVisible, 280);
     }, 50);
   }
 
@@ -1739,6 +1774,8 @@
       if (name === "ss-hub") renderSsHub();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
+    // Compact play layout for landscape / keyboard after screen switch
+    if (typeof syncPlayViewportFit === "function") syncPlayViewportFit();
   }
 
   function openSsWeek(weekId) {
@@ -6549,15 +6586,26 @@
     startSocialLearn();
   });
 
-  // Scroll answer into view when keyboard mode is on (button or Pre-K/K addition)
+  // Keep answer above keyboard without jumping the page to center
   $("answer").addEventListener("focus", () => {
     if (!answerKeyboardWanted && !usesKeyboardOnlyAnswer()) return;
-    window.setTimeout(() => {
-      $("answer")?.scrollIntoView({ block: "center", behavior: "smooth" });
-    }, 300);
+    window.setTimeout(ensureAnswerVisible, 120);
+    window.setTimeout(ensureAnswerVisible, 320);
   });
 
+  const onViewportFit = () => syncPlayViewportFit();
+  window.addEventListener("resize", onViewportFit);
+  window.addEventListener("orientationchange", () => {
+    window.setTimeout(onViewportFit, 100);
+    window.setTimeout(ensureAnswerVisible, 350);
+  });
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener("resize", onViewportFit);
+    window.visualViewport.addEventListener("scroll", onViewportFit);
+  }
+
   syncAnswerEntryUI();
+  syncPlayViewportFit();
 
   ensureRobloxFloor();
   writeRobloxBankStore();
