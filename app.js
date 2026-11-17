@@ -8,6 +8,10 @@
   const ROBLOX_FLOOR_POINTS = 105;
   const CHILD = "Ali Ayaan";
   const MASTERY_STREAK = 5;
+  /** After a miss, re-ask this many questions later (then keep looping until mastered) */
+  const RETRY_GAP_MIN = 1;
+  const RETRY_GAP_MAX = 2;
+  const RETRY_AFTER_HIT_GAP = 3;
   const QUESTION_SECS = 5;
 
   const DIFFICULTY = {
@@ -1739,6 +1743,70 @@
     return state.facts[key];
   }
 
+  function retryGap(min = RETRY_GAP_MIN, max = RETRY_GAP_MAX) {
+    if (max <= min) return min;
+    return min + Math.floor(Math.random() * (max - min + 1));
+  }
+
+  /** Snapshot of current math problem for later re-ask */
+  function snapshotMathProblem(problem = session?.current) {
+    if (!problem) return null;
+    return {
+      a: Number(problem.a),
+      b: Number(problem.b),
+      key: problem.key,
+      dividend: problem.dividend,
+      divisor: problem.divisor,
+      expected: problem.expected,
+      remainder: problem.remainder,
+    };
+  }
+
+  function scheduleMathRetry(delay, problem = session?.current) {
+    if (!session || !problem?.key) return;
+    session.retrySoon = session.retrySoon || [];
+    // asked is still the current question #; delay 1 = next question
+    const dueAt = (session.asked || 0) + Math.max(1, delay) - 1;
+    const existing = session.retrySoon.find((r) => r.key === problem.key);
+    if (existing) {
+      existing.dueAt = Math.min(existing.dueAt, dueAt);
+      existing.needs = Math.min(8, (existing.needs || 1) + 1);
+      return;
+    }
+    session.retrySoon.push({
+      ...snapshotMathProblem(problem),
+      dueAt,
+      needs: 1,
+    });
+  }
+
+  function clearMathRetry(key) {
+    if (!session?.retrySoon?.length || !key) return;
+    session.retrySoon = session.retrySoon.filter((r) => r.key !== key);
+  }
+
+  /** Pull a missed problem that is due to show again */
+  function takeDueMathRetry() {
+    if (!session?.retrySoon?.length) return null;
+    const due = session.retrySoon
+      .filter((r) => r.dueAt <= session.asked)
+      .sort((a, b) => a.dueAt - b.dueAt || (b.needs || 0) - (a.needs || 0));
+    if (!due.length) return null;
+    const pick = due[0];
+    session.retrySoon = session.retrySoon.filter((r) => r !== pick);
+    return pick;
+  }
+
+  /** Re-insert a missed English/SS item a couple questions later */
+  function insertRetrySoon(list, index, item, gapMin = 1, gapMax = 2) {
+    if (!Array.isArray(list) || !item) return;
+    const gap = retryGap(gapMin, gapMax);
+    const at = Math.min(list.length, Math.max(index + 1, index + gap));
+    const clone = typeof structuredClone === "function" ? structuredClone(item) : JSON.parse(JSON.stringify(item));
+    clone._retry = true;
+    list.splice(at, 0, clone);
+  }
+
   function isTableMastered(s, n) {
     const maxOther = Math.max(DIFFICULTY.easy, ...Object.values(DIFFICULTY).filter(() => true));
     // Master table n within 1..12 range for badge fairness
@@ -2365,6 +2433,7 @@
     if (ok) {
       engSession.answered = true;
       if (engSession.attemptsOnCurrent === 1) engSession.firstTryCorrect += 1;
+      else noteEngNeedsRetry();
       engSession.correct += 1;
       if ($("eng-stars")) $("eng-stars").textContent = String(engSession.correct);
       lockEngChoices(q.letter, btn);
@@ -2379,6 +2448,7 @@
 
     if (engSession.attemptsOnCurrent >= ENG_MAX_TRIES) {
       engSession.answered = true;
+      noteEngNeedsRetry();
       lockEngChoices(q.letter, btn);
       if (feedback) {
         feedback.textContent = `It's ${q.letter}!`;
@@ -2424,6 +2494,7 @@
     if (ok) {
       engSession.answered = true;
       if (engSession.attemptsOnCurrent === 1) engSession.firstTryCorrect += 1;
+      else noteEngNeedsRetry();
       engSession.correct += 1;
       if ($("eng-stars")) $("eng-stars").textContent = String(engSession.correct);
       input.disabled = true;
@@ -2438,6 +2509,7 @@
 
     if (engSession.attemptsOnCurrent >= ENG_MAX_TRIES) {
       engSession.answered = true;
+      noteEngNeedsRetry();
       input.disabled = true;
       input.value = q.word;
       if (feedback) {
@@ -2517,6 +2589,7 @@
     if (ok) {
       engSession.answered = true;
       if (engSession.attemptsOnCurrent === 1) engSession.firstTryCorrect += 1;
+      else noteEngNeedsRetry();
       engSession.correct += 1;
       if ($("eng-stars")) $("eng-stars").textContent = String(engSession.correct);
       input.disabled = true;
@@ -2536,6 +2609,7 @@
 
     if (engSession.attemptsOnCurrent >= ENG_MAX_TRIES) {
       engSession.answered = true;
+      noteEngNeedsRetry();
       input.disabled = true;
       input.value = q.display;
       if (feedback) {
@@ -2555,6 +2629,23 @@
       feedback.className = "feedback wrong";
     }
     await playWrongSound();
+  }
+
+  function noteEngNeedsRetry() {
+    if (!engSession) return;
+    const q = engCurrent();
+    if (!q) return;
+    const marker = q._retryOf || q.target || q.letter || q.word || q.display || "";
+    // Cap so a hard item doesn't explode the round length forever
+    const already = engSession.questions.filter((item) => item._retryOf === marker).length;
+    if (already >= 3) return;
+    const clone =
+      typeof structuredClone === "function" ? structuredClone(q) : JSON.parse(JSON.stringify(q));
+    clone._retry = true;
+    clone._retryOf = marker;
+    const gap = retryGap(1, 2);
+    const at = Math.min(engSession.questions.length, engSession.index + gap);
+    engSession.questions.splice(at, 0, clone);
   }
 
   function advanceEngQuestion() {
@@ -4875,6 +4966,22 @@
       $("ss-score").textContent = String(ssSession.correct);
       state.stars += 1;
       saveState();
+      // Second-try success still needs another look soon
+      if (ssSession.attemptsOnCurrent > 1) {
+        const marker = q.text;
+        const already = ssSession.questions.filter((item) => item._retryOf === marker).length;
+        if (already < 2) {
+          const clone =
+            typeof structuredClone === "function"
+              ? structuredClone(q)
+              : JSON.parse(JSON.stringify(q));
+          clone._retry = true;
+          clone._retryOf = marker;
+          const gap = retryGap(1, 2);
+          const at = Math.min(ssSession.questions.length, ssSession.index + gap);
+          ssSession.questions.splice(at, 0, clone);
+        }
+      }
       $("ss-feedback").innerHTML =
         ssSession.attemptsOnCurrent === 1
           ? `<strong>Yes!</strong> ${q.explain}`
@@ -4897,7 +5004,7 @@
       return;
     }
 
-    // After 2 misses: reveal the right answer clearly
+    // After 2 misses: reveal the right answer clearly, then bring it back soon
     ssSession.answered = true;
     revealSocialAnswer(btn);
     if (!ssSession.misses.some((m) => m.text === q.text)) {
@@ -4908,8 +5015,19 @@
         explain: q.explain,
       });
     }
+    const marker = q.text;
+    const already = ssSession.questions.filter((item) => item._retryOf === marker).length;
+    if (already < 2) {
+      const clone =
+        typeof structuredClone === "function" ? structuredClone(q) : JSON.parse(JSON.stringify(q));
+      clone._retry = true;
+      clone._retryOf = marker;
+      const gap = retryGap(1, 2);
+      const at = Math.min(ssSession.questions.length, ssSession.index + gap);
+      ssSession.questions.splice(at, 0, clone);
+    }
     $("ss-feedback").innerHTML =
-      `<strong>Right answer → ${q.answer}</strong><br>${q.explain}`;
+      `<strong>Right answer → ${q.answer}</strong><br>${q.explain}<br><em>We’ll ask this one again soon!</em>`;
     $("ss-feedback").className = "feedback ss-feedback-reveal";
     await playWrongSound();
     const nextBtn = $("btn-ss-next");
@@ -5265,7 +5383,7 @@
       seen.add(id);
       const key = factKey(a, b, "round");
       const fact = ensureFact(key);
-      const weight = fact.mastered ? 0.35 : Math.max(1, fact.weight);
+      const weight = fact.mastered ? 0.25 : Math.max(1, fact.weight);
       pool.push({ a, b, key, weight });
     };
 
@@ -5304,7 +5422,7 @@
       seen.add(id);
       const key = factKey(a, b, operation);
       const fact = ensureFact(key);
-      const weight = fact.mastered ? 0.35 : Math.max(1, fact.weight);
+      const weight = fact.mastered ? 0.25 : Math.max(1, fact.weight);
       pool.push({ a, b, key, weight });
     };
 
@@ -5561,6 +5679,7 @@
       max,
       queue,
       queueIndex: 0,
+      retrySoon: [],
       asked: 0,
       target: mode === "10" || mode === "20" ? Number(mode) : null,
       correct: 0,
@@ -5696,10 +5815,11 @@
     $("live-streak").textContent = "0";
 
     const fact = ensureFact(session.current.key);
-    fact.weight = Math.min(20, fact.weight + 4);
+    fact.weight = Math.min(24, fact.weight + 8);
     fact.correctStreak = 0;
     fact.wrongs += 1;
     fact.mastered = false;
+    scheduleMathRetry(retryGap());
     state.totalAttempts += 1;
     saveState();
 
@@ -5721,19 +5841,23 @@
     const isLongDiv = session.operation === "long-div";
     const isPad = isPadPractice(session.operation);
     const opForMath = isMdMult ? "multiply" : session.operation;
-    const picked = isMdMult
-      ? randomMdMultPair(session.mdRange || state.settings)
-      : isLongDiv
-        ? randomLongDivPair(session.ldRange || state.settings)
-        : pickQuestion(
-            session.operation,
-            session.max,
-            session.shuffle,
-            session.tables,
-            session.digitLevel,
-            session.roundPlace,
-            session.roundDigits
-          );
+    // Missed problems come back soon until mastered
+    const retryPick = takeDueMathRetry();
+    const picked = retryPick
+      ? retryPick
+      : isMdMult
+        ? randomMdMultPair(session.mdRange || state.settings)
+        : isLongDiv
+          ? randomLongDivPair(session.ldRange || state.settings)
+          : pickQuestion(
+              session.operation,
+              session.max,
+              session.shuffle,
+              session.tables,
+              session.digitLevel,
+              session.roundPlace,
+              session.roundDigits
+            );
     const promptType = isPad
       ? "product"
       : choosePromptType(session.problemType, picked.a, picked.b, session.operation);
@@ -5743,9 +5867,20 @@
     let hint;
     let remainder = 0;
     if (isLongDiv) {
-      expected = Number(picked.expected);
-      remainder = Number(picked.remainder) || 0;
-      display = `${picked.dividend} ÷ ${picked.divisor} = ?`;
+      const dividend = Number(picked.dividend ?? picked.a);
+      const divisor = Number(picked.divisor ?? picked.b);
+      if (Number.isFinite(Number(picked.expected))) {
+        expected = Number(picked.expected);
+        remainder = Number(picked.remainder) || 0;
+      } else {
+        expected = Math.floor(dividend / divisor);
+        remainder = dividend % divisor;
+      }
+      picked.dividend = dividend;
+      picked.divisor = divisor;
+      picked.a = dividend;
+      picked.b = divisor;
+      display = `${dividend} ÷ ${divisor} = ?`;
       hint = "Write the long division, then type quotient and R!";
     } else {
       const formatted = formatProblem(picked.a, picked.b, promptType, opForMath);
@@ -5864,13 +5999,16 @@
 
     const fact = ensureFact(session.current.key);
     if (session.attemptsOnCurrent === 1) {
-      // First miss on this prompt: bump frequency hard
-      fact.weight = Math.min(20, fact.weight + 4);
+      // First miss: bump frequency hard and queue a re-ask soon
+      fact.weight = Math.min(24, fact.weight + 8);
       fact.correctStreak = 0;
       fact.wrongs += 1;
       fact.mastered = false;
+      scheduleMathRetry(retryGap());
     } else {
-      fact.weight = Math.min(20, fact.weight + 1);
+      fact.weight = Math.min(24, fact.weight + 2);
+      // Keep pulling it forward if they miss again on the same prompt
+      scheduleMathRetry(retryGap());
     }
     state.totalAttempts += 1;
     saveState();
@@ -5892,10 +6030,15 @@
     fact.correctStreak += 1;
     if (fact.correctStreak >= MASTERY_STREAK) {
       fact.mastered = true;
-      fact.weight = 0.5;
+      fact.weight = 0.25;
+      clearMathRetry(session.current.key);
     } else {
-      // Still reinforce until mastery, but ease a bit after success
-      fact.weight = Math.max(1, fact.weight - 1);
+      // Still reinforce until mastery — decay slowly so misses stay frequent
+      fact.weight = Math.max(fact.wrongs > 0 ? 2 : 1, fact.weight - 0.5);
+      if (fact.wrongs > 0) {
+        // Keep bringing missed facts back until the mastery streak is done
+        scheduleMathRetry(RETRY_AFTER_HIT_GAP, session.current);
+      }
     }
 
     state.totalCorrect += 1;
@@ -6224,7 +6367,7 @@
       <div class="parent-card">
         <h3>How mastery works</h3>
         <p style="margin:0;font-weight:700;color:var(--muted)">
-          Missed facts show up more often. A fact is mastered after ${MASTERY_STREAK} correct answers in a row.
+          Missed problems come back again soon until mastered (${MASTERY_STREAK} correct in a row).
           Wrong answers must be retried until correct (no hint).
         </p>
       </div>
