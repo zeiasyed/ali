@@ -1533,9 +1533,11 @@
   }
 
   function clearRobloxBank() {
-    if (!confirm(`Clear Ali’s Roblox points bank? (Currently ${getRobloxPoints()} points)`)) {
-      return;
-    }
+    const current = getRobloxPoints();
+    const ok = confirm(
+      `Are you sure?\n\nThis will reset Roblox points to 0.\n(Currently ${current} points)\n\nTap OK to reset, or Cancel to keep them.`
+    );
+    if (!ok) return;
     state.robloxPoints = 0;
     state.robloxLog = [];
     state.robloxLastAwardDay = "";
@@ -1555,7 +1557,7 @@
     }
     saveState();
     renderRobloxBank();
-    renderParent();
+    if ($("screen-parent")?.classList.contains("active")) renderParent();
   }
 
   function getGradeId() {
@@ -6368,7 +6370,7 @@
         </p>
         ${robloxLogHtml}
         <button type="button" class="btn secondary" id="btn-clear-roblox" style="margin-top:0.75rem;width:100%">
-          Clear bank (after you buy)
+          Reset Roblox to 0
         </button>
       </div>
       <div class="parent-card">
@@ -6694,6 +6696,7 @@
     showScreen("home");
   }
 
+  $("btn-reset-roblox")?.addEventListener("click", clearRobloxBank);
   $("btn-reset").addEventListener("click", resetProgress);
   $("btn-reset-results").addEventListener("click", resetProgress);
 
