@@ -4,8 +4,8 @@
   const ROBLOX_BANK_KEY = "ali-ayaan-roblox-bank-v1";
   const ROBLOX_BANK_BACKUP_KEY = "ali-ayaan-roblox-bank-backup-v1";
   /** Parent clear sets this to "cleared"; otherwise floor is always enforced on load */
-  const ROBLOX_FLOOR_FLAG = "ali-ayaan-roblox-floor-105-2026-11-08";
-  const ROBLOX_FLOOR_POINTS = 105;
+  const ROBLOX_FLOOR_FLAG = "ali-ayaan-roblox-floor-225-2026-11-16";
+  const ROBLOX_FLOOR_POINTS = 225;
   const CHILD = "Ali Ayaan";
   const MASTERY_STREAK = 5;
   /** After a miss, re-ask this many questions later (then keep looping until mastered) */
@@ -1479,14 +1479,13 @@
     return target;
   }
 
-  /** On every load: restore max(saved, high-water, floor 45) unless parent cleared */
+  /** On every load: restore max(saved, high-water, floor) unless parent cleared */
   function ensureRobloxFloor() {
     try {
       if (robloxFloorCleared()) return;
       mergeRobloxFromStores(state);
-      if (getRobloxPoints() < ROBLOX_FLOOR_POINTS) {
-        state.robloxPoints = ROBLOX_FLOOR_POINTS;
-      }
+      // Carry over any higher saved bank; bump up to the current floor if below
+      state.robloxPoints = Math.max(getRobloxPoints(), ROBLOX_FLOOR_POINTS);
       localStorage.setItem(ROBLOX_FLOOR_FLAG, "1");
       writeRobloxBankStore();
       saveState();
