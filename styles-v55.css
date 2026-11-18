@@ -2399,6 +2399,142 @@ body.ld-answer-mode #answer.ld-quot-input {
   font-size: clamp(1.15rem, 4.5vw, 1.55rem);
 }
 
+.ar-flash-card {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: center;
+  width: min(100%, 360px);
+  margin: 0.5rem auto 0.75rem;
+  padding: 1.25rem 1rem 1rem;
+  border: 3px solid var(--ink);
+  border-radius: 18px;
+  background: #fffdf6;
+  box-shadow: 4px 4px 0 var(--ink);
+  cursor: pointer;
+  font: inherit;
+  color: var(--ink);
+}
+
+.ar-flash-card:active {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.ar-flash-emoji {
+  font-size: clamp(2.4rem, 12vw, 3.4rem);
+  line-height: 1;
+}
+
+.ar-flash-ar {
+  font-family: "Segoe UI", "Noto Naskh Arabic", "Arabic Typesetting", Tahoma, sans-serif;
+  font-size: clamp(2.6rem, 14vw, 3.8rem);
+  font-weight: 800;
+  line-height: 1.2;
+  direction: rtl;
+}
+
+.ar-flash-en {
+  font-family: var(--font-cartoon, var(--font-body));
+  font-size: clamp(1.5rem, 7vw, 2.2rem);
+  font-weight: 800;
+  text-transform: lowercase;
+}
+
+.ar-flash-tap {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
+.ar-flash-card.revealed {
+  background: #e8fff2;
+}
+
+.ar-write-form {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0.5rem 0 0.25rem;
+  justify-items: center;
+}
+
+.ar-write-form[hidden],
+.ar-flash-card[hidden],
+.ar-reveal[hidden] {
+  display: none !important;
+}
+
+.ar-write-input {
+  width: 100%;
+  min-height: min(22dvh, 160px);
+  border: 3px solid var(--ink);
+  border-radius: 14px;
+  background: #fffdf6;
+  padding: 0.85rem 1rem;
+  font-family: "Segoe UI", "Noto Naskh Arabic", "Arabic Typesetting", Tahoma, sans-serif;
+  font-size: clamp(2rem, 10vw, 3rem);
+  font-weight: 800;
+  text-align: center;
+  direction: rtl;
+  color: var(--ink);
+  resize: none;
+}
+
+.ar-write-input:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(30, 111, 255, 0.25);
+}
+
+#btn-ar-pow {
+  width: min(100%, 280px);
+  min-height: 3.1rem;
+}
+
+.ar-reveal {
+  display: grid;
+  gap: 0.45rem;
+  justify-items: center;
+  margin: 0.65rem 0 0.35rem;
+  padding: 0.9rem 0.75rem;
+  border: 3px dashed var(--ink);
+  border-radius: 16px;
+  background: #eef6ff;
+}
+
+.ar-reveal-label {
+  margin: 0;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ar-reveal-ar {
+  margin: 0;
+  font-family: "Segoe UI", "Noto Naskh Arabic", "Arabic Typesetting", Tahoma, sans-serif;
+  font-size: clamp(2.4rem, 12vw, 3.6rem);
+  font-weight: 900;
+  direction: rtl;
+  line-height: 1.2;
+}
+
+.ar-reveal-yours {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--ink);
+  direction: rtl;
+  text-align: center;
+}
+
+.ar-self-check {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: center;
+  margin-top: 0.35rem;
+}
+
 .eng-prompt .eng-emoji {
   display: block;
   font-size: clamp(2.6rem, 14vw, 4rem);

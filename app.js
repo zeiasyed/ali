@@ -3391,29 +3391,50 @@
     return out;
   }
 
-  function buildArWordQuestions(n = AR_TARGET) {
+  function buildArFlashQuestions(n = AR_WORDS.length) {
     const pool = shuffleInPlace([...AR_WORDS]);
-    const arWords = AR_WORDS.map((x) => x.ar);
     return pool.slice(0, Math.min(n, pool.length)).map((item) => ({
-      kind: "word",
+      kind: "flash",
+      ar: item.ar,
+      en: item.en,
+      emoji: item.emoji,
+      answer: item.en,
+      speak: item.ar,
+      hint: "Tap the card to show English",
+    }));
+  }
+
+  function buildArWriteQuestions(n = AR_TARGET) {
+    const pool = shuffleInPlace([...AR_WORDS]);
+    return pool.slice(0, Math.min(n, pool.length)).map((item) => ({
+      kind: "write",
       promptHtml: `<span class="eng-emoji" aria-hidden="true">${item.emoji}</span><span class="eng-copy-word">${item.en}</span>`,
+      ar: item.ar,
+      en: item.en,
+      emoji: item.emoji,
       answer: item.ar,
       speak: item.ar,
-      choices: engPickChoices(item.ar, arWords, 4),
-      hint: "Tap the Arabic word!",
+      hint: "Write the Arabic word, then POW!",
     }));
   }
 
   function startArPractice(mode) {
     arLastMode = mode;
+    const questions =
+      mode === "flash"
+        ? buildArFlashQuestions()
+        : mode === "words"
+          ? buildArWriteQuestions(AR_TARGET)
+          : buildArLetterQuestions(AR_TARGET);
     arSession = {
       mode,
-      questions: mode === "words" ? buildArWordQuestions(AR_TARGET) : buildArLetterQuestions(AR_TARGET),
+      questions,
       index: 0,
       correct: 0,
       firstTryCorrect: 0,
       attemptsOnCurrent: 0,
       answered: false,
+      flashRevealed: false,
     };
     showScreen("ar-play");
     renderArQuestion();
@@ -3423,19 +3444,40 @@
     return arSession?.questions?.[arSession.index] || null;
   }
 
+  function hideArExtraPanels() {
+    const flash = $("ar-flash-card");
+    const writeForm = $("ar-write-form");
+    const reveal = $("ar-reveal");
+    const choices = $("ar-choices");
+    if (flash) flash.hidden = true;
+    if (writeForm) writeForm.hidden = true;
+    if (reveal) reveal.hidden = true;
+    if (choices) {
+      choices.hidden = false;
+      choices.innerHTML = "";
+    }
+  }
+
   function renderArQuestion() {
     if (!arSession) return;
     const q = arCurrent();
     if (!q) return;
     arSession.answered = false;
     arSession.attemptsOnCurrent = 0;
+    arSession.flashRevealed = false;
+    arSession._writeSettled = false;
 
     if ($("ar-progress")) {
       $("ar-progress").textContent = `${arSession.index + 1} / ${arSession.questions.length}`;
     }
     if ($("ar-stars")) $("ar-stars").textContent = String(arSession.correct);
     if ($("ar-mode-tag")) {
-      $("ar-mode-tag").textContent = arSession.mode === "words" ? "Easy Words" : "Letters";
+      $("ar-mode-tag").textContent =
+        arSession.mode === "flash"
+          ? "Flashcards"
+          : arSession.mode === "words"
+            ? "Write Words"
+            : "Letters";
     }
     if ($("ar-feedback")) {
       $("ar-feedback").textContent = "";
@@ -3443,12 +3485,77 @@
     }
     if ($("btn-ar-next")) $("btn-ar-next").hidden = true;
 
+    hideArExtraPanels();
+
     const prompt = $("ar-prompt");
     const hint = $("ar-hint");
     const choices = $("ar-choices");
     const hearBtn = $("btn-ar-hear");
 
+    if (arSession.mode === "flash") {
+      if (prompt) {
+        prompt.className = "eng-prompt ar-prompt";
+        prompt.textContent = "";
+        prompt.hidden = true;
+      }
+      if (hint) hint.textContent = "Tap the card to show English";
+      if (hearBtn) hearBtn.hidden = false;
+      if (choices) choices.hidden = true;
+      const flash = $("ar-flash-card");
+      const flashEmoji = $("ar-flash-emoji");
+      const flashAr = $("ar-flash-ar");
+      const flashEn = $("ar-flash-en");
+      const flashTap = $("ar-flash-tap");
+      if (flash) {
+        flash.hidden = false;
+        flash.classList.remove("revealed");
+      }
+      if (flashEmoji) flashEmoji.textContent = q.emoji || "✨";
+      if (flashAr) flashAr.textContent = q.ar || "";
+      if (flashEn) {
+        flashEn.textContent = q.en || "";
+        flashEn.hidden = true;
+      }
+      if (flashTap) {
+        flashTap.hidden = false;
+        flashTap.textContent = "Tap to show English";
+      }
+      if ($("btn-ar-next")) $("btn-ar-next").hidden = false;
+      if (q.speak) window.setTimeout(() => speakArabic(q.speak), 250);
+      return;
+    }
+
+    if (arSession.mode === "words") {
+      if (prompt) {
+        prompt.hidden = false;
+        prompt.className = "eng-prompt eng-prompt-word ar-prompt";
+        prompt.innerHTML = q.promptHtml || "";
+      }
+      if (hint) hint.textContent = "Write the Arabic word, then POW!";
+      if (hearBtn) hearBtn.hidden = true;
+      if (choices) choices.hidden = true;
+      const writeForm = $("ar-write-form");
+      const writeInput = $("ar-write-input");
+      const reveal = $("ar-reveal");
+      if (writeForm) writeForm.hidden = false;
+      if (reveal) reveal.hidden = true;
+      if (writeInput) {
+        writeInput.disabled = false;
+        writeInput.value = "";
+        window.setTimeout(() => {
+          try {
+            writeInput.focus({ preventScroll: true });
+          } catch {
+            writeInput.focus();
+          }
+        }, 120);
+      }
+      return;
+    }
+
+    // Letters quiz
     if (prompt) {
+      prompt.hidden = false;
       if (q.promptHtml) {
         prompt.className = "eng-prompt eng-prompt-word ar-prompt";
         prompt.innerHTML = q.promptHtml;
@@ -3461,10 +3568,9 @@
       }
     }
     if (hint) hint.textContent = q.hint || "Tap the answer!";
-    if (hearBtn) {
-      hearBtn.hidden = !q.speak;
-    }
+    if (hearBtn) hearBtn.hidden = !q.speak;
     if (choices) {
+      choices.hidden = false;
       choices.innerHTML = (q.choices || [])
         .map(
           (choice) =>
@@ -3478,6 +3584,63 @@
       });
     }
     if (q.speak) window.setTimeout(() => speakArabic(q.speak), 250);
+  }
+
+  function flipArFlashCard() {
+    if (!arSession || arSession.mode !== "flash") return;
+    const q = arCurrent();
+    if (!q) return;
+    arSession.flashRevealed = true;
+    const flash = $("ar-flash-card");
+    const flashEn = $("ar-flash-en");
+    const flashTap = $("ar-flash-tap");
+    if (flash) flash.classList.add("revealed");
+    if (flashEn) flashEn.hidden = false;
+    if (flashTap) flashTap.textContent = "English shown";
+    speakArabic(q.ar);
+  }
+
+  function submitArWrite(event) {
+    if (event) event.preventDefault();
+    if (!arSession || arSession.answered || arSession.mode !== "words") return;
+    const q = arCurrent();
+    const input = $("ar-write-input");
+    if (!q || !input) return;
+
+    const yours = String(input.value || "").trim();
+    arSession.answered = true;
+    input.disabled = true;
+
+    const writeForm = $("ar-write-form");
+    const reveal = $("ar-reveal");
+    if (writeForm) writeForm.hidden = true;
+    if (reveal) reveal.hidden = false;
+    if ($("ar-reveal-ar")) $("ar-reveal-ar").textContent = q.ar || q.answer || "";
+    if ($("ar-reveal-yours")) {
+      $("ar-reveal-yours").textContent = yours
+        ? `Your writing: ${yours}`
+        : "Your writing: (blank)";
+    }
+    if ($("ar-feedback")) {
+      $("ar-feedback").textContent = "Compare your writing — how close are you?";
+      $("ar-feedback").className = "feedback";
+    }
+    speakArabic(q.ar || q.answer);
+  }
+
+  function finishArWriteSelfCheck(gotIt) {
+    if (!arSession || arSession.mode !== "words" || arSession._writeSettled) return;
+    arSession._writeSettled = true;
+    if (gotIt) {
+      arSession.correct += 1;
+      arSession.firstTryCorrect += 1;
+      if ($("ar-stars")) $("ar-stars").textContent = String(arSession.correct);
+      playCorrectSound();
+    } else {
+      noteArNeedsRetry();
+      playWrongSound();
+    }
+    window.setTimeout(() => advanceArQuestion(), 400);
   }
 
   async function submitArChoice(choice, btn) {
@@ -3574,7 +3737,12 @@
     const right = arSession.correct;
     const firstTry = arSession.firstTryCorrect;
     const pct = Math.round((firstTry / total) * 100);
-    const title = arSession.mode === "words" ? "Arabic · Easy Words" : "Arabic · Letters";
+    const title =
+      arSession.mode === "flash"
+        ? "Arabic · Flashcards"
+        : arSession.mode === "words"
+          ? "Arabic · Write Words"
+          : "Arabic · Letters";
     const reward = maybeAwardRobloxPoints(pct, firstTry, total, {
       week: "AR",
       title,
@@ -7574,6 +7742,10 @@
     pokeAudio();
     startArPractice("letters");
   });
+  $("btn-ar-flash")?.addEventListener("click", () => {
+    pokeAudio();
+    startArPractice("flash");
+  });
   $("btn-ar-words")?.addEventListener("click", () => {
     pokeAudio();
     startArPractice("words");
@@ -7582,6 +7754,10 @@
     const q = arCurrent();
     if (q?.speak) speakArabic(q.speak);
   });
+  $("ar-flash-card")?.addEventListener("click", () => flipArFlashCard());
+  $("ar-write-form")?.addEventListener("submit", (e) => submitArWrite(e));
+  $("btn-ar-got-it")?.addEventListener("click", () => finishArWriteSelfCheck(true));
+  $("btn-ar-missed")?.addEventListener("click", () => finishArWriteSelfCheck(false));
   $("btn-ar-quit")?.addEventListener("click", () => {
     if (!arSession) {
       showScreen("arabic");
@@ -7592,7 +7768,18 @@
       showScreen("arabic");
     }
   });
-  $("btn-ar-next")?.addEventListener("click", () => advanceArQuestion());
+  $("btn-ar-next")?.addEventListener("click", () => {
+    if (arSession?.mode === "flash") {
+      if (arSession.flashRevealed) {
+        arSession.correct += 1;
+        arSession.firstTryCorrect += 1;
+        if ($("ar-stars")) $("ar-stars").textContent = String(arSession.correct);
+      }
+      advanceArQuestion();
+      return;
+    }
+    advanceArQuestion();
+  });
   $("btn-ar-again")?.addEventListener("click", () => {
     pokeAudio();
     startArPractice(arLastMode || "letters");

@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v76.css?v=113" />
+  <link rel="stylesheet" href="styles-v77.css?v=114" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -77,7 +77,7 @@
   </style>
 </head>
 <body>
-  <div id="app-version-badge" class="app-version-badge" aria-label="App version">v113</div>
+  <div id="app-version-badge" class="app-version-badge" aria-label="App version">v114</div>
   <button type="button" id="btn-global-home" class="btn-global-home" data-go="home">
     Home
   </button>
@@ -344,7 +344,7 @@
           <button type="submit" class="btn primary big" id="btn-start-math">Start Mission</button>
         </div>
 
-        <p class="setup-note" id="app-version-note">App v113 · Grade 3 Arabic</p>
+        <p class="setup-note" id="app-version-note">App v114 · Arabic flash + write</p>
       </form>
 
       <nav class="home-nav">
@@ -547,10 +547,15 @@
           <span class="eng-card-title">Letters</span>
           <span class="eng-card-sub">Match Arabic letters · Alif, Ba, Ta…</span>
         </button>
+        <button type="button" class="eng-card" id="btn-ar-flash">
+          <span class="eng-card-emoji" aria-hidden="true">🃏</span>
+          <span class="eng-card-title">Flashcards</span>
+          <span class="eng-card-sub">See Arabic · tap to show English</span>
+        </button>
         <button type="button" class="eng-card" id="btn-ar-words">
-          <span class="eng-card-emoji" aria-hidden="true">📖</span>
-          <span class="eng-card-title">Easy Words</span>
-          <span class="eng-card-sub">Pick the Arabic word for the picture</span>
+          <span class="eng-card-emoji" aria-hidden="true">✍️</span>
+          <span class="eng-card-title">Write Words</span>
+          <span class="eng-card-sub">See English · write Arabic · POW to check</span>
         </button>
       </div>
 
@@ -571,7 +576,48 @@
         <p class="eng-prompt ar-prompt" id="ar-prompt">ا</p>
         <p class="eng-hint" id="ar-hint">Tap the matching name!</p>
         <button type="button" class="btn secondary" id="btn-ar-hear" hidden>Hear</button>
+
+        <!-- Letter quiz choices -->
         <div id="ar-choices" class="eng-choices"></div>
+
+        <!-- Flashcards: Arabic front · tap for English -->
+        <button type="button" id="ar-flash-card" class="ar-flash-card" hidden>
+          <span class="ar-flash-emoji" id="ar-flash-emoji" aria-hidden="true">📖</span>
+          <span class="ar-flash-ar" id="ar-flash-ar">كتاب</span>
+          <span class="ar-flash-en" id="ar-flash-en" hidden>book</span>
+          <span class="ar-flash-tap" id="ar-flash-tap">Tap to show English</span>
+        </button>
+
+        <!-- Write quiz: English prompt · write Arabic · POW reveals answer -->
+        <form id="ar-write-form" class="ar-write-form" hidden autocomplete="off">
+          <label class="sr-only" for="ar-write-input">Write the Arabic word</label>
+          <textarea
+            id="ar-write-input"
+            class="ar-write-input"
+            rows="2"
+            dir="rtl"
+            lang="ar"
+            inputmode="text"
+            enterkeyhint="done"
+            autocomplete="off"
+            autocapitalize="off"
+            autocorrect="off"
+            spellcheck="false"
+            placeholder="اكتب هنا"
+          ></textarea>
+          <button type="submit" class="btn primary big" id="btn-ar-pow">POW!</button>
+        </form>
+
+        <div id="ar-reveal" class="ar-reveal" hidden>
+          <p class="ar-reveal-label">Correct Arabic</p>
+          <p class="ar-reveal-ar" id="ar-reveal-ar">كتاب</p>
+          <p class="ar-reveal-yours" id="ar-reveal-yours"></p>
+          <div class="ar-self-check">
+            <button type="button" class="btn primary" id="btn-ar-got-it">Got it ★</button>
+            <button type="button" class="btn secondary" id="btn-ar-missed">Not yet</button>
+          </div>
+        </div>
+
         <p id="ar-feedback" class="feedback" role="status" aria-live="polite"></p>
         <button type="button" class="btn primary big" id="btn-ar-next" hidden>Next</button>
       </div>
@@ -889,6 +935,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v112.js?v=113"></script>
+  <script src="app-v113.js?v=114"></script>
 </body>
 </html>
