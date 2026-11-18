@@ -2508,9 +2508,13 @@ body.ld-answer-mode #answer.ld-quot-input {
   user-select: none;
 }
 
-/* Easy Words: bigger pad, POW only */
+/* Easy Words: bigger finger-writing pad */
 body.eng-words-pad .eng-write-surface {
-  min-height: min(48dvh, 420px);
+  min-height: min(36dvh, 300px);
+}
+
+body.eng-words-pad #eng-prek-spell {
+  margin-top: 0.5rem;
 }
 
 body.eng-words-pad .eng-pen-tools {
