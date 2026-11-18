@@ -2725,14 +2725,13 @@
       if (hearBtn) hearBtn.hidden = false;
       setEngWordsPadOnly(false);
       const easyInput = $("eng-easy-input");
-      const easyGuide = $("eng-easy-guide");
-      if (easyGuide) easyGuide.textContent = String(q.word || "").toUpperCase();
       if (easyInput) {
         easyInput.disabled = false;
         easyInput.value = "";
         easyInput.setAttribute("inputmode", "text");
         easyInput.setAttribute("enterkeyhint", "done");
         easyInput.removeAttribute("readonly");
+        updateEasySeen();
         // Focus so Pencil Scribble targets this field
         window.setTimeout(() => {
           try {
@@ -2740,7 +2739,8 @@
           } catch {
             easyInput.focus();
           }
-        }, 150);
+          updateEasySeen();
+        }, 180);
       }
       window.setTimeout(() => speakEngWord(q.word), 250);
       return;
@@ -2914,8 +2914,35 @@
       // Scribble / handwriting lookalikes
       .replace(/0/g, "o")
       .replace(/1/g, "l")
+      .replace(/\|/g, "l")
       .replace(/5/g, "s")
+      .replace(/\$/g, "s")
+      .replace(/@/g, "a")
       .replace(/[^a-z]/g, "");
+  }
+
+  function readEasyInputRaw(input = $("eng-easy-input")) {
+    if (!input) return "";
+    return String(input.value || input.textContent || "");
+  }
+
+  function updateEasySeen() {
+    const seen = $("eng-easy-seen");
+    if (!seen) return;
+    const letters = normalizeEngWord(readEasyInputRaw());
+    seen.textContent = letters ? `I see: ${letters}` : "I see: —";
+  }
+
+  async function waitForScribbleSettle(input, ms = 450) {
+    // Scribble often commits letters slightly after the Pencil lifts
+    const start = readEasyInputRaw(input);
+    await new Promise((r) => window.setTimeout(r, ms));
+    const mid = readEasyInputRaw(input);
+    if (mid !== start) {
+      await new Promise((r) => window.setTimeout(r, 200));
+    }
+    updateEasySeen();
+    return normalizeEngWord(readEasyInputRaw(input));
   }
 
   async function submitEasyWord(event) {
@@ -2925,17 +2952,15 @@
     const input = $("eng-easy-input") || $("eng-word-input");
     if (!q || !input) return;
 
-    // Give Scribble a moment to commit the last stroke into the field
-    await new Promise((r) => window.setTimeout(r, 120));
-
-    const typed = normalizeEngWord(input.value);
+    const typed = await waitForScribbleSettle(input);
     const target = normalizeEngWord(q.word || q.target);
     const feedback = $("eng-feedback");
     const nextBtn = $("btn-eng-next");
 
     if (!typed) {
       if (feedback) {
-        feedback.textContent = "Write the word with Apple Pencil, then POW!";
+        feedback.textContent =
+          "No letters yet — write with Apple Pencil in the box, wait until “I see” shows letters, then POW!";
         feedback.className = "feedback";
       }
       try {
@@ -2971,8 +2996,9 @@
       noteEngNeedsRetry();
       input.disabled = true;
       input.value = q.word || target;
+      updateEasySeen();
       if (feedback) {
-        feedback.textContent = `It's “${q.word || target}”`;
+        feedback.textContent = `It's “${q.word || target}” (I saw “${typed}”)`;
         feedback.className = "feedback wrong";
       }
       if (nextBtn) nextBtn.hidden = false;
@@ -2981,10 +3007,11 @@
     }
 
     if (feedback) {
-      feedback.textContent = "Not quite — clear and write it again!";
+      feedback.textContent = `Not quite — I saw “${typed}”. Clear and write “${target}” again!`;
       feedback.className = "feedback wrong";
     }
     input.value = "";
+    updateEasySeen();
     try {
       input.focus({ preventScroll: true });
     } catch {
@@ -7212,12 +7239,17 @@
     const input = $("eng-easy-input");
     if (!input || input.disabled) return;
     input.value = "";
+    updateEasySeen();
     try {
       input.focus({ preventScroll: true });
     } catch {
       input.focus();
     }
   });
+
+  $("eng-easy-input")?.addEventListener("input", updateEasySeen);
+  $("eng-easy-input")?.addEventListener("keyup", updateEasySeen);
+  $("eng-easy-input")?.addEventListener("change", updateEasySeen);
 
   $("eng-pen-form")?.addEventListener("submit", (e) => {
     submitEngPen(e);

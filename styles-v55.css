@@ -2538,15 +2538,18 @@ body.eng-words-pad .eng-pen-tools #btn-eng-pen-pow {
 }
 
 .eng-easy-pad {
+  display: grid;
+  gap: 0.45rem;
   padding: 0.55rem;
   border: 3px dashed var(--ink);
   border-radius: 16px;
   background: #fffdf6;
 }
 
-.eng-easy-surface {
-  position: relative;
-  min-height: min(42dvh, 360px);
+.eng-easy-input {
+  display: block;
+  width: 100%;
+  min-height: min(28dvh, 220px);
   border: 3px solid var(--ink);
   border-radius: 12px;
   background:
@@ -2556,56 +2559,41 @@ body.eng-words-pad .eng-pen-tools #btn-eng-pen-pow {
       #fff 39px,
       #d7e7ff 40px
     );
-  overflow: hidden;
-}
-
-.eng-easy-guide {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 0;
-  font-family: var(--font-cartoon, var(--font-body));
-  font-size: clamp(3.2rem, 16vw, 5.5rem);
-  font-weight: 900;
-  letter-spacing: 0.12em;
-  color: rgba(30, 80, 160, 0.18);
-  pointer-events: none;
-  text-transform: uppercase;
-  z-index: 0;
-}
-
-.eng-easy-input {
-  position: absolute;
-  inset: 0;
-  z-index: 2;
-  width: 100%;
-  height: 100%;
-  min-height: min(42dvh, 360px);
-  border: 0;
-  background: transparent;
   text-align: center;
   font-family: var(--font-cartoon, var(--font-body));
-  font-size: clamp(2.4rem, 12vw, 4.2rem);
+  font-size: clamp(2rem, 9vw, 3.4rem);
   font-weight: 900;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.12em;
+  line-height: 1.35;
   text-transform: lowercase;
   color: var(--ink);
-  padding: 0.5rem;
+  padding: 1.1rem 0.75rem;
   outline: none;
+  resize: none;
   -webkit-user-select: text;
   user-select: text;
-  /* Let Apple Pencil Scribble target this field */
-  touch-action: manipulation;
+  /* Important for Pencil Scribble — do not restrict touch gestures */
+  touch-action: auto;
   -webkit-touch-callout: default;
+}
+
+.eng-easy-input:focus {
+  box-shadow: 0 0 0 3px rgba(30, 111, 255, 0.25);
+}
+
+.eng-easy-seen {
+  margin: 0;
+  text-align: center;
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--ink);
 }
 
 .eng-easy-hint {
   margin: 0;
   text-align: center;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
   color: var(--muted);
 }
 
@@ -2616,13 +2604,10 @@ body.eng-words-pad .eng-pen-tools #btn-eng-pen-pow {
 }
 
 @media (orientation: landscape) {
-  body.play-landscape.eng-play-on #screen-eng-play .eng-easy-surface,
   body.play-landscape.eng-play-on #screen-eng-play .eng-easy-input {
-    min-height: min(38dvh, 240px);
-  }
-
-  body.play-landscape.eng-play-on #screen-eng-play .eng-easy-hint {
-    display: none;
+    min-height: min(24dvh, 160px);
+    font-size: clamp(1.6rem, 6vh, 2.6rem);
+    padding: 0.7rem 0.55rem;
   }
 }
 
