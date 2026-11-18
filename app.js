@@ -2712,24 +2712,36 @@
         prompt.className = "eng-prompt eng-prompt-word";
         prompt.innerHTML = `<span class="eng-emoji" aria-hidden="true">${q.emoji}</span><span class="eng-copy-word">${q.word}</span>`;
       }
-      if (hint) hint.textContent = "Write the word with your finger on the pad!";
+      if (hint) hint.textContent = "Write with Apple Pencil (Scribble) in the box!";
       if (choices) {
         choices.hidden = true;
         choices.innerHTML = "";
       }
-      // Finger pad only — no letter tiles
+      // Scribble text field — iPadOS turns Pencil writing into letters we can check
       if (wordForm) wordForm.hidden = true;
-      if (easyForm) easyForm.hidden = true;
-      if (penForm) penForm.hidden = false;
+      if (penForm) penForm.hidden = true;
       if (prekSpell) prekSpell.hidden = true;
+      if (easyForm) easyForm.hidden = false;
       if (hearBtn) hearBtn.hidden = false;
-      setEngWordsPadOnly(true);
-      if (penInput) {
-        penInput.value = "";
-        penInput.disabled = true;
+      setEngWordsPadOnly(false);
+      const easyInput = $("eng-easy-input");
+      const easyGuide = $("eng-easy-guide");
+      if (easyGuide) easyGuide.textContent = String(q.word || "").toUpperCase();
+      if (easyInput) {
+        easyInput.disabled = false;
+        easyInput.value = "";
+        easyInput.setAttribute("inputmode", "text");
+        easyInput.setAttribute("enterkeyhint", "done");
+        easyInput.removeAttribute("readonly");
+        // Focus so Pencil Scribble targets this field
+        window.setTimeout(() => {
+          try {
+            easyInput.focus({ preventScroll: true });
+          } catch {
+            easyInput.focus();
+          }
+        }, 150);
       }
-      setEngPenKeyboard(false);
-      prepareEngPenPad(String(q.word || "").toUpperCase());
       window.setTimeout(() => speakEngWord(q.word), 250);
       return;
     }
@@ -2913,6 +2925,9 @@
     const input = $("eng-easy-input") || $("eng-word-input");
     if (!q || !input) return;
 
+    // Give Scribble a moment to commit the last stroke into the field
+    await new Promise((r) => window.setTimeout(r, 120));
+
     const typed = normalizeEngWord(input.value);
     const target = normalizeEngWord(q.word || q.target);
     const feedback = $("eng-feedback");
@@ -2920,7 +2935,7 @@
 
     if (!typed) {
       if (feedback) {
-        feedback.textContent = "Write the word in the box, then POW!";
+        feedback.textContent = "Write the word with Apple Pencil, then POW!";
         feedback.className = "feedback";
       }
       try {
@@ -3004,29 +3019,9 @@
     const padInk = engWritePadHasInk();
     const targetWord = String(q.target || q.word || "").toLowerCase();
 
-    // Easy Words: finger writing practice (no letter-tile UI)
+    // Easy Words uses Scribble field (eng-easy-form), not this canvas path
     if (engSession.mode === "words") {
-      if (!padInk) {
-        const emptyFeedback = $("eng-feedback");
-        if (emptyFeedback) {
-          emptyFeedback.textContent = "Draw the word on the pad, then POW!";
-          emptyFeedback.className = "feedback";
-        }
-        return;
-      }
-      engSession.attemptsOnCurrent += 1;
-      engSession.answered = true;
-      if (engSession.attemptsOnCurrent === 1) engSession.firstTryCorrect += 1;
-      engSession.correct += 1;
-      if ($("eng-stars")) $("eng-stars").textContent = String(engSession.correct);
-      const feedback = $("eng-feedback");
-      if (feedback) {
-        feedback.textContent =
-          engSession.attemptsOnCurrent === 1 ? "Nice writing! ★" : "Got it!";
-        feedback.className = "feedback right";
-      }
-      await playCorrectSound();
-      window.setTimeout(() => advanceEngQuestion(), 750);
+      await submitEasyWord(event);
       return;
     }
 

@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v72.css?v=104" />
+  <link rel="stylesheet" href="styles-v73.css?v=105" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -77,7 +77,7 @@
   </style>
 </head>
 <body>
-  <div id="app-version-badge" class="app-version-badge" aria-label="App version">v104</div>
+  <div id="app-version-badge" class="app-version-badge" aria-label="App version">v105</div>
   <button type="button" id="btn-global-home" class="btn-global-home" data-go="home">
     Home
   </button>
@@ -341,7 +341,7 @@
           <button type="submit" class="btn primary big" id="btn-start-math">Start Mission</button>
         </div>
 
-        <p class="setup-note" id="app-version-note">App v104 · Easy Words pad only</p>
+        <p class="setup-note" id="app-version-note">App v105 · Pencil Scribble</p>
       </form>
 
       <nav class="home-nav">
@@ -389,7 +389,7 @@
         <button type="button" class="eng-card" id="btn-eng-words">
           <span class="eng-card-emoji" aria-hidden="true">⌨️</span>
           <span class="eng-card-title">Easy Words</span>
-          <span class="eng-card-sub">Write words like cat &amp; sun with your finger</span>
+          <span class="eng-card-sub">Apple Pencil Scribble · must spell the word right</span>
         </button>
       </div>
 
@@ -438,19 +438,19 @@
         <form id="eng-easy-form" class="eng-easy-form" hidden autocomplete="off">
           <div class="eng-easy-pad">
             <div class="work-pad-head">
-              <p class="work-pad-label">Write the word here</p>
+              <p class="work-pad-label">Apple Pencil · Scribble the word</p>
               <button type="button" id="btn-eng-easy-clear" class="btn-clear-pad">Clear</button>
             </div>
             <div class="eng-easy-surface">
               <p class="eng-easy-guide" id="eng-easy-guide" aria-hidden="true"></p>
-              <label class="sr-only" for="eng-easy-input">Write the word</label>
+              <label class="sr-only" for="eng-easy-input">Scribble the word with Apple Pencil</label>
               <input
                 id="eng-easy-input"
                 type="text"
                 inputmode="text"
                 enterkeyhint="done"
                 maxlength="12"
-                placeholder=""
+                placeholder=" "
                 autocomplete="off"
                 autocapitalize="off"
                 autocorrect="off"
@@ -459,7 +459,7 @@
               />
             </div>
           </div>
-          <p class="eng-easy-hint">Write the letters, then POW!</p>
+          <p class="eng-easy-hint">Scribble with Apple Pencil · letters must match · then POW!</p>
           <button type="submit" class="btn primary big" id="btn-eng-easy-pow">POW!</button>
         </form>
 
@@ -824,6 +824,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v104.js?v=104"></script>
+  <script src="app-v105.js?v=105"></script>
 </body>
 </html>
