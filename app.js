@@ -67,7 +67,7 @@
       digitLevel: "dual",
       difficulty: "medium",
       roundPreset: "mix:3",
-      subjects: ["math", "english", "social"],
+      subjects: ["math", "english", "social", "arabic"],
     },
     4: {
       label: "Grade 4",
@@ -84,6 +84,7 @@
     math: "Math",
     english: "English",
     social: "Social Studies",
+    arabic: "Arabic",
   };
 
   function gradeAllowsSocial(gradeId = getGradeId()) {
@@ -1911,12 +1912,13 @@
       // Leave nested practice sessions when returning to the dashboard
       ssSession = null;
       engSession = null;
+      arSession = null;
       renderHome();
     }
     if (name === "map") renderMap();
     if (name === "badges") renderBadges();
     if (name === "parent") renderParent();
-    if (name === "social" || name === "english" || name === "ss-hub") {
+    if (name === "social" || name === "english" || name === "arabic" || name === "ss-hub") {
       renderRobloxBank();
       if (name === "ss-hub") renderSsHub();
       if (name === "english") syncEngHubCards();
@@ -3287,6 +3289,338 @@
   // ---------------------------------------------------------------------------
   // Social Studies · Week 7 · Thinking Like a Geographer
   // ---------------------------------------------------------------------------
+  // ---------------------------------------------------------------------------
+  // Arabic · Grade 3 letters + easy words
+  // ---------------------------------------------------------------------------
+  const AR_TARGET = 10;
+  const AR_MAX_TRIES = 2;
+  const AR_LETTERS = [
+    { letter: "ا", name: "Alif", emoji: "🐪" },
+    { letter: "ب", name: "Ba", emoji: "🚪" },
+    { letter: "ت", name: "Ta", emoji: "🌴" },
+    { letter: "ث", name: "Tha", emoji: "🦊" },
+    { letter: "ج", name: "Jeem", emoji: "🐪" },
+    { letter: "ح", name: "Haa", emoji: "🕌" },
+    { letter: "خ", name: "Kha", emoji: "🥬" },
+    { letter: "د", name: "Dal", emoji: "🐔" },
+    { letter: "ذ", name: "Thal", emoji: "🌽" },
+    { letter: "ر", name: "Ra", emoji: "🌙" },
+    { letter: "ز", name: "Zay", emoji: "🌸" },
+    { letter: "س", name: "Seen", emoji: "🐟" },
+    { letter: "ش", name: "Sheen", emoji: "☀️" },
+    { letter: "ص", name: "Sad", emoji: "🧼" },
+    { letter: "ض", name: "Dad", emoji: "💡" },
+    { letter: "ط", name: "Taa", emoji: "🐦" },
+    { letter: "ظ", name: "Zaa", emoji: "🕶️" },
+    { letter: "ع", name: "Ain", emoji: "👁️" },
+    { letter: "غ", name: "Ghain", emoji: "☁️" },
+    { letter: "ف", name: "Fa", emoji: "🐘" },
+    { letter: "ق", name: "Qaf", emoji: "🖊️" },
+    { letter: "ك", name: "Kaf", emoji: "📖" },
+    { letter: "ل", name: "Lam", emoji: "🍋" },
+    { letter: "م", name: "Meem", emoji: "💧" },
+    { letter: "ن", name: "Noon", emoji: "⭐" },
+    { letter: "ه", name: "Heh", emoji: "🏠" },
+    { letter: "و", name: "Waw", emoji: "🌹" },
+    { letter: "ي", name: "Ya", emoji: "✋" },
+  ].map((item) => ({ ...item, emoji: String(item.emoji).trim() || "✨" }));
+
+  const AR_WORDS = [
+    { ar: "كتاب", en: "book", emoji: "📖" },
+    { ar: "قلم", en: "pen", emoji: "🖊️" },
+    { ar: "بيت", en: "house", emoji: "🏠" },
+    { ar: "ماء", en: "water", emoji: "💧" },
+    { ar: "شمس", en: "sun", emoji: "☀️" },
+    { ar: "قمر", en: "moon", emoji: "🌙" },
+    { ar: "باب", en: "door", emoji: "🚪" },
+    { ar: "ولد", en: "boy", emoji: "👦" },
+    { ar: "بنت", en: "girl", emoji: "👧" },
+    { ar: "أم", en: "mom", emoji: "👩" },
+    { ar: "أب", en: "dad", emoji: "👨" },
+    { ar: "يد", en: "hand", emoji: "✋" },
+    { ar: "عين", en: "eye", emoji: "👁️" },
+    { ar: "سمك", en: "fish", emoji: "🐟" },
+    { ar: "تفاح", en: "apple", emoji: "🍎" },
+    { ar: "حليب", en: "milk", emoji: "🥛" },
+  ];
+
+  let arSession = null;
+  let arLastMode = "letters";
+
+  function speakArabic(text) {
+    try {
+      if (!window.speechSynthesis || !text) return;
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(String(text));
+      u.lang = "ar-SA";
+      u.rate = 0.85;
+      window.speechSynthesis.speak(u);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  function buildArLetterQuestions(n = AR_TARGET) {
+    const pool = shuffleInPlace([...AR_LETTERS]);
+    const names = AR_LETTERS.map((x) => x.name);
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      const item = pool[i % pool.length];
+      const kind = i % 2 === 0 ? "letter-to-name" : "name-to-letter";
+      if (kind === "letter-to-name") {
+        out.push({
+          kind,
+          prompt: item.letter,
+          answer: item.name,
+          speak: item.letter,
+          choices: engPickChoices(item.name, names, 4),
+          hint: "Tap the matching letter name!",
+        });
+      } else {
+        const letters = AR_LETTERS.map((x) => x.letter);
+        out.push({
+          kind,
+          prompt: item.name,
+          answer: item.letter,
+          speak: item.letter,
+          choices: engPickChoices(item.letter, letters, 4),
+          hint: `Tap the letter for “${item.name}”!`,
+        });
+      }
+    }
+    return out;
+  }
+
+  function buildArWordQuestions(n = AR_TARGET) {
+    const pool = shuffleInPlace([...AR_WORDS]);
+    const arWords = AR_WORDS.map((x) => x.ar);
+    return pool.slice(0, Math.min(n, pool.length)).map((item) => ({
+      kind: "word",
+      promptHtml: `<span class="eng-emoji" aria-hidden="true">${item.emoji}</span><span class="eng-copy-word">${item.en}</span>`,
+      answer: item.ar,
+      speak: item.ar,
+      choices: engPickChoices(item.ar, arWords, 4),
+      hint: "Tap the Arabic word!",
+    }));
+  }
+
+  function startArPractice(mode) {
+    arLastMode = mode;
+    arSession = {
+      mode,
+      questions: mode === "words" ? buildArWordQuestions(AR_TARGET) : buildArLetterQuestions(AR_TARGET),
+      index: 0,
+      correct: 0,
+      firstTryCorrect: 0,
+      attemptsOnCurrent: 0,
+      answered: false,
+    };
+    showScreen("ar-play");
+    renderArQuestion();
+  }
+
+  function arCurrent() {
+    return arSession?.questions?.[arSession.index] || null;
+  }
+
+  function renderArQuestion() {
+    if (!arSession) return;
+    const q = arCurrent();
+    if (!q) return;
+    arSession.answered = false;
+    arSession.attemptsOnCurrent = 0;
+
+    if ($("ar-progress")) {
+      $("ar-progress").textContent = `${arSession.index + 1} / ${arSession.questions.length}`;
+    }
+    if ($("ar-stars")) $("ar-stars").textContent = String(arSession.correct);
+    if ($("ar-mode-tag")) {
+      $("ar-mode-tag").textContent = arSession.mode === "words" ? "Easy Words" : "Letters";
+    }
+    if ($("ar-feedback")) {
+      $("ar-feedback").textContent = "";
+      $("ar-feedback").className = "feedback";
+    }
+    if ($("btn-ar-next")) $("btn-ar-next").hidden = true;
+
+    const prompt = $("ar-prompt");
+    const hint = $("ar-hint");
+    const choices = $("ar-choices");
+    const hearBtn = $("btn-ar-hear");
+
+    if (prompt) {
+      if (q.promptHtml) {
+        prompt.className = "eng-prompt eng-prompt-word ar-prompt";
+        prompt.innerHTML = q.promptHtml;
+      } else {
+        prompt.className =
+          q.kind === "name-to-letter"
+            ? "eng-prompt eng-prompt-word ar-prompt"
+            : "eng-prompt ar-prompt ar-prompt-letter";
+        prompt.textContent = q.prompt;
+      }
+    }
+    if (hint) hint.textContent = q.hint || "Tap the answer!";
+    if (hearBtn) {
+      hearBtn.hidden = !q.speak;
+    }
+    if (choices) {
+      choices.innerHTML = (q.choices || [])
+        .map(
+          (choice) =>
+            `<button type="button" class="eng-choice ar-choice" data-ar-choice="${String(choice).replace(/"/g, "&quot;")}">${choice}</button>`
+        )
+        .join("");
+      choices.querySelectorAll(".eng-choice").forEach((btn) => {
+        btn.addEventListener("click", () =>
+          submitArChoice(btn.getAttribute("data-ar-choice"), btn)
+        );
+      });
+    }
+    if (q.speak) window.setTimeout(() => speakArabic(q.speak), 250);
+  }
+
+  async function submitArChoice(choice, btn) {
+    if (!arSession || arSession.answered) return;
+    const q = arCurrent();
+    if (!q) return;
+    const picked = String(choice || "");
+    const ok = picked === String(q.answer);
+    arSession.attemptsOnCurrent += 1;
+    const feedback = $("ar-feedback");
+    const nextBtn = $("btn-ar-next");
+
+    if (ok) {
+      arSession.answered = true;
+      if (arSession.attemptsOnCurrent === 1) arSession.firstTryCorrect += 1;
+      else noteArNeedsRetry();
+      arSession.correct += 1;
+      if ($("ar-stars")) $("ar-stars").textContent = String(arSession.correct);
+      $("ar-choices")
+        ?.querySelectorAll(".eng-choice")
+        .forEach((el) => {
+          el.disabled = true;
+          if (el.getAttribute("data-ar-choice") === String(q.answer)) el.classList.add("right");
+        });
+      if (feedback) {
+        feedback.textContent =
+          arSession.attemptsOnCurrent === 1 ? "Yes! ★" : "Got it!";
+        feedback.className = "feedback right";
+      }
+      await playCorrectSound();
+      window.setTimeout(() => advanceArQuestion(), 700);
+      return;
+    }
+
+    if (btn) {
+      btn.classList.add("wrong");
+      btn.disabled = true;
+    }
+
+    if (arSession.attemptsOnCurrent >= AR_MAX_TRIES) {
+      arSession.answered = true;
+      noteArNeedsRetry();
+      $("ar-choices")
+        ?.querySelectorAll(".eng-choice")
+        .forEach((el) => {
+          el.disabled = true;
+          if (el.getAttribute("data-ar-choice") === String(q.answer)) el.classList.add("right");
+        });
+      if (feedback) {
+        feedback.textContent = `It's “${q.answer}”`;
+        feedback.className = "feedback wrong";
+      }
+      if (nextBtn) nextBtn.hidden = false;
+      await playWrongSound();
+      return;
+    }
+
+    if (feedback) {
+      feedback.textContent = "Try again!";
+      feedback.className = "feedback wrong";
+    }
+    await playWrongSound();
+  }
+
+  function noteArNeedsRetry() {
+    if (!arSession) return;
+    const q = arCurrent();
+    if (!q) return;
+    const marker = q.answer || q.prompt || "";
+    const already = arSession.questions.filter((item) => item._retryOf === marker).length;
+    if (already >= 3) return;
+    const clone =
+      typeof structuredClone === "function" ? structuredClone(q) : JSON.parse(JSON.stringify(q));
+    clone._retry = true;
+    clone._retryOf = marker;
+    const gap = retryGap(1, 2);
+    const at = Math.min(arSession.questions.length, arSession.index + gap);
+    arSession.questions.splice(at, 0, clone);
+  }
+
+  function advanceArQuestion() {
+    if (!arSession) return;
+    if (arSession.index + 1 >= arSession.questions.length) {
+      endArPractice();
+      return;
+    }
+    arSession.index += 1;
+    renderArQuestion();
+  }
+
+  function endArPractice() {
+    if (!arSession) return;
+    const total = arSession.questions.length;
+    const right = arSession.correct;
+    const firstTry = arSession.firstTryCorrect;
+    const pct = Math.round((firstTry / total) * 100);
+    const title = arSession.mode === "words" ? "Arabic · Easy Words" : "Arabic · Letters";
+    const reward = maybeAwardRobloxPoints(pct, firstTry, total, {
+      week: "AR",
+      title,
+    });
+    const resultsTitle = $("ar-results-title");
+    const resultsSub = $("ar-results-sub");
+    const grid = $("ar-results-grid");
+    const rewardBox = $("ar-reward-box");
+    if (resultsTitle) {
+      resultsTitle.textContent =
+        pct >= ROBLOX_PASS_PCT ? "Arabic Star!" : pct >= 70 ? "Great Practice!" : "Keep Going!";
+    }
+    if (resultsSub) {
+      resultsSub.textContent = `${title} · ${right}/${total} correct · ${firstTry}/${total} first-try (${pct}%)`;
+    }
+    if (grid) {
+      grid.innerHTML = `
+        <div class="stat-card"><span>${right}</span> correct</div>
+        <div class="stat-card"><span>${firstTry}</span> first-try</div>
+        <div class="stat-card"><span>${pct}%</span> first-try</div>
+        <div class="stat-card"><span data-roblox-points>${getRobloxPoints()}</span> Roblox pts</div>
+      `;
+    }
+    if (rewardBox) {
+      if (reward.awarded) {
+        rewardBox.hidden = false;
+        rewardBox.className = "ss-reward-box won";
+        rewardBox.innerHTML = `
+          <p class="ss-reward-emoji">🧱</p>
+          <p class="ss-reward-title">You earned ${reward.points} Roblox points!</p>
+          <p>First-try ${pct}% (need ${ROBLOX_PASS_PCT}%+). Bank: <strong>${reward.total}</strong></p>
+        `;
+      } else {
+        rewardBox.hidden = false;
+        rewardBox.className = "ss-reward-box miss";
+        rewardBox.innerHTML = `
+          <p class="ss-reward-title">Almost — need ${ROBLOX_PASS_PCT}%+ first-try for Roblox points</p>
+          <p>You got ${pct}%. Bank: <strong>${getRobloxPoints()}</strong></p>
+        `;
+      }
+    }
+    arSession = null;
+    showScreen("ar-results");
+    renderRobloxBank();
+  }
+
   const SS_DIFFICULTIES = ["easy1", "easy2", "medium", "hard"];
   const SS_DIFF_LABELS = {
     easy1: "Easy 1",
@@ -5741,13 +6075,16 @@
     const isMath = subject === "math";
     const isEnglish = subject === "english";
     const isSocial = subject === "social";
+    const isArabic = subject === "arabic";
     setSetupVisible($("subject-math"), isMath);
     setSetupVisible($("subject-english"), isEnglish);
     setSetupVisible($("subject-social"), isSocial);
+    setSetupVisible($("subject-arabic"), isArabic);
     const tag = $("home-tagline");
     if (tag) {
       if (isEnglish) tag.textContent = "Letters, spelling & easy words!";
       else if (isSocial) tag.textContent = "Learn California Studies Weekly!";
+      else if (isArabic) tag.textContent = "Arabic letters & easy words!";
     }
     if (isMath) syncOperationUI();
   }
@@ -7002,6 +7339,10 @@
       showScreen("social");
       return;
     }
+    if (subject === "arabic") {
+      showScreen("arabic");
+      return;
+    }
 
     const operation = $("operation")?.value || "multiply";
     const tables = operation === "multiply" ? getSelectedTables() : state.settings.tables || rangeTables(10);
@@ -7228,6 +7569,34 @@
       .then(() => playStartSound())
       .catch(() => {});
   }
+
+  $("btn-ar-letters")?.addEventListener("click", () => {
+    pokeAudio();
+    startArPractice("letters");
+  });
+  $("btn-ar-words")?.addEventListener("click", () => {
+    pokeAudio();
+    startArPractice("words");
+  });
+  $("btn-ar-hear")?.addEventListener("click", () => {
+    const q = arCurrent();
+    if (q?.speak) speakArabic(q.speak);
+  });
+  $("btn-ar-quit")?.addEventListener("click", () => {
+    if (!arSession) {
+      showScreen("arabic");
+      return;
+    }
+    if (confirm("Quit Arabic practice?")) {
+      arSession = null;
+      showScreen("arabic");
+    }
+  });
+  $("btn-ar-next")?.addEventListener("click", () => advanceArQuestion());
+  $("btn-ar-again")?.addEventListener("click", () => {
+    pokeAudio();
+    startArPractice(arLastMode || "letters");
+  });
 
   $("btn-eng-alphabet")?.addEventListener("click", () => {
     pokeAudio();

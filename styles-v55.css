@@ -2388,6 +2388,17 @@ body.ld-answer-mode #answer.ld-quot-input {
   font-size: clamp(2rem, 10vw, 3.2rem);
 }
 
+.ar-prompt-letter {
+  font-family: "Segoe UI", "Noto Naskh Arabic", "Arabic Typesetting", Tahoma, sans-serif;
+  font-size: clamp(3.4rem, 18vw, 5.5rem);
+  line-height: 1.2;
+}
+
+.ar-choice {
+  font-family: "Segoe UI", "Noto Naskh Arabic", "Arabic Typesetting", Tahoma, sans-serif;
+  font-size: clamp(1.15rem, 4.5vw, 1.55rem);
+}
+
 .eng-prompt .eng-emoji {
   display: block;
   font-size: clamp(2.6rem, 14vw, 4rem);
