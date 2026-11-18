@@ -702,7 +702,7 @@ body.kb-open.play-landscape #screen-play .problem.equation {
 .problem {
   margin: 0 0 1.15rem;
   font-family: var(--font-nums);
-  font-size: clamp(3.2rem, 14vw, 6rem);
+  font-size: clamp(4.8rem, 21vw, 9rem);
   font-weight: 700;
   letter-spacing: 0.06em;
   line-height: 1.05;
@@ -710,7 +710,7 @@ body.kb-open.play-landscape #screen-play .problem.equation {
 }
 
 .problem.equation {
-  font-size: clamp(2.4rem, 11vw, 4.6rem);
+  font-size: clamp(3.6rem, 16.5vw, 6.9rem);
   letter-spacing: 0.05em;
 }
 
@@ -790,11 +790,11 @@ body.keyboard-only-answer #btn-keyboard {
 .answer-scribble {
   text-align: center;
   font-family: var(--font-nums);
-  font-size: clamp(2.2rem, 8vw, 3.4rem);
+  font-size: clamp(3.3rem, 12vw, 5.1rem);
   font-weight: 700;
   letter-spacing: 0.06em;
-  padding: 1.1rem 1rem;
-  min-height: 5rem;
+  padding: 1.65rem 1.5rem;
+  min-height: 7.5rem;
   font-variant-numeric: lining-nums tabular-nums;
   /* Room for Apple Pencil Scribble handwriting */
   -webkit-user-select: text;
@@ -803,16 +803,16 @@ body.keyboard-only-answer #btn-keyboard {
 }
 
 #answer-form .btn.primary {
-  font-size: clamp(1.35rem, 3.8vw, 1.75rem);
-  padding: 1.1rem 1.4rem;
-  min-height: 5rem;
-  min-width: 6.5rem;
+  font-size: clamp(2rem, 5.7vw, 2.6rem);
+  padding: 1.65rem 2.1rem;
+  min-height: 7.5rem;
+  min-width: 9.75rem;
 }
 
 #answer-form .btn.say-it {
   width: 100%;
-  min-height: 3.2rem;
-  font-size: clamp(1rem, 3vw, 1.2rem);
+  min-height: 4.8rem;
+  font-size: clamp(1.5rem, 4.5vw, 1.8rem);
   letter-spacing: 0.02em;
   background: #fff;
   color: var(--muted);
