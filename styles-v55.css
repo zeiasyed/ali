@@ -566,7 +566,7 @@ select, input[type="text"] {
   border: 4px solid var(--ink);
   border-radius: 24px;
   box-shadow: var(--shadow);
-  padding: 1.6rem 1.2rem 1.25rem;
+  padding: 2.4rem 1.8rem 1.9rem;
   text-align: center;
 }
 
@@ -725,19 +725,19 @@ body.kb-open.play-landscape #screen-play .problem.equation {
 .problem-hint {
   margin: -0.35rem 0 0.85rem;
   font-weight: 800;
-  font-size: 1rem;
+  font-size: 1.5rem;
   color: var(--muted);
 }
 
 #answer-form {
   display: grid;
-  gap: 0.75rem;
+  gap: 1.1rem;
 }
 
 .answer-row {
   display: grid;
   grid-template-columns: 1fr auto;
-  gap: 0.75rem;
+  gap: 1.1rem;
   align-items: stretch;
 }
 
@@ -745,7 +745,7 @@ body.kb-open.play-landscape #screen-play .problem.equation {
   margin: 0 0 0.45rem;
   font-family: var(--font-cartoon, var(--font-body));
   font-weight: 800;
-  font-size: 0.88rem;
+  font-size: 1.32rem;
   color: var(--muted);
   text-align: center;
 }
@@ -753,7 +753,7 @@ body.kb-open.play-landscape #screen-play .problem.equation {
 .answer-tools {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 0.55rem;
+  gap: 0.8rem;
 }
 
 .answer-tools:has(#btn-mic[hidden]),
@@ -803,10 +803,11 @@ body.keyboard-only-answer #btn-keyboard {
 }
 
 #answer-form .btn.primary {
-  font-size: clamp(2rem, 5.7vw, 2.6rem);
-  padding: 1.65rem 2.1rem;
-  min-height: 7.5rem;
-  min-width: 9.75rem;
+  /* Keep POW at normal size — only the problem/answer UI scales up */
+  font-size: clamp(1.35rem, 3.8vw, 1.75rem);
+  padding: 1.1rem 1.4rem;
+  min-height: 5rem;
+  min-width: 6.5rem;
 }
 
 #answer-form .btn.say-it {
@@ -844,7 +845,7 @@ body.keyboard-only-answer #btn-keyboard {
   min-height: 1.5em;
   margin: 0.85rem 0 0;
   font-weight: 900;
-  font-size: clamp(1.2rem, 3.2vw, 1.5rem);
+  font-size: clamp(1.8rem, 4.8vw, 2.25rem);
 }
 
 .feedback.wrong { color: var(--red); }
@@ -876,19 +877,19 @@ body.keyboard-only-answer #btn-keyboard {
   margin-top: 1rem;
   text-align: center;
   font-weight: 800;
-  font-size: clamp(1.1rem, 3vw, 1.35rem);
+  font-size: clamp(1.65rem, 4.5vw, 2rem);
   background: rgba(255, 255, 255, 0.9);
   border: 3px solid var(--ink);
   border-radius: 999px;
-  padding: 0.75rem;
+  padding: 1.1rem;
 }
 
 .play-meta {
-  font-size: clamp(1rem, 2.6vw, 1.2rem) !important;
+  font-size: clamp(1.5rem, 3.9vw, 1.8rem) !important;
 }
 
 .play-score {
-  font-size: clamp(1.6rem, 4vw, 2.2rem) !important;
+  font-size: clamp(2.4rem, 6vw, 3.3rem) !important;
 }
 
 .results-grid,
