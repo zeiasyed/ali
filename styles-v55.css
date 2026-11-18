@@ -1777,8 +1777,9 @@ body.keyboard-only-answer #btn-keyboard {
   flex-shrink: 0;
   font-family: var(--font-cartoon, var(--font-body));
   font-weight: 800;
-  font-size: 0.9rem;
-  padding: 0.35rem 0.75rem;
+  font-size: 1.2rem;
+  min-height: 3rem;
+  padding: 0.65rem 1.25rem;
   border: 3px solid var(--ink);
   border-radius: 999px;
   background: #ffe8a3;
