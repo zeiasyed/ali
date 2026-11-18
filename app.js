@@ -2734,14 +2734,14 @@
         easyInput.setAttribute("inputmode", "text");
         easyInput.setAttribute("enterkeyhint", "done");
         easyInput.removeAttribute("readonly");
-        updateEasySeen();
+        updateEasySeen(true);
         window.setTimeout(() => {
           try {
             easyInput.focus({ preventScroll: true });
           } catch {
             easyInput.focus();
           }
-          updateEasySeen();
+          updateEasySeen(true);
         }, 180);
       }
       window.setTimeout(() => speakEngWord(q.word), 250);
@@ -2827,14 +2827,14 @@
         easyInput.placeholder =
           q.kind === "pen-letter" ? "Write the letter" : "Write the word";
         easyInput.maxLength = q.kind === "pen-letter" ? 4 : 24;
-        updateEasySeen();
+        updateEasySeen(true);
         window.setTimeout(() => {
           try {
             easyInput.focus({ preventScroll: true });
           } catch {
             easyInput.focus();
           }
-          updateEasySeen();
+          updateEasySeen(true);
         }, 180);
       }
       return;
@@ -2949,22 +2949,54 @@
     return String(input.value || input.textContent || "");
   }
 
-  function updateEasySeen() {
+  let easySeenTimer = null;
+
+  function updateEasySeen(immediate = false) {
     const seen = $("eng-easy-seen");
     if (!seen) return;
-    const letters = normalizeEngWord(readEasyInputRaw());
-    seen.textContent = letters ? `I see: ${letters}` : "I see: —";
+    const show = () => {
+      const letters = normalizeEngWord(readEasyInputRaw());
+      seen.textContent = letters ? `I see: ${letters}` : "I see: —";
+    };
+    if (easySeenTimer) {
+      window.clearTimeout(easySeenTimer);
+      easySeenTimer = null;
+    }
+    // Don't flash partial Scribble guesses while he's still writing
+    if (immediate === true) {
+      show();
+      return;
+    }
+    seen.textContent = "Writing…";
+    easySeenTimer = window.setTimeout(show, 2000);
   }
 
-  async function waitForScribbleSettle(input, ms = 450) {
-    // Scribble often commits letters slightly after the Pencil lifts
-    const start = readEasyInputRaw(input);
-    await new Promise((r) => window.setTimeout(r, ms));
-    const mid = readEasyInputRaw(input);
-    if (mid !== start) {
-      await new Promise((r) => window.setTimeout(r, 200));
+  async function waitForScribbleSettle(input, stableMs = 2500, maxMs = 7000) {
+    // Give a few seconds after strokes stop so Scribble can finish the letter/word
+    const seen = $("eng-easy-seen");
+    if (easySeenTimer) {
+      window.clearTimeout(easySeenTimer);
+      easySeenTimer = null;
     }
-    updateEasySeen();
+    if (seen) seen.textContent = "Waiting for writing…";
+
+    const started = Date.now();
+    let last = readEasyInputRaw(input);
+    let lastChange = Date.now();
+
+    while (Date.now() - started < maxMs) {
+      await new Promise((r) => window.setTimeout(r, 200));
+      const now = readEasyInputRaw(input);
+      if (now !== last) {
+        last = now;
+        lastChange = Date.now();
+        if (seen) seen.textContent = "Still writing…";
+      } else if (Date.now() - lastChange >= stableMs) {
+        break;
+      }
+    }
+
+    updateEasySeen(true);
     return normalizeEngWord(readEasyInputRaw(input));
   }
 
@@ -3030,7 +3062,7 @@
       noteEngNeedsRetry();
       input.disabled = true;
       input.value = pretty;
-      updateEasySeen();
+      updateEasySeen(true);
       if (feedback) {
         feedback.textContent = `It's “${pretty}” (I saw “${typed}”)`;
         feedback.className = "feedback wrong";
@@ -3045,7 +3077,7 @@
       feedback.className = "feedback wrong";
     }
     input.value = "";
-    updateEasySeen();
+    updateEasySeen(true);
     try {
       input.focus({ preventScroll: true });
     } catch {
@@ -7248,7 +7280,7 @@
     const input = $("eng-easy-input");
     if (!input || input.disabled) return;
     input.value = "";
-    updateEasySeen();
+    updateEasySeen(true);
     try {
       input.focus({ preventScroll: true });
     } catch {
@@ -7256,9 +7288,9 @@
     }
   });
 
-  $("eng-easy-input")?.addEventListener("input", updateEasySeen);
-  $("eng-easy-input")?.addEventListener("keyup", updateEasySeen);
-  $("eng-easy-input")?.addEventListener("change", updateEasySeen);
+  $("eng-easy-input")?.addEventListener("input", () => updateEasySeen());
+  $("eng-easy-input")?.addEventListener("keyup", () => updateEasySeen());
+  $("eng-easy-input")?.addEventListener("change", () => updateEasySeen(true));
 
   $("eng-pen-form")?.addEventListener("submit", (e) => {
     submitEngPen(e);
