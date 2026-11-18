@@ -2556,10 +2556,10 @@
       keyboard.hidden = !!on;
       keyboard.style.display = on ? "none" : "";
     }
-    // Easy Words: hide pen-form POW row — letter-tile POW is the check
+    // Easy Words: show only POW under the pad (no clear-box / keyboard / tiles)
     if (tools) {
-      tools.hidden = !!on;
-      tools.style.display = on ? "none" : "";
+      tools.hidden = false;
+      tools.style.display = "";
     }
     const padLabel = document.querySelector("#eng-write-pad .work-pad-label");
     if (padLabel) {
@@ -2712,18 +2712,16 @@
         prompt.className = "eng-prompt eng-prompt-word";
         prompt.innerHTML = `<span class="eng-emoji" aria-hidden="true">${q.emoji}</span><span class="eng-copy-word">${q.word}</span>`;
       }
-      if (hint) {
-        hint.textContent = "1) Write on the pad with your finger  2) Tap letters to check";
-      }
+      if (hint) hint.textContent = "Write the word with your finger on the pad!";
       if (choices) {
         choices.hidden = true;
         choices.innerHTML = "";
       }
-      // Finger can draw on the canvas; letter tiles check the real spelling
+      // Finger pad only — no letter tiles
       if (wordForm) wordForm.hidden = true;
       if (easyForm) easyForm.hidden = true;
       if (penForm) penForm.hidden = false;
-      if (prekSpell) prekSpell.hidden = false;
+      if (prekSpell) prekSpell.hidden = true;
       if (hearBtn) hearBtn.hidden = false;
       setEngWordsPadOnly(true);
       if (penInput) {
@@ -2731,16 +2729,7 @@
         penInput.disabled = true;
       }
       setEngPenKeyboard(false);
-      // Ensure letters exist for the check board
-      if (!Array.isArray(q.letters) || !q.letters.length) {
-        q.letters = String(q.word || "")
-          .toUpperCase()
-          .replace(/[^A-Z]/g, "")
-          .split("");
-      }
-      q.display = q.letters.join(" ");
       prepareEngPenPad(String(q.word || "").toUpperCase());
-      renderPrekSpellBoard(q);
       window.setTimeout(() => speakEngWord(q.word), 250);
       return;
     }
@@ -3015,9 +3004,29 @@
     const padInk = engWritePadHasInk();
     const targetWord = String(q.target || q.word || "").toLowerCase();
 
-    // Easy Words: spelling is checked by letter tiles (finger can still draw on the pad)
+    // Easy Words: finger writing practice (no letter-tile UI)
     if (engSession.mode === "words") {
-      await submitPrekSpell();
+      if (!padInk) {
+        const emptyFeedback = $("eng-feedback");
+        if (emptyFeedback) {
+          emptyFeedback.textContent = "Draw the word on the pad, then POW!";
+          emptyFeedback.className = "feedback";
+        }
+        return;
+      }
+      engSession.attemptsOnCurrent += 1;
+      engSession.answered = true;
+      if (engSession.attemptsOnCurrent === 1) engSession.firstTryCorrect += 1;
+      engSession.correct += 1;
+      if ($("eng-stars")) $("eng-stars").textContent = String(engSession.correct);
+      const feedback = $("eng-feedback");
+      if (feedback) {
+        feedback.textContent =
+          engSession.attemptsOnCurrent === 1 ? "Nice writing! ★" : "Got it!";
+        feedback.className = "feedback right";
+      }
+      await playCorrectSound();
+      window.setTimeout(() => advanceEngQuestion(), 750);
       return;
     }
 
