@@ -13,7 +13,7 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <link rel="stylesheet" href="styles-v82.css?v=120" />
+  <link rel="stylesheet" href="styles-v82.css?v=121" />
   <style>
     /* Inline so a cached old styles.css can't hide the background */
     html, body {
@@ -77,7 +77,7 @@
   </style>
 </head>
 <body>
-  <div id="app-version-badge" class="app-version-badge" aria-label="App version">v120</div>
+  <div id="app-version-badge" class="app-version-badge" aria-label="App version">v121</div>
   <button type="button" id="btn-global-refresh" class="btn-global-refresh" aria-label="Refresh app">
     Refresh
   </button>
@@ -182,8 +182,8 @@
           <label id="difficulty-wrap">
             <span id="difficulty-label">Difficulty</span>
             <select id="difficulty" name="difficulty">
-              <option value="easy">Easy · tables 1–5</option>
-              <option value="medium" selected>Medium · tables 1–10</option>
+              <option value="easy" selected>Easy · tables 1–5</option>
+              <option value="medium">Medium · tables 1–10</option>
               <option value="hard">Hard · tables 1–12</option>
               <option value="expert">Expert · tables 1–15</option>
             </select>
@@ -327,13 +327,13 @@
           <p class="setup-step">6 · Options</p>
           <label class="toggle-row">
             <span>Go in order (7×1, 7×2, 7×3…)</span>
-            <input type="checkbox" id="in-order" checked />
+            <input type="checkbox" id="in-order" />
             <span class="switch" aria-hidden="true"></span>
           </label>
 
           <label class="toggle-row">
             <span>Auto-listen each question</span>
-            <input type="checkbox" id="voice-mode" checked />
+            <input type="checkbox" id="voice-mode" />
             <span class="switch" aria-hidden="true"></span>
           </label>
 
@@ -347,7 +347,7 @@
           <button type="submit" class="btn primary big" id="btn-start-math">Start Mission</button>
         </div>
 
-        <p class="setup-note" id="app-version-note">App v120 · K easy/medium</p>
+        <p class="setup-note" id="app-version-note">App v121 · easy defaults</p>
       </form>
 
       <nav class="home-nav">
@@ -938,6 +938,6 @@
   </div>
 
   <div id="fx" class="fx" aria-hidden="true"></div>
-  <script src="app-v115.js?v=120"></script>
+  <script src="app-v116.js?v=121"></script>
 </body>
 </html>

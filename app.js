@@ -1392,8 +1392,8 @@
         difficulty: "easy",
         digitLevel: "dual",
         mode: "10",
-        shuffle: false,
-        voiceMode: true,
+        shuffle: true,
+        voiceMode: false,
         perQuestionTimer: false,
         tables: rangeTables(5),
         problemType: "product",
@@ -1654,6 +1654,12 @@
         state.settings.roundPlace = parsed.roundPlace;
         state.settings.roundDigits = parsed.roundDigits;
       }
+      // Defaults: Easy · not in order · no auto-listen
+      state.settings.difficulty = profile.difficulty || "easy";
+      state.settings.shuffle = true;
+      state.settings.voiceMode = false;
+      if ($("in-order")) $("in-order").checked = false;
+      if ($("voice-mode")) $("voice-mode").checked = false;
       const max = DIFFICULTY[profile.difficulty] || 10;
       state.settings.tables = rangeTables(max);
     }
@@ -1770,6 +1776,13 @@
       if (typeof merged.settings.ldDivMax !== "number") merged.settings.ldDivMax = 99;
       if (typeof merged.settings.ldByMin !== "number") merged.settings.ldByMin = 2;
       if (typeof merged.settings.ldByMax !== "number") merged.settings.ldByMax = 9;
+      // One-time: Easy · shuffled · no auto-listen
+      if (!merged.settings._defaults121) {
+        merged.settings.difficulty = "easy";
+        merged.settings.shuffle = true;
+        merged.settings.voiceMode = false;
+        merged.settings._defaults121 = true;
+      }
       mergeRobloxFromStores(merged);
       return merged;
     } catch {
@@ -6481,11 +6494,7 @@
       opt.textContent = text;
       select.appendChild(opt);
     }
-    const next = allowed.has(previous)
-      ? previous
-      : kinder
-        ? "easy"
-        : "medium";
+    const next = allowed.has(previous) ? previous : "easy";
     select.value = next;
     state.settings.difficulty = next;
     if (label) label.textContent = kinder ? "Math level" : "Difficulty";
