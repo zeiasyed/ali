@@ -577,12 +577,12 @@ select, input[type="text"] {
   overscroll-behavior: contain;
 }
 
-/* Play mode: use nearly the full iPad width */
+/* Play mode: wide iPad card (~15% smaller than v117) */
 body.play-fit .app,
 body.play-landscape .app,
 body.kb-open .app {
-  width: min(1180px, 96vw);
-  max-width: 96vw;
+  width: min(1000px, 82vw);
+  max-width: 82vw;
 }
 
 @media (orientation: landscape) {
@@ -592,13 +592,13 @@ body.kb-open .app {
   }
 
   body.play-landscape #screen-play .play-top {
-    margin-bottom: 0.45rem;
+    margin-bottom: 0.4rem;
   }
 
   body.play-landscape #screen-play .problem-card {
-    padding: 1.5rem 1.6rem 1.35rem;
-    border-radius: 22px;
-    min-height: min(78dvh, 640px);
+    padding: 1.25rem 1.35rem 1.15rem;
+    border-radius: 20px;
+    min-height: min(66dvh, 544px);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -606,8 +606,8 @@ body.kb-open .app {
 
   body.play-landscape #screen-play .problem,
   body.play-landscape #screen-play .problem.equation {
-    font-size: clamp(3.4rem, 14vh, 5.8rem);
-    margin-bottom: 0.75rem;
+    font-size: clamp(2.9rem, 12vh, 4.9rem);
+    margin-bottom: 0.65rem;
   }
 
   body.play-landscape #screen-play .problem-hint,
@@ -622,40 +622,40 @@ body.kb-open .app {
 
   body.play-landscape #screen-play #answer,
   body.play-landscape #screen-play #answer-rem {
-    min-height: 7rem;
-    padding: 1.15rem 1.2rem;
-    font-size: clamp(3rem, 12vh, 4.6rem);
+    min-height: 6rem;
+    padding: 1rem 1rem;
+    font-size: clamp(2.55rem, 10vh, 3.9rem);
   }
 
   body.play-landscape #screen-play #answer-form {
-    gap: 0.85rem;
+    gap: 0.7rem;
   }
 
   body.play-landscape #screen-play .answer-tools {
-    gap: 0.65rem;
+    gap: 0.55rem;
   }
 
   body.play-landscape #screen-play .answer-tools .btn.say-it {
-    min-height: 3.6rem;
-    padding: 0.55rem 0.9rem;
-    font-size: clamp(1.25rem, 4vh, 1.55rem);
+    min-height: 3.05rem;
+    padding: 0.45rem 0.75rem;
+    font-size: clamp(1.05rem, 3.4vh, 1.3rem);
   }
 
   /* POW stays smaller than the answer box */
   body.play-landscape #screen-play #btn-pow {
     width: 100%;
-    min-height: 3.4rem;
-    padding: 0.55rem 1rem;
-    font-size: clamp(1.35rem, 3.8vw, 1.75rem);
+    min-height: 2.9rem;
+    padding: 0.45rem 0.85rem;
+    font-size: clamp(1.15rem, 3.2vw, 1.5rem);
   }
 
   body.play-landscape #screen-play .feedback {
-    margin-top: 0.35rem;
-    font-size: 1.25rem;
+    margin-top: 0.3rem;
+    font-size: 1.05rem;
   }
 
   body.play-landscape.md-work-mode #screen-play .work-pad-surface {
-    min-height: min(22dvh, 140px);
+    min-height: min(19dvh, 120px);
   }
 }
 
@@ -668,25 +668,25 @@ body.kb-open #screen-play .answer-pen-hint {
 }
 
 body.kb-open #screen-play .problem-card {
-  padding: 1.1rem 1.2rem 1rem;
-  min-height: min(58dvh, 480px);
+  padding: 0.95rem 1rem 0.85rem;
+  min-height: min(49dvh, 410px);
 }
 
 body.kb-open #screen-play .problem,
 body.kb-open #screen-play .problem.equation {
-  font-size: clamp(2.6rem, 10vh, 4.2rem);
-  margin-bottom: 0.55rem;
+  font-size: clamp(2.2rem, 8.5vh, 3.55rem);
+  margin-bottom: 0.45rem;
 }
 
 body.kb-open #screen-play #answer,
 body.kb-open #screen-play #answer-rem {
-  min-height: 5.5rem;
-  padding: 0.85rem 1rem;
-  font-size: clamp(2.4rem, 9vh, 3.6rem);
+  min-height: 4.7rem;
+  padding: 0.7rem 0.85rem;
+  font-size: clamp(2rem, 7.5vh, 3.05rem);
 }
 
 body.kb-open #screen-play #answer-form {
-  gap: 0.65rem;
+  gap: 0.55rem;
 }
 
 body.kb-open #screen-play .answer-row {
@@ -725,13 +725,13 @@ body.kb-open.play-landscape #screen-play #btn-mic {
 
 body.kb-open.play-landscape #screen-play .problem,
 body.kb-open.play-landscape #screen-play .problem.equation {
-  font-size: clamp(2.8rem, 11vh, 4.6rem);
+  font-size: clamp(2.4rem, 9.5vh, 3.9rem);
 }
 
 body.kb-open.play-landscape #screen-play #answer,
 body.kb-open.play-landscape #screen-play #answer-rem {
-  min-height: 5.8rem;
-  font-size: clamp(2.6rem, 10vh, 4rem);
+  min-height: 4.9rem;
+  font-size: clamp(2.2rem, 8.5vh, 3.4rem);
 }
 
 #ld-rem-wrap[hidden] {
