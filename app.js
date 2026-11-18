@@ -23,15 +23,15 @@
 
   /** Grade unlocks skills and sets kid-friendly defaults */
   const GRADE_PROFILES = {
+    // Pre-K folded into Kindergarten (kept as alias for old saved settings)
     prek: {
-      label: "Pre-K",
-      skills: ["add"],
+      label: "Kindergarten",
+      skills: ["add", "sub"],
       defaultOp: "add",
       digitLevel: "single",
       difficulty: "easy",
       roundPreset: "mix:2",
-      // Pre-K: Math + English only (no Social Studies)
-      subjects: ["math", "english"],
+      subjects: ["math", "english", "social"],
     },
     k: {
       label: "Kindergarten",
@@ -749,7 +749,7 @@
   function usesKeyboardOnlyAnswer(op = session?.operation, grade = session?.grade) {
     const gradeId = grade || state.settings.grade || getGradeId();
     const operation = op || state.settings.operation || "multiply";
-    return (gradeId === "prek" || gradeId === "k") && operation === "add";
+    return (gradeId === "k" || gradeId === "prek") && operation === "add";
   }
 
   function setAnswerInputMode(wantKeyboard) {
@@ -1581,10 +1581,16 @@
     if ($("screen-parent")?.classList.contains("active")) renderParent();
   }
 
+  function normalizeGradeId(gradeId) {
+    // Pre-K combined into Kindergarten
+    if (gradeId === "prek") return "k";
+    return gradeId;
+  }
+
   function getGradeId() {
-    const fromUi = $("grade")?.value;
+    const fromUi = normalizeGradeId($("grade")?.value);
     if (fromUi && GRADE_PROFILES[fromUi]) return fromUi;
-    const saved = state.settings.grade;
+    const saved = normalizeGradeId(state.settings.grade);
     if (saved && GRADE_PROFILES[saved]) return saved;
     return "2";
   }
@@ -1594,9 +1600,13 @@
   }
 
   function syncGradeUI(gradeId = getGradeId(), { applyDefaults = false } = {}) {
+    gradeId = normalizeGradeId(gradeId);
     const profile = getGradeProfile(gradeId);
     state.settings.grade = gradeId;
-    if ($("grade")) $("grade").value = gradeId;
+    if ($("grade")) {
+      // Pre-K option removed — always store/select Kindergarten
+      $("grade").value = gradeId === "prek" ? "k" : gradeId;
+    }
 
     const opSelect = $("operation");
     const previousOp = state.settings.operation || opSelect?.value;
@@ -1729,6 +1739,9 @@
       }
       if (!merged.unlockedHeroes?.spiderman) {
         merged.unlockedHeroes = { ...merged.unlockedHeroes, spiderman: true };
+      }
+      if (merged.settings.grade === "prek") {
+        merged.settings.grade = "k";
       }
       if (!GRADE_PROFILES[merged.settings.grade]) {
         merged.settings.grade = "2";
@@ -2155,17 +2168,17 @@
 
   function syncEngHubCards() {
     const gradeId = getGradeId();
-    const isPrek = gradeId === "prek";
+    const isKinder = gradeId === "k";
     const prekBtn = $("btn-eng-prek-spell");
     const spellBtn = $("btn-eng-spell");
+    // Spell It (tap letters) lives under Kindergarten now
     if (prekBtn) {
-      prekBtn.hidden = !isPrek;
-      prekBtn.style.display = isPrek ? "" : "none";
+      prekBtn.hidden = !isKinder;
+      prekBtn.style.display = isKinder ? "" : "none";
     }
     if (spellBtn) {
-      // Kindergarten+ spelling (sounds) — hide for Pre-K
-      spellBtn.hidden = isPrek;
-      spellBtn.style.display = isPrek ? "none" : "";
+      spellBtn.hidden = false;
+      spellBtn.style.display = "";
     }
   }
 
@@ -5913,8 +5926,7 @@
 
   function digitRange(digitLevel, gradeId = getGradeId()) {
     // Younger grades use smaller number ranges
-    if (gradeId === "prek") return { min: 1, max: 5 };
-    if (gradeId === "k") return { min: 1, max: 10 };
+    if (gradeId === "k" || gradeId === "prek") return { min: 1, max: 10 };
     if (digitLevel === "dual") return { min: 10, max: 99 };
     if (gradeId === "1") return { min: 1, max: 20 };
     return { min: 1, max: 9 };
