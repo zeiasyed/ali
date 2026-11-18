@@ -6265,11 +6265,14 @@
     const isPad = isPadPractice(op);
     const isRound = op === "round";
     const isAddSub = op === "add" || op === "sub";
+    const kinderAddSub = isKinderGrade() && isAddSub;
 
     // Rounding / pad practice hide table chips
-    setSetupVisible($("difficulty-wrap"), isMult);
+    // Kindergarten add/sub: show Easy / Medium finger-counting levels
+    setSetupVisible($("difficulty-wrap"), isMult || kinderAddSub);
     setSetupVisible($("table-picker"), isMult);
-    setSetupVisible($("digit-wrap"), isAddSub);
+    setSetupVisible($("digit-wrap"), isAddSub && !kinderAddSub);
+    syncDifficultyOptions();
     setSetupVisible($("round-wrap"), isRound);
     setSetupVisible($("round-digits-wrap"), false);
     setSetupVisible($("md-wrap"), isMdMult);
@@ -6429,12 +6432,63 @@
     }
   }
 
-  function digitRange(digitLevel, gradeId = getGradeId()) {
-    // Younger grades use smaller number ranges
-    if (gradeId === "k" || gradeId === "prek") return { min: 1, max: 10 };
+  function isKinderGrade(gradeId = getGradeId()) {
+    return gradeId === "k" || gradeId === "prek";
+  }
+
+  function kinderMathLevel(difficulty = state.settings.difficulty) {
+    return String(difficulty || "easy") === "medium" ? "medium" : "easy";
+  }
+
+  function digitRange(digitLevel, gradeId = getGradeId(), difficulty) {
+    // Kindergarten: Easy = one hand (+ a few), Medium = to 10
+    if (isKinderGrade(gradeId)) {
+      return kinderMathLevel(difficulty) === "medium"
+        ? { min: 1, max: 10 }
+        : { min: 1, max: 5 };
+    }
     if (digitLevel === "dual") return { min: 10, max: 99 };
     if (gradeId === "1") return { min: 1, max: 20 };
     return { min: 1, max: 9 };
+  }
+
+  const MULT_DIFFICULTY_OPTIONS = [
+    ["easy", "Easy · tables 1–5"],
+    ["medium", "Medium · tables 1–10"],
+    ["hard", "Hard · tables 1–12"],
+    ["expert", "Expert · tables 1–15"],
+  ];
+
+  const KINDER_DIFFICULTY_OPTIONS = [
+    ["easy", "Easy · one hand + a few fingers (to 5)"],
+    ["medium", "Medium · numbers to 10"],
+  ];
+
+  function syncDifficultyOptions() {
+    const select = $("difficulty");
+    const label = $("difficulty-label");
+    if (!select) return;
+    const op = $("operation")?.value || state.settings.operation || "multiply";
+    const isAddSub = op === "add" || op === "sub";
+    const kinder = isKinderGrade() && isAddSub;
+    const options = kinder ? KINDER_DIFFICULTY_OPTIONS : MULT_DIFFICULTY_OPTIONS;
+    const previous = select.value || state.settings.difficulty || "easy";
+    const allowed = new Set(options.map(([v]) => v));
+    select.innerHTML = "";
+    for (const [value, text] of options) {
+      const opt = document.createElement("option");
+      opt.value = value;
+      opt.textContent = text;
+      select.appendChild(opt);
+    }
+    const next = allowed.has(previous)
+      ? previous
+      : kinder
+        ? "easy"
+        : "medium";
+    select.value = next;
+    state.settings.difficulty = next;
+    if (label) label.textContent = kinder ? "Math level" : "Difficulty";
   }
 
   function roundDigitRanges(roundDigits) {
@@ -6527,13 +6581,24 @@
       return pool;
     }
 
-    const { min, max: hi } = digitRange(
-      digitLevel || "single",
-      gradeId || session?.grade || state.settings.grade || "2"
-    );
+    const gid = gradeId || session?.grade || state.settings.grade || "2";
+    const level =
+      session?.difficulty ||
+      state.settings.difficulty ||
+      $("difficulty")?.value ||
+      "easy";
+    const { min, max: hi } = digitRange(digitLevel || "single", gid, level);
+    // Easy K: answers stay countable on one hand + a few fingers (≤ 8)
+    const sumCap =
+      isKinderGrade(gid) && operation === "add"
+        ? kinderMathLevel(level) === "easy"
+          ? 8
+          : 10
+        : null;
     for (let a = min; a <= hi; a++) {
       for (let b = min; b <= hi; b++) {
         if (operation === "sub" && a < b) continue;
+        if (sumCap != null && a + b > sumCap) continue;
         pushPair(a, b);
       }
     }
@@ -7566,10 +7631,12 @@
   });
 
   $("difficulty")?.addEventListener("change", () => {
+    state.settings.difficulty = $("difficulty").value || "easy";
     const max = currentMax();
     state.settings.tables = getSelectedTables().filter((n) => n <= max);
     if (!state.settings.tables.length) state.settings.tables = rangeTables(max);
     renderTableChips();
+    saveState();
   });
 
   $("table-chips")?.addEventListener("click", (e) => {
