@@ -2539,7 +2539,6 @@
       hint.hidden = !!on;
       hint.style.display = on ? "none" : "";
       if (!on) hint.textContent = "Finger or Pencil on the pad · then POW!";
-      else hint.textContent = "Write on the pad, then tap the letters below!";
     }
     if (input) {
       input.hidden = !!on;
@@ -2557,10 +2556,9 @@
       keyboard.hidden = !!on;
       keyboard.style.display = on ? "none" : "";
     }
-    // Easy Words: practice pad + letter tiles (works on laptop touchscreen)
     if (tools) {
-      tools.hidden = !!on;
-      tools.style.display = on ? "none" : "";
+      tools.hidden = false;
+      tools.style.display = "";
     }
     const padLabel = document.querySelector("#eng-write-pad .work-pad-label");
     if (padLabel) {
@@ -2713,20 +2711,35 @@
         prompt.className = "eng-prompt eng-prompt-word";
         prompt.innerHTML = `<span class="eng-emoji" aria-hidden="true">${q.emoji}</span><span class="eng-copy-word">${q.word}</span>`;
       }
-      if (hint) hint.textContent = "Write with your finger, then tap the letters in order!";
+      if (hint) hint.textContent = "Write with Apple Pencil (Scribble) in the box!";
       if (choices) {
         choices.hidden = true;
         choices.innerHTML = "";
       }
-      // Laptop / any touchscreen: finger pad for practice + letter tiles to check spelling
+      // iPad Scribble: Pencil writing becomes letters we can check
       if (wordForm) wordForm.hidden = true;
-      if (easyForm) easyForm.hidden = true;
-      if (penForm) penForm.hidden = false;
-      if (prekSpell) prekSpell.hidden = false;
+      if (penForm) penForm.hidden = true;
+      if (prekSpell) prekSpell.hidden = true;
+      if (easyForm) easyForm.hidden = false;
       if (hearBtn) hearBtn.hidden = false;
-      setEngWordsPadOnly(true);
-      prepareEngPenPad(q.word || q.target || "");
-      renderPrekSpellBoard(q);
+      setEngWordsPadOnly(false);
+      const easyInput = $("eng-easy-input");
+      if (easyInput) {
+        easyInput.disabled = false;
+        easyInput.value = "";
+        easyInput.setAttribute("inputmode", "text");
+        easyInput.setAttribute("enterkeyhint", "done");
+        easyInput.removeAttribute("readonly");
+        updateEasySeen();
+        window.setTimeout(() => {
+          try {
+            easyInput.focus({ preventScroll: true });
+          } catch {
+            easyInput.focus();
+          }
+          updateEasySeen();
+        }, 180);
+      }
       window.setTimeout(() => speakEngWord(q.word), 250);
       return;
     }
@@ -2933,11 +2946,6 @@
   async function submitEasyWord(event) {
     if (event) event.preventDefault();
     if (!engSession || engSession.answered || engSession.mode !== "words") return;
-    // Touchscreen / laptop path: letter tiles are the real answer check
-    if ($("eng-prek-spell") && !$("eng-prek-spell").hidden) {
-      await submitPrekSpell();
-      return;
-    }
     const q = engCurrent();
     const input = $("eng-easy-input") || $("eng-word-input");
     if (!q || !input) return;
@@ -3036,9 +3044,9 @@
     const padInk = engWritePadHasInk();
     const targetWord = String(q.target || q.word || "").toLowerCase();
 
-    // Easy Words uses finger pad + letter tiles
+    // Easy Words uses Scribble field (eng-easy-form)
     if (engSession.mode === "words") {
-      await submitPrekSpell();
+      await submitEasyWord(event);
       return;
     }
 
