@@ -469,9 +469,9 @@ select, input[type="text"] {
   pointer-events: none;
 }
 
+.btn-global-refresh,
 .btn-global-home {
   position: fixed;
-  top: calc(max(0.55rem, env(safe-area-inset-top)) + 2.7rem);
   left: max(0.55rem, env(safe-area-inset-left));
   right: auto;
   z-index: 80;
@@ -479,7 +479,6 @@ select, input[type="text"] {
   padding: 0.4rem 0.9rem;
   border: 3px solid var(--ink);
   border-radius: 999px;
-  background: #ffe08a;
   box-shadow: 2px 2px 0 var(--ink);
   font-family: var(--font-cartoon, var(--font-body));
   font-weight: 800;
@@ -488,6 +487,17 @@ select, input[type="text"] {
   cursor: pointer;
 }
 
+.btn-global-refresh {
+  top: calc(max(0.55rem, env(safe-area-inset-top)) + 2.7rem);
+  background: #d7ecff;
+}
+
+.btn-global-home {
+  top: calc(max(0.55rem, env(safe-area-inset-top)) + 5.4rem);
+  background: #ffe08a;
+}
+
+.btn-global-refresh:active,
 .btn-global-home:active {
   transform: translate(1px, 1px);
   box-shadow: 1px 1px 0 var(--ink);

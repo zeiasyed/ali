@@ -7986,6 +7986,13 @@
     window.visualViewport.addEventListener("scroll", onViewportFit);
   }
 
+  $("btn-global-refresh")?.addEventListener("click", () => {
+    // Cache-bust reload so iPad picks up new CSS/JS
+    const u = new URL(window.location.href);
+    u.searchParams.set("r", String(Date.now()));
+    window.location.replace(u.toString());
+  });
+
   syncAnswerEntryUI();
   syncPlayViewportFit();
 
