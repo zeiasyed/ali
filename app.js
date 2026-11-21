@@ -6793,13 +6793,305 @@
     setSetupVisible($("subject-english"), isEnglish);
     setSetupVisible($("subject-social"), isSocial);
     setSetupVisible($("subject-arabic"), isArabic);
+    const uploadPanel = $("week-upload-panel");
+    if (uploadPanel) {
+      setSetupVisible(uploadPanel, !!weekUpload.active && (isMath || isSocial));
+    }
     const tag = $("home-tagline");
     if (tag) {
       if (isEnglish) tag.textContent = "Letters, spelling & easy words!";
       else if (isSocial) tag.textContent = "Learn California Studies Weekly!";
       else if (isArabic) tag.textContent = "Arabic letters & easy words!";
+      else tag.textContent = "Power up your math skills!";
     }
     if (isMath) syncOperationUI();
+  }
+
+  /* ── Upload Week’s Work → save file + ask Cursor to build ── */
+  const WEEK_UPLOAD_DB = "ali-week-upload-v1";
+  const weekUpload = {
+    active: false,
+    subject: "social",
+    week: null,
+    fileName: "",
+    dirHandle: null,
+    pollTimer: null,
+  };
+
+  function parseWeekFromFileName(name) {
+    const base = String(name || "");
+    const patterns = [
+      /week[_\s-]*0*(\d{1,2})/i,
+      /\bw\s*0*(\d{1,2})\b/i,
+      /\b0*(\d{1,2})\s*student/i,
+    ];
+    for (const re of patterns) {
+      const m = base.match(re);
+      if (m) {
+        const n = Number(m[1]);
+        if (n >= 1 && n <= 52) return n;
+      }
+    }
+    return null;
+  }
+
+  function subjectLabelForUpload(subject) {
+    return subject === "math" ? "Math" : "Social Studies";
+  }
+
+  function setWeekUploadProgress(pct, message, ready) {
+    const fill = $("week-upload-bar-fill");
+    const status = $("week-upload-status");
+    const readyEl = $("week-upload-ready");
+    const panel = $("week-upload-panel");
+    if (panel) setSetupVisible(panel, true);
+    weekUpload.active = true;
+    if (status && message) status.textContent = message;
+    if (fill) {
+      const clamped = Math.max(0, Math.min(100, Number(pct) || 0));
+      fill.style.width = `${clamped}%`;
+      fill.classList.toggle("is-ready", !!ready || clamped >= 100);
+    }
+    if (readyEl) readyEl.hidden = !ready;
+  }
+
+  async function idbOpenWeekUpload() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(WEEK_UPLOAD_DB, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if (!db.objectStoreNames.contains("handles")) db.createObjectStore("handles");
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function saveDirHandle(handle) {
+    const db = await idbOpenWeekUpload();
+    await new Promise((resolve, reject) => {
+      const tx = db.transaction("handles", "readwrite");
+      tx.objectStore("handles").put(handle, "week-uploads");
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+    db.close();
+  }
+
+  async function loadDirHandle() {
+    try {
+      const db = await idbOpenWeekUpload();
+      const handle = await new Promise((resolve, reject) => {
+        const tx = db.transaction("handles", "readonly");
+        const req = tx.objectStore("handles").get("week-uploads");
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => reject(req.error);
+      });
+      db.close();
+      return handle || null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function ensureWeekUploadsDir() {
+    if (weekUpload.dirHandle) {
+      try {
+        const perm = await weekUpload.dirHandle.queryPermission({ mode: "readwrite" });
+        if (perm === "granted") return weekUpload.dirHandle;
+        const next = await weekUpload.dirHandle.requestPermission({ mode: "readwrite" });
+        if (next === "granted") return weekUpload.dirHandle;
+      } catch {
+        /* fall through */
+      }
+    }
+    const saved = await loadDirHandle();
+    if (saved) {
+      try {
+        const perm = await saved.queryPermission({ mode: "readwrite" });
+        if (perm === "granted" || (await saved.requestPermission({ mode: "readwrite" })) === "granted") {
+          weekUpload.dirHandle = saved;
+          return saved;
+        }
+      } catch {
+        /* fall through */
+      }
+    }
+    if (typeof window.showDirectoryPicker !== "function") return null;
+    const handle = await window.showDirectoryPicker({
+      id: "ali-week-uploads",
+      mode: "readwrite",
+      startIn: "documents",
+    });
+    weekUpload.dirHandle = handle;
+    await saveDirHandle(handle);
+    return handle;
+  }
+
+  async function writeUploadStatus(dir, payload) {
+    const file = await dir.getFileHandle("status.json", { create: true });
+    const writable = await file.createWritable();
+    await writable.write(JSON.stringify(payload, null, 2));
+    await writable.close();
+  }
+
+  async function readUploadStatus(dir) {
+    try {
+      const file = await dir.getFileHandle("status.json");
+      const blob = await (await file.getFile()).text();
+      return JSON.parse(blob);
+    } catch {
+      return null;
+    }
+  }
+
+  function stopWeekUploadPoll() {
+    if (weekUpload.pollTimer) {
+      clearInterval(weekUpload.pollTimer);
+      weekUpload.pollTimer = null;
+    }
+  }
+
+  function startWeekUploadPoll(dir) {
+    stopWeekUploadPoll();
+    weekUpload.pollTimer = setInterval(async () => {
+      const status = await readUploadStatus(dir);
+      if (!status) return;
+      const phase = String(status.phase || "");
+      const progress = Number(status.progress);
+      const message = status.message || "";
+      if (phase === "ready" || progress >= 100) {
+        setWeekUploadProgress(100, message || `Week ${weekUpload.week} ready`, true);
+        stopWeekUploadPoll();
+        return;
+      }
+      if (phase === "building" || phase === "uploaded" || phase === "reading") {
+        setWeekUploadProgress(
+          Number.isFinite(progress) ? progress : 15,
+          message || `Building Week ${weekUpload.week}…`
+        );
+      }
+    }, 2000);
+  }
+
+  function buildCursorWeekPrompt(subject, week, fileName) {
+    const label = subjectLabelForUpload(subject);
+    const pathHint = `week-uploads/${fileName}`;
+    if (subject === "math") {
+      return (
+        `Build Math Week ${week} for the Ali Ayaan app from the uploaded file at ${pathHint}. ` +
+        `Read the PDF, photos, or Word doc. Add practice content matching existing math patterns in app.js. ` +
+        `Deploy (copy app.js → latest app-vN.js, bump index/go version, commit, push). ` +
+        `While building, update week-uploads/status.json with phase (reading|building|ready), progress 0–100, and message. ` +
+        `When live, set phase to "ready", progress 100, message "Week ${week} ready".`
+      );
+    }
+    return (
+      `Build Social Studies Week ${week} for the Ali Ayaan app from the uploaded file at ${pathHint}. ` +
+      `Read the PDF, photos, or Word doc (Studies Weekly student edition). ` +
+      `Add SS_CATALOG week ${week} with lessons + quiz banks like weeks 7–9, add the week card on the SS hub, deploy (copy app.js → latest app-vN.js, bump index/go version, commit, push). ` +
+      `While building, update week-uploads/status.json with phase (reading|building|ready), progress 0–100, and message. ` +
+      `When live, set phase to "ready", progress 100, message "Week ${week} ready".`
+    );
+  }
+
+  function openCursorBuildPrompt(subject, week, fileName) {
+    const text = buildCursorWeekPrompt(subject, week, fileName);
+    const url = new URL("cursor://anysphere.cursor-deeplink/prompt");
+    url.searchParams.set("text", text);
+    url.searchParams.set("mode", "agent");
+    try {
+      window.location.href = url.toString();
+    } catch {
+      /* ignore */
+    }
+    // Fallback web link if protocol is blocked
+    setTimeout(() => {
+      const web = new URL("https://cursor.com/link/prompt");
+      web.searchParams.set("text", text);
+      // only used if user still needs it — keep as data attribute
+      const status = $("week-upload-status");
+      if (status) status.dataset.cursorLink = web.toString();
+    }, 0);
+  }
+
+  function downloadFallback(file, safeName) {
+    const url = URL.createObjectURL(file);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = safeName;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  async function handleWeekUploadFile(file, subject) {
+    if (!file) return;
+    const week = parseWeekFromFileName(file.name);
+    if (!week) {
+      setWeekUploadProgress(0, "Couldn’t find the week number in the file name. Use something like Week_9_….pdf", false);
+      return;
+    }
+    weekUpload.subject = subject;
+    weekUpload.week = week;
+    weekUpload.fileName = file.name;
+    const label = subjectLabelForUpload(subject);
+    setWeekUploadProgress(8, `Uploaded · ${label} Week ${week}`, false);
+
+    const safeName = file.name.replace(/[^\w.\- ()]/g, "_");
+    let savedToFolder = false;
+    try {
+      setWeekUploadProgress(12, `Saving Week ${week}…`, false);
+      const dir = await ensureWeekUploadsDir();
+      if (dir) {
+        const inbox = await dir.getDirectoryHandle("inbox", { create: true });
+        const out = await inbox.getFileHandle(safeName, { create: true });
+        const writable = await out.createWritable();
+        await writable.write(file);
+        await writable.close();
+        weekUpload.fileName = `inbox/${safeName}`;
+        await writeUploadStatus(dir, {
+          phase: "uploaded",
+          progress: 15,
+          subject,
+          week,
+          file: weekUpload.fileName,
+          message: `Uploaded · ${label} Week ${week}. Opening Cursor…`,
+          updatedAt: new Date().toISOString(),
+        });
+        savedToFolder = true;
+        setWeekUploadProgress(20, `Uploaded · ${label} Week ${week}. Opening Cursor…`, false);
+        startWeekUploadPoll(dir);
+      }
+    } catch (err) {
+      console.warn("week upload folder save failed", err);
+    }
+
+    if (!savedToFolder) {
+      downloadFallback(file, safeName);
+      setWeekUploadProgress(
+        20,
+        `Uploaded Week ${week} (saved to Downloads). Opening Cursor — pick the week-uploads folder next time for live progress.`,
+        false
+      );
+    }
+
+    openCursorBuildPrompt(subject, week, weekUpload.fileName);
+    setWeekUploadProgress(
+      25,
+      `Building ${label} Week ${week}… Confirm the prompt in Cursor.`,
+      false
+    );
+  }
+
+  function beginWeekUpload(subject) {
+    weekUpload.subject = subject || getSubject() || "social";
+    const input = $("week-upload-input");
+    if (!input) return;
+    setWeekUploadProgress(0, "Choose a PDF, photo, or Word file.", false);
+    const readyEl = $("week-upload-ready");
+    if (readyEl) readyEl.hidden = true;
+    input.value = "";
+    input.click();
   }
 
   function syncOperationUI() {
@@ -8492,6 +8784,21 @@
   $("btn-eng-again")?.addEventListener("click", () => {
     pokeAudio();
     startEngPractice(engLastMode || "alphabet");
+  });
+
+  document.querySelectorAll("[data-upload-subject]").forEach((btn) => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      pokeAudio();
+      beginWeekUpload(btn.getAttribute("data-upload-subject") || getSubject());
+    });
+  });
+
+  $("week-upload-input")?.addEventListener("change", async () => {
+    const input = $("week-upload-input");
+    const file = input?.files?.[0];
+    if (!file) return;
+    await handleWeekUploadFile(file, weekUpload.subject || getSubject());
   });
 
   document.querySelectorAll("[data-ss-week]").forEach((btn) => {

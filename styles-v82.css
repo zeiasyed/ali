@@ -890,6 +890,61 @@ body.keyboard-only-answer #btn-keyboard {
   color: var(--muted);
 }
 
+.week-upload-panel {
+  margin: 0.75rem 0 0;
+  padding: 0.85rem 1rem;
+  border: 3px solid var(--ink);
+  border-radius: 1.1rem;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.week-upload-panel[hidden] {
+  display: none !important;
+}
+
+.week-upload-status {
+  margin: 0;
+  font-size: 0.98rem;
+  font-weight: 800;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.week-upload-bar {
+  margin-top: 0.65rem;
+  height: 0.85rem;
+  border-radius: 999px;
+  border: 2px solid var(--ink);
+  background: #f3f3f3;
+  overflow: hidden;
+}
+
+.week-upload-bar-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: inherit;
+  background: var(--blue);
+  transition: width 0.35s ease;
+}
+
+.week-upload-bar-fill.is-ready {
+  background: var(--green);
+}
+
+.week-upload-ready {
+  margin: 0.55rem 0 0;
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--green);
+  letter-spacing: 0.02em;
+}
+
+#btn-upload-week-social,
+#btn-upload-week-math {
+  margin-top: 0.55rem;
+  width: 100%;
+}
+
 .feedback {
   min-height: 1.5em;
   margin: 0.85rem 0 0;
