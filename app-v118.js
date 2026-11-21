@@ -5988,10 +5988,17 @@
               difficulty: "hard",
               type: "mc",
               prompt: "Pick the best answer:",
-              text: "“How do landforms influence movement and resources?” is this week’s __________.",
-              choices: ["guiding question", "lunch menu", "phone number", "zip code"],
-              answer: "guiding question",
-              explain: "That is the guiding question.",
+              text: "How can landforms influence movement and resources?",
+              choices: [
+                "They can make travel harder or easier and change what water, soil, or minerals are nearby",
+                "They only change the names of cities on a map",
+                "They decide the day of the week",
+                "They set the temperature of outer space",
+              ],
+              answer:
+                "They can make travel harder or easier and change what water, soil, or minerals are nearby",
+              explain:
+                "Landforms shape routes people and animals take and what resources are available.",
             },
           ],
         },
