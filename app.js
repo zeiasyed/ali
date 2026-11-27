@@ -53,7 +53,7 @@
     },
     2: {
       label: "Grade 2",
-      skills: ["add", "sub", "multiply", "md-mult", "long-div", "round"],
+      skills: ["add", "sub", "multiply", "divide", "md-mult", "long-div", "round"],
       defaultOp: "multiply",
       digitLevel: "dual",
       difficulty: "easy",
@@ -62,7 +62,7 @@
     },
     3: {
       label: "Grade 3",
-      skills: ["add", "sub", "multiply", "md-mult", "long-div", "round"],
+      skills: ["add", "sub", "multiply", "divide", "md-mult", "long-div", "round"],
       defaultOp: "multiply",
       digitLevel: "dual",
       difficulty: "medium",
@@ -71,7 +71,7 @@
     },
     4: {
       label: "Grade 4",
-      skills: ["add", "sub", "multiply", "md-mult", "long-div", "round"],
+      skills: ["add", "sub", "multiply", "divide", "md-mult", "long-div", "round"],
       defaultOp: "multiply",
       digitLevel: "dual",
       difficulty: "hard",
@@ -94,6 +94,7 @@
 
   const SKILL_LABELS = {
     multiply: "Multiplication",
+    divide: "Division",
     "md-mult": "Practice · multi-digit ×",
     "long-div": "Practice · long division",
     add: "Addition",
@@ -111,6 +112,7 @@
       op === "add" ||
       op === "sub" ||
       op === "multiply" ||
+      op === "divide" ||
       op === "md-mult" ||
       op === "long-div" ||
       op === "round"
@@ -127,6 +129,7 @@
     if (op === "md-mult") return "Practice · multi-digit ×";
     if (op === "round") return "Rounding practice";
     if (op === "multiply") return "Multiplication practice";
+    if (op === "divide") return "Division practice";
     if (op === "add") return "Addition practice";
     if (op === "sub") return "Subtraction practice";
     return "Math practice";
@@ -506,6 +509,8 @@
     ) {
       type = "product";
     }
+    // Easy division starts as “45 ÷ 5 = ?” only
+    if (operation === "divide") return "product";
     return type;
   }
 
@@ -943,6 +948,7 @@
   function opSymbol(operation) {
     if (operation === "add") return "+";
     if (operation === "sub") return "−";
+    if (operation === "divide") return "÷";
     if (operation === "round") return "≈";
     return "×";
   }
@@ -955,6 +961,7 @@
   function computeResult(a, b, operation) {
     if (operation === "add") return a + b;
     if (operation === "sub") return a - b;
+    if (operation === "divide") return Math.floor(Number(a) / Number(b));
     if (operation === "round") return roundToPlace(a, b);
     return a * b;
   }
@@ -1809,6 +1816,9 @@
     }
     if (operation === "sub") {
       return `-:${a}-${b}`;
+    }
+    if (operation === "divide") {
+      return `÷:${a}/${b}`;
     }
     if (operation === "round") {
       return `r${b}:${a}`;
@@ -7124,6 +7134,7 @@
   function syncOperationUI() {
     const op = $("operation")?.value || state.settings.operation || "multiply";
     const isMult = op === "multiply";
+    const isDivide = op === "divide";
     const isMdMult = op === "md-mult";
     const isLongDiv = op === "long-div";
     const isPad = isPadPractice(op);
@@ -7133,8 +7144,8 @@
 
     // Rounding / pad practice hide table chips
     // Kindergarten add/sub: show Easy / Medium finger-counting levels
-    setSetupVisible($("difficulty-wrap"), isMult || kinderAddSub);
-    setSetupVisible($("table-picker"), isMult);
+    setSetupVisible($("difficulty-wrap"), isMult || isDivide || kinderAddSub);
+    setSetupVisible($("table-picker"), isMult || isDivide);
     setSetupVisible($("digit-wrap"), isAddSub && !kinderAddSub);
     syncDifficultyOptions();
     setSetupVisible($("round-wrap"), isRound);
@@ -7142,12 +7153,12 @@
     setSetupVisible($("md-wrap"), isMdMult);
     setSetupVisible($("long-div-wrap"), isLongDiv);
     const lockedTen = locksFixedTenMission(op);
-    setSetupVisible($("problem-type-wrap"), !isRound && !isPad);
-    // Show Roblox note whenever mission mode is visible (add / sub / multiply)
-    setSetupVisible($("mult-roblox-note"), !lockedTen && (isMult || isAddSub));
-    // In-order is for tables only
+    setSetupVisible($("problem-type-wrap"), !isRound && !isPad && !isDivide);
+    // Show Roblox note whenever mission mode is visible (add / sub / multiply / divide)
+    setSetupVisible($("mult-roblox-note"), !lockedTen && (isMult || isDivide || isAddSub));
+    // In-order is for tables / divisor sets
     const inOrderRow = $("in-order")?.closest("label");
-    setSetupVisible(inOrderRow, isMult);
+    setSetupVisible(inOrderRow, isMult || isDivide);
     const timedRow = $("per-question-timer")?.closest("label");
     setSetupVisible(timedRow, !lockedTen);
     const modeWrap = $("mode")?.closest("label");
@@ -7161,7 +7172,7 @@
       if ($("per-question-timer")) $("per-question-timer").checked = false;
       if (isMdMult) syncMdRangeInputs();
       if (isLongDiv) syncLongDivRangeInputs();
-    } else if ((isMult || isAddSub) && $("mode")) {
+    } else if ((isMult || isDivide || isAddSub) && $("mode")) {
       // Nudge toward the Roblox-eligible 10-question round
       if ($("mode").value === "endless" || $("mode").value === "timed") {
         $("mode").value = "10";
@@ -7172,6 +7183,7 @@
     if (tag) {
       if (op === "add") tag.textContent = "Power up your addition!";
       else if (op === "sub") tag.textContent = "Power up your subtraction!";
+      else if (op === "divide") tag.textContent = "Power up your division!";
       else if (op === "round") tag.textContent = "Power up your rounding!";
       else if (op === "md-mult") tag.textContent = "Practice multi-digit × single digit!";
       else if (op === "long-div") tag.textContent = "Practice long division!";
@@ -7206,7 +7218,9 @@
         ? { a: 4, b: 3, r: 7 }
         : operation === "sub"
           ? { a: 12, b: 4, r: 8 }
-          : { a: 4, b: 3, r: 12 };
+          : operation === "divide"
+            ? { a: 45, b: 5, r: 9 }
+            : { a: 4, b: 3, r: 12 };
 
     const options = [
       ["product", `${samples.a} ${sym} ${samples.b} = ?`],
@@ -7323,6 +7337,13 @@
     ["expert", "Expert · tables 1–15"],
   ];
 
+  const DIV_DIFFICULTY_OPTIONS = [
+    ["easy", "Easy · no remainders · 2 digits · ÷2–5"],
+    ["medium", "Medium · no remainders · 2 digits · ÷2–10"],
+    ["hard", "Hard · no remainders · 2 digits · ÷2–12"],
+    ["expert", "Expert · no remainders · 2 digits · ÷2–15"],
+  ];
+
   const KINDER_DIFFICULTY_OPTIONS = [
     ["easy", "Easy · one hand + a few fingers (to 5)"],
     ["medium", "Medium · numbers to 10"],
@@ -7335,7 +7356,11 @@
     const op = $("operation")?.value || state.settings.operation || "multiply";
     const isAddSub = op === "add" || op === "sub";
     const kinder = isKinderGrade() && isAddSub;
-    const options = kinder ? KINDER_DIFFICULTY_OPTIONS : MULT_DIFFICULTY_OPTIONS;
+    const options = kinder
+      ? KINDER_DIFFICULTY_OPTIONS
+      : op === "divide"
+        ? DIV_DIFFICULTY_OPTIONS
+        : MULT_DIFFICULTY_OPTIONS;
     const previous = select.value || state.settings.difficulty || "easy";
     const allowed = new Set(options.map(([v]) => v));
     select.innerHTML = "";
@@ -7441,6 +7466,22 @@
       return pool;
     }
 
+    if (operation === "divide") {
+      // Easy division: 2-digit ÷ 1-digit, no remainders (e.g. 45 ÷ 5)
+      const focus = (tables && tables.length ? tables : rangeTables(max))
+        .map(Number)
+        .filter((n) => n >= 2 && n <= max);
+      for (const divisor of focus) {
+        const qMin = Math.max(2, Math.ceil(10 / divisor));
+        const qMax = Math.floor(99 / divisor);
+        for (let q = qMin; q <= qMax; q++) {
+          const dividend = divisor * q;
+          if (dividend >= 10 && dividend <= 99) pushPair(dividend, divisor);
+        }
+      }
+      return pool;
+    }
+
     const gid = gradeId || session?.grade || state.settings.grade || "2";
     const level =
       session?.difficulty ||
@@ -7500,6 +7541,10 @@
     // Stable order: tables 7×1, 7×2… or rounding place then number
     pool.sort((x, y) => {
       if (operation === "round") {
+        if (x.b !== y.b) return x.b - y.b;
+        return x.a - y.a;
+      }
+      if (operation === "divide") {
         if (x.b !== y.b) return x.b - y.b;
         return x.a - y.a;
       }
@@ -7609,7 +7654,10 @@
     return {
       display: `${a} ${sym} ${b} = ${blank}`,
       expected: result,
-      hint: "Type it or tap 🎤 and say it",
+      hint:
+        operation === "divide"
+          ? `${a} divided by ${b} — type or say the answer`
+          : "Type it or tap 🎤 and say it",
     };
   }
 
@@ -8076,7 +8124,9 @@
         ? `${session.current.a} → ${session.current.expected} mastered!`
         : session.operation === "long-div"
           ? `${session.current.a} ÷ ${session.current.b} mastered!`
-          : `${session.current.a}${opSymbol(session.operation)}${session.current.b} mastered!`
+          : session.operation === "divide"
+            ? `${session.current.a} ÷ ${session.current.b} mastered!`
+            : `${session.current.a}${opSymbol(session.operation)}${session.current.b} mastered!`
       : CHEERS[Math.floor(Math.random() * CHEERS.length)];
 
     const card = $("problem-card");
@@ -8438,9 +8488,16 @@
     }
 
     const operation = $("operation")?.value || "multiply";
-    const tables = operation === "multiply" ? getSelectedTables() : state.settings.tables || rangeTables(10);
+    const tables =
+      operation === "multiply" || operation === "divide"
+        ? getSelectedTables()
+        : state.settings.tables || rangeTables(10);
     if (operation === "multiply" && !tables.length) {
       alert("Pick at least one times table (like 2× or 7×).");
+      return;
+    }
+    if (operation === "divide" && !tables.filter((n) => Number(n) >= 2).length) {
+      alert("Pick at least one divisor table (like ÷2 or ÷5).");
       return;
     }
     const mdRange = operation === "md-mult" ? readMdRangeSettings() : {};
