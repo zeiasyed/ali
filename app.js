@@ -7341,10 +7341,10 @@
   ];
 
   const DIV_DIFFICULTY_OPTIONS = [
-    ["easy", "Easy · no remainders · up to 2 digits · ÷2–5 (facts to ×10)"],
-    ["medium", "Medium · no remainders · up to 2 digits · ÷2–10"],
-    ["hard", "Hard · no remainders · up to 2 digits · ÷2–12"],
-    ["expert", "Expert · no remainders · up to 2 digits · ÷2–15 (answers to 12)"],
+    ["easy", "Easy · no remainders · up to 2 digits · ÷2–5 (answers to ×12)"],
+    ["medium", "Medium · no remainders · up to 2 digits · ÷2–10 (answers to ×12)"],
+    ["hard", "Hard · no remainders · up to 2 digits · ÷2–12 (answers to ×12)"],
+    ["expert", "Expert · no remainders · up to 2 digits · ÷2–15 (answers to ×12)"],
   ];
 
   const KINDER_DIFFICULTY_OPTIONS = [
@@ -7470,9 +7470,9 @@
     }
 
     if (operation === "divide") {
-      // No remainders. Allow 2-digit dividends (e.g. 35 ÷ 5), but never ask
-      // quotients above 12 — so kids don’t need facts like 2 × 13.
-      const quotientMax = Math.min(12, Math.max(Number(max) || 10, 10));
+      // No remainders. Allow 2-digit dividends (e.g. 35 ÷ 5, 24 ÷ 2).
+      // Quotient always stays within times tables 1–12 (never 2 × 13).
+      const quotientMax = 12;
       const focus = (tables && tables.length ? tables : rangeTables(max))
         .map(Number)
         .filter((n) => n >= 2 && n <= max);
