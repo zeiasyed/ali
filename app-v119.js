@@ -7222,7 +7222,7 @@
         : operation === "sub"
           ? { a: 12, b: 4, r: 8 }
           : operation === "divide"
-            ? { a: 8, b: 2, r: 4 }
+            ? { a: 35, b: 5, r: 7 }
             : { a: 4, b: 3, r: 12 };
 
     const options = [
@@ -7341,10 +7341,10 @@
   ];
 
   const DIV_DIFFICULTY_OPTIONS = [
-    ["easy", "Easy · no remainders · numbers to 10 · ÷2–5"],
-    ["medium", "Medium · no remainders · numbers to 10 · ÷2–10"],
-    ["hard", "Hard · no remainders · to 20 · ÷2–12"],
-    ["expert", "Expert · no remainders · 2 digits · ÷2–15"],
+    ["easy", "Easy · no remainders · up to 2 digits · ÷2–5 (facts to ×10)"],
+    ["medium", "Medium · no remainders · up to 2 digits · ÷2–10"],
+    ["hard", "Hard · no remainders · up to 2 digits · ÷2–12"],
+    ["expert", "Expert · no remainders · up to 2 digits · ÷2–15 (answers to 12)"],
   ];
 
   const KINDER_DIFFICULTY_OPTIONS = [
@@ -7470,41 +7470,17 @@
     }
 
     if (operation === "divide") {
-      // No remainders. Easy/medium: dividends up to 10 (e.g. 8 ÷ 2). Harder levels go bigger.
-      const level =
-        session?.difficulty ||
-        state.settings.difficulty ||
-        $("difficulty")?.value ||
-        "easy";
-      const dividendMax =
-        level === "expert" ? 99 : level === "hard" ? 20 : 10;
-      const dividendMin = 2;
+      // No remainders. Allow 2-digit dividends (e.g. 35 ÷ 5), but never ask
+      // quotients above 12 — so kids don’t need facts like 2 × 13.
+      const quotientMax = Math.min(12, Math.max(Number(max) || 10, 10));
       const focus = (tables && tables.length ? tables : rangeTables(max))
         .map(Number)
-        .filter((n) => n >= 2 && n <= max && n <= dividendMax);
+        .filter((n) => n >= 2 && n <= max);
       for (const divisor of focus) {
-        const qMin = 1;
-        const qMax = Math.floor(dividendMax / divisor);
-        for (let q = qMin; q <= qMax; q++) {
+        for (let q = 2; q <= quotientMax; q++) {
           const dividend = divisor * q;
-          if (
-            dividend >= dividendMin &&
-            dividend <= dividendMax &&
-            dividend > divisor // skip n ÷ n = 1 noise for tiny sets; keep 10 ÷ 5 etc.
-          ) {
-            pushPair(dividend, divisor);
-          }
-        }
-      }
-      // If filter removed everything (e.g. only ÷10 with max 10), allow exact equals
-      if (!pool.length) {
-        for (const divisor of focus) {
-          for (let q = 1; q <= Math.floor(dividendMax / divisor); q++) {
-            const dividend = divisor * q;
-            if (dividend >= dividendMin && dividend <= dividendMax) {
-              pushPair(dividend, divisor);
-            }
-          }
+          // Keep dividends at most 2 digits
+          if (dividend >= 4 && dividend <= 99) pushPair(dividend, divisor);
         }
       }
       return pool;
