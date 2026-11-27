@@ -746,7 +746,10 @@
 
   function setPowLabel(text) {
     const btn = $("btn-pow");
-    if (btn) btn.textContent = text;
+    if (btn) {
+      btn.textContent = text;
+      if (text === "POW!") btn.disabled = false;
+    }
   }
 
   let answerKeyboardWanted = false;
@@ -8160,18 +8163,17 @@
     card.classList.add("pop");
     burstStars();
 
+    // Auto-advance after a short cheer — no NEXT! tap needed
     session.waitingNext = true;
-    setPowLabel("NEXT!");
-
-    // Timed rounds keep moving — auto-advance after a short cheer
-    if (session.perQuestionTimer) {
-      window.setTimeout(() => {
-        if (session && !session.ended && session.waitingNext) {
-          session.waitingNext = false;
-          nextQuestion();
-        }
-      }, 500);
-    }
+    setPowLabel("POW!");
+    const powBtn = $("btn-pow");
+    if (powBtn) powBtn.disabled = true;
+    window.setTimeout(() => {
+      if (!session || session.ended || !session.waitingNext) return;
+      session.waitingNext = false;
+      if (powBtn) powBtn.disabled = false;
+      nextQuestion();
+    }, session.perQuestionTimer ? 500 : 700);
   }
 
   function burstStars() {
@@ -8606,14 +8608,8 @@
     e.preventDefault();
     if (!session || session.ended || !session.current) return;
 
-    // After a correct answer, POW becomes NEXT!
-    if (session.waitingNext) {
-      session.waitingNext = false;
-      nextQuestion();
-      return;
-    }
-
-    if (session.accepting === false) return;
+    // Correct answers auto-advance — ignore taps while cheering
+    if (session.waitingNext || session.accepting === false) return;
 
     const raw = normalizeAnswerField($("answer"));
     if (!raw) {
@@ -8681,15 +8677,18 @@
     revealLongDivisionWork();
   });
 
-  $("btn-quit").addEventListener("click", () => {
+  function leavePlayMission() {
     if (!session || session.ended) {
       showScreen("home");
       return;
     }
-    if (confirm("Quit this mission?")) {
+    if (confirm("Go back to Home Base?")) {
       endMission("Mission paused");
     }
-  });
+  }
+
+  $("btn-play-back")?.addEventListener("click", () => leavePlayMission());
+  $("btn-quit").addEventListener("click", () => leavePlayMission());
 
   $("btn-again").addEventListener("click", () => {
     startMission({
