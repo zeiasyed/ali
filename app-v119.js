@@ -8,9 +8,9 @@
   const ROBLOX_FLOOR_POINTS = 225;
   const CHILD = "Ali Ayaan";
   const MASTERY_STREAK = 5;
-  /** After a miss, re-ask this many questions later (then keep looping until mastered) */
-  const RETRY_GAP_MIN = 1;
-  const RETRY_GAP_MAX = 2;
+  /** After a miss, re-ask this many questions later (not the very next one) */
+  const RETRY_GAP_MIN = 2;
+  const RETRY_GAP_MAX = 4;
   const RETRY_AFTER_HIT_GAP = 3;
   const QUESTION_SECS = 5;
 
@@ -7920,7 +7920,8 @@
     if (!session || session.ended) return;
     stopQuestionTimer();
 
-    if (session.target != null && session.asked >= session.target) {
+    // Fixed rounds (10 / 20): keep going until that many are answered correctly
+    if (session.target != null && session.correct >= session.target) {
       endMission("Mission complete!");
       return;
     }
@@ -8038,10 +8039,10 @@
     startQuestionTimer();
 
     if (session.target != null) {
-      const left = Math.max(0, session.target - session.asked + 1);
-      $("play-progress").textContent = isPad
-        ? `Q ${session.asked} / ${session.target} · ${left} left`
-        : `Q ${session.asked} / ${session.target}`;
+      const need = Math.max(0, session.target - session.correct);
+      $("play-progress").textContent =
+        `${session.correct}/${session.target} right` +
+        (need > 0 ? ` · Q ${session.asked}` : "");
     } else if (session.mode === "timed") {
       $("play-progress").textContent = `Solved ${session.correct}`;
     } else {
@@ -8062,6 +8063,7 @@
     stopListening();
     stopQuestionTimer();
     playWrongSound();
+    session.accepting = false;
     const card = $("problem-card");
     card.classList.remove("shake");
     void card.offsetWidth;
@@ -8072,13 +8074,22 @@
       session.attemptsOnCurrent >= 2 &&
       !session.workShown;
 
+    // Long division: allow a second try on the same card, then move on
+    const stayForAnotherTry =
+      session.operation === "long-div" &&
+      session.attemptsOnCurrent < 2 &&
+      !session.workShown;
+
     if (canOfferHelp) {
       $("feedback").textContent = "Not yet — try again, or show the work & answer.";
       $("hero-cheer").textContent = "It’s okay — peek at the steps!";
       offerShowWork();
+    } else if (stayForAnotherTry) {
+      $("feedback").textContent = "Not yet — try once more!";
+      $("hero-cheer").textContent = "Shake it off. One more try!";
     } else {
-      $("feedback").textContent = "Not yet — try again!";
-      $("hero-cheer").textContent = "Shake it off. Try once more!";
+      $("feedback").textContent = "Not yet — we’ll try this one again soon!";
+      $("hero-cheer").textContent = "Coming back later — keep going!";
     }
     $("feedback").className = "feedback wrong";
 
@@ -8087,23 +8098,37 @@
 
     const fact = ensureFact(session.current.key);
     if (session.attemptsOnCurrent === 1) {
-      // First miss: bump frequency hard and queue a re-ask soon
       fact.weight = Math.min(24, fact.weight + 8);
       fact.correctStreak = 0;
       fact.wrongs += 1;
       fact.mastered = false;
-      scheduleMathRetry(retryGap());
     } else {
       fact.weight = Math.min(24, fact.weight + 2);
-      // Keep pulling it forward if they miss again on the same prompt
-      scheduleMathRetry(retryGap());
     }
+    // Mix the miss back in a few questions later (not the very next one)
+    scheduleMathRetry(retryGap(RETRY_GAP_MIN, RETRY_GAP_MAX));
     state.totalAttempts += 1;
     saveState();
-    maybeAutoListen();
-    // Wrong answer still on same question — restart the 5s clock if timed
-    if (session.perQuestionTimer) startQuestionTimer();
-    focusAnswer();
+
+    if (stayForAnotherTry || canOfferHelp) {
+      session.accepting = true;
+      maybeAutoListen();
+      if (session.perQuestionTimer) startQuestionTimer();
+      focusAnswer();
+      return;
+    }
+
+    // Move on; missed problem returns mixed into later questions
+    session.waitingNext = true;
+    setPowLabel("POW!");
+    const powBtn = $("btn-pow");
+    if (powBtn) powBtn.disabled = true;
+    window.setTimeout(() => {
+      if (!session || session.ended || !session.waitingNext) return;
+      session.waitingNext = false;
+      if (powBtn) powBtn.disabled = false;
+      nextQuestion();
+    }, 800);
   }
 
   function onCorrect() {
@@ -8116,17 +8141,13 @@
 
     fact.corrects += 1;
     fact.correctStreak += 1;
+    // Got it right — drop from the miss queue (it only returns if missed again)
+    clearMathRetry(session.current.key);
     if (fact.correctStreak >= MASTERY_STREAK) {
       fact.mastered = true;
       fact.weight = 0.25;
-      clearMathRetry(session.current.key);
     } else {
-      // Still reinforce until mastery — decay slowly so misses stay frequent
       fact.weight = Math.max(fact.wrongs > 0 ? 2 : 1, fact.weight - 0.5);
-      if (fact.wrongs > 0) {
-        // Keep bringing missed facts back until the mastery streak is done
-        scheduleMathRetry(RETRY_AFTER_HIT_GAP, session.current);
-      }
     }
 
     state.totalCorrect += 1;
